@@ -19,12 +19,13 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
               <span>{t('login.email')}</span>
               <span className="alt-inputwrap">
                 <input className="alt-input" type="email" name="email" required autoComplete="email"
-                  aria-invalid={stato === 'dominio' || stato === 'errore' ? true : undefined}
+                  aria-invalid={stato === 'dominio' || stato === 'errore' || stato === 'limite' ? true : undefined}
                   aria-describedby={stato ? 'login-err' : undefined} />
               </span>
             </label>
             {stato === 'dominio' && <p id="login-err" className="alt-field__msg alt-field--err">{t('login.dominio')}</p>}
             {stato === 'errore' && <p id="login-err" className="alt-field__msg alt-field--err">{t('login.errore')}</p>}
+            {stato === 'limite' && <p id="login-err" className="alt-field__msg alt-field--err">{t('login.limite')}</p>}
             <button className="alt-btn alt-btn--primary" type="submit">{t('login.invia')}</button>
           </form>
         )}

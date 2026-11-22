@@ -14,6 +14,7 @@ export async function inviaLink(form: FormData) {
     email,
     options: { emailRedirectTo: `${origin}/auth/callback`, shouldCreateUser: true }
   });
+  if (error?.status === 429 || error?.code === 'over_email_send_rate_limit') redirect('/login?stato=limite');
   redirect(error ? '/login?stato=errore' : '/login?stato=inviato');
 }
 
