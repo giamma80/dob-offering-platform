@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>DOB Offering Platform</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f7fa;font-family:Metropolis,'Segoe UI',Helvetica,Arial,sans-serif;color:#043962;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f7fa;padding:32px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:12px;overflow:hidden;">
+        <tr>
+          <td style="background:#043962;padding:18px 28px;">
+            <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+              <td style="padding-right:10px;"><img src="https://dob-offering-platform.vercel.app/alten-mark.png" width="19" height="28" alt="ALTEN" style="display:block;border:0;"></td>
+              <td style="font-size:15px;font-weight:800;letter-spacing:.12em;color:#ffffff;padding-right:12px;border-right:1px solid rgba(255,255,255,.3);">ALTEN</td>
+              <td style="font-size:14px;font-weight:600;color:#b2e0f5;padding-left:12px;">DOB Offering Platform</td>
+            </tr></table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px 28px 8px;">
+            <p style="margin:0 0 6px;font-size:20px;font-weight:700;">Accedi alla piattaforma</p>
+            <p style="margin:0 0 24px;font-size:14px;line-height:21px;color:#4a617d;">Il link vale un'ora e funziona una sola volta. Aprilo dallo stesso browser da cui l'hai richiesto.</p>
+            <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+              <td style="border-radius:8px;background:#008bd2;">
+                <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:12px 26px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;">Accedi</a>
+              </td>
+            </tr></table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px 28px 8px;">
+            <p style="margin:0 0 6px;font-size:16px;font-weight:700;" lang="en">Sign in to the platform</p>
+            <p style="margin:0 0 20px;font-size:13px;line-height:20px;color:#4a617d;" lang="en">The link is valid for one hour and works once. Open it in the same browser you requested it from. <a href="{{ .ConfirmationURL }}" style="color:#008bd2;font-weight:700;">Sign in</a></p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:16px 28px 24px;border-top:1px solid #d2d7de;font-size:11.5px;line-height:17px;color:#5f7285;">
+            Se non hai richiesto tu questo accesso, ignora l'email.<br>
+            <span lang="en">If you did not request this, you can ignore this email.</span><br>
+            Uso interno ALTEN · ALTEN internal use only
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
