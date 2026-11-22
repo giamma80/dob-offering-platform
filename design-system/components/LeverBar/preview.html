@@ -1,0 +1,35 @@
+<!-- @dsCard group="Leve" height=200 subtitle="Le quattro leve, sempre a schermo su ogni tab" -->
+<div class="alt-root" style="padding:20px;display:flex;flex-direction:column;gap:14px">
+  <div class="alt-leverbar">
+    <div class="alt-leverbar__item">
+      <p class="alt-leverbar__name"><label for="lb-1">Canone SaaS</label></p>
+      <div class="alt-leverbar__row">
+        <span class="alt-leverbar__val">140.000&nbsp;€</span>
+        <input class="alt-range" id="lb-1" type="range" min="80000" max="220000" step="5000" value="140000">
+      </div>
+    </div>
+    <div class="alt-leverbar__item">
+      <p class="alt-leverbar__name"><label for="lb-2">Canone on-premise</label></p>
+      <div class="alt-leverbar__row">
+        <span class="alt-leverbar__val">40.000&nbsp;€</span>
+        <input class="alt-range" id="lb-2" type="range" min="0" max="120000" step="5000" value="40000">
+      </div>
+    </div>
+    <div class="alt-leverbar__item">
+      <p class="alt-leverbar__name"><label for="lb-3">Sconto consumo</label></p>
+      <div class="alt-leverbar__row">
+        <span class="alt-leverbar__val">40%</span>
+        <input class="alt-range" id="lb-3" type="range" min="0" max="80" step="5" value="40">
+      </div>
+    </div>
+    <div class="alt-leverbar__item">
+      <p class="alt-leverbar__name"><label for="lb-4">Clienti attivi</label></p>
+      <div class="alt-leverbar__row">
+        <span class="alt-leverbar__val">4</span>
+        <input class="alt-range" id="lb-4" type="range" min="1" max="8" step="1" value="4">
+      </div>
+    </div>
+  </div>
+  <p class="alt-note">Nel foglio Excel la stessa cella d'input non è modificabile da fogli diversi: qui la barra resta
+  agganciata in alto su tutti i tab, e i numeri sotto si riallineano mentre si muove la leva.</p>
+</div>

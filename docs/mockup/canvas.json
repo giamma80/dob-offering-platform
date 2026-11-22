@@ -1,0 +1,150 @@
+{
+ "v": 3,
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-11-20T10:35:00Z"
+ },
+ "title": "ALTEN Quotation DOB — mockup dello strumento",
+ "launch": {
+  "view": "focused",
+  "file": "Assessment.dc.html"
+ },
+ "pages": [],
+ "boards": {
+  "Assessment.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 1380,
+   "title": "1 ▸ Assessment",
+   "expand": "fill"
+  },
+  "Soluzione.dc.html": {
+   "x": 1520,
+   "y": 0,
+   "w": 1440,
+   "h": 1380,
+   "title": "2 ▸ Soluzione",
+   "expand": "fill"
+  },
+  "Stima.dc.html": {
+   "x": 3040,
+   "y": 0,
+   "w": 1440,
+   "h": 1380,
+   "title": "3 ▸ Stima",
+   "expand": "fill"
+  },
+  "Prezzo.dc.html": {
+   "x": 4560,
+   "y": 0,
+   "w": 1440,
+   "h": 1380,
+   "title": "4 ▸ Prezzo",
+   "expand": "fill"
+  },
+  "Resoconto.dc.html": {
+   "x": 0,
+   "y": 1480,
+   "w": 1440,
+   "h": 1380,
+   "title": "5 ▸ Resoconto · Sintesi",
+   "expand": "fill"
+  },
+  "Sostenibilita.dc.html": {
+   "x": 1520,
+   "y": 1480,
+   "w": 1440,
+   "h": 1380,
+   "title": "5 ▸ Resoconto · Sostenibilità",
+   "expand": "fill"
+  },
+  "Dettaglio.dc.html": {
+   "x": 3040,
+   "y": 1480,
+   "w": 1440,
+   "h": 1380,
+   "title": "5 ▸ Resoconto · Dettaglio costi",
+   "expand": "fill"
+  },
+  "Specchietto.dc.html": {
+   "x": 4560,
+   "y": 1480,
+   "w": 1440,
+   "h": 1380,
+   "title": "Specchietto cliente",
+   "expand": "fill"
+  },
+  "Offerte.dc.html": {
+   "x": 0,
+   "y": 3400,
+   "w": 1440,
+   "h": 1380,
+   "title": "Monitoraggio ▸ Offerte",
+   "expand": "fill"
+  },
+  "BusinessPlan.dc.html": {
+   "x": 1520,
+   "y": 3400,
+   "w": 1440,
+   "h": 1380,
+   "title": "Monitoraggio ▸ Business plan",
+   "expand": "fill"
+  },
+  "Sistema.dc.html": {
+   "x": 3040,
+   "y": 3400,
+   "w": 1440,
+   "h": 1380,
+   "title": "Monitoraggio ▸ Parametri di sistema",
+   "expand": "fill"
+  },
+  "Validazione.dc.html": {
+   "x": 4560,
+   "y": 3400,
+   "w": 1440,
+   "h": 1380,
+   "title": "Design system ▸ Stato e validazione",
+   "expand": "fill"
+  }
+ },
+ "order": [
+  "Assessment.dc.html",
+  "Soluzione.dc.html",
+  "Stima.dc.html",
+  "Prezzo.dc.html",
+  "Resoconto.dc.html",
+  "Sostenibilita.dc.html",
+  "Dettaglio.dc.html",
+  "Specchietto.dc.html",
+  "Offerte.dc.html",
+  "BusinessPlan.dc.html",
+  "Sistema.dc.html",
+  "Validazione.dc.html"
+ ],
+ "notes": {
+  "t1": {
+   "x": 0,
+   "y": -300,
+   "text": "Offerta — una offerta alla volta, cinque fasi sulla timeline",
+   "kind": "title1",
+   "maxW": 6000
+  },
+  "t2": {
+   "x": 0,
+   "y": 3100,
+   "text": "Monitoraggio — tutte le offerte, business plan, parametri di sistema",
+   "kind": "title1",
+   "maxW": 6000
+  }
+ },
+ "designSystems": [
+  {
+   "title": "ALTEN Quotation — Design System",
+   "namespace": "alten-quotation",
+   "artifact": "https://claude.ai/artifact/EUDFkEVWesziatGBCtoUqz",
+   "version": null,
+   "copiedAt": "2026-11-20T10:35:00Z"
+  }
+ ]
+}

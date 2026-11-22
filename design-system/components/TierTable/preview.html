@@ -1,0 +1,33 @@
+<!-- @dsCard group="Dettaglio" height=330 subtitle="Scaglioni marginali: la fascia si applica solo alle sue transazioni" -->
+<div class="alt-root" style="padding:20px;display:flex;flex-direction:column;gap:14px">
+  <div class="alt-confid" style="background:var(--signal-open-soft);color:var(--signal-open-ink);border-left-color:var(--signal-open)">
+    <span class="alt-badge alt-badge--aperto">Da definire</span>
+    <span>Fasce e prezzi sono ipotesi di lavoro: sono il parametro che muove di più il ricavo a pari volume.
+    Vanno fissati dal business prima di mandare l'offerta.</span>
+  </div>
+  <table class="alt-table">
+    <caption>Consumo annuo sul volume ipotizzato di 20.000 transazioni &mdash; scenario A</caption>
+    <thead>
+      <tr><th scope="col">Scaglione</th><th scope="col" class="num">Da</th><th scope="col" class="num">A</th>
+        <th scope="col" class="num">Transazioni nella fascia</th><th scope="col" class="num">€/transazione</th>
+        <th scope="col" class="num">Importo</th></tr>
+    </thead>
+    <tbody>
+      <tr class="is-open"><td>Scaglione 1</td><td class="num">1</td><td class="num">5.000</td>
+        <td class="num">5.000</td><td class="num">6,00&nbsp;€</td><td class="num">30.000&nbsp;€</td></tr>
+      <tr class="is-open"><td>Scaglione 2</td><td class="num">5.001</td><td class="num">15.000</td>
+        <td class="num">10.000</td><td class="num">4,50&nbsp;€</td><td class="num">45.000&nbsp;€</td></tr>
+      <tr class="is-open"><td>Scaglione 3</td><td class="num">15.001</td><td class="num">30.000</td>
+        <td class="num">5.000</td><td class="num">3,50&nbsp;€</td><td class="num">17.500&nbsp;€</td></tr>
+      <tr class="is-open"><td><span class="alt-table__name">Scaglione 4
+        <span class="alt-table__hint">nessuna transazione in questa fascia al volume attuale</span></span></td>
+        <td class="num">30.001</td><td class="num">oltre</td>
+        <td class="num" style="color:var(--ink-muted)">0</td><td class="num">2,50&nbsp;€</td>
+        <td class="num" style="color:var(--ink-muted)">0&nbsp;€</td></tr>
+      <tr class="is-sub"><td>Totale consumo annuo</td><td class="num"></td><td class="num"></td>
+        <td class="num">20.000</td><td class="num">4,63&nbsp;€ medi</td><td class="num">92.500&nbsp;€</td></tr>
+    </tbody>
+  </table>
+  <p class="alt-note">Ogni fascia si applica solo alle transazioni che ricadono in essa:
+  nessun salto di prezzo al superamento di una soglia, quindi nessuna contestazione in fattura.</p>
+</div>

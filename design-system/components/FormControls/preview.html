@@ -1,0 +1,57 @@
+<!-- @dsCard group="Input" height=300 subtitle="Campi del tab Parametri: numeri, scelte, interruttori" -->
+<div class="alt-root" style="padding:20px;display:flex;flex-direction:column;gap:18px">
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+    <div class="alt-field">
+      <label class="alt-label" for="f1">Tariffa architetto</label>
+      <div class="alt-inputwrap">
+        <input class="alt-input" id="f1" type="text" inputmode="decimal" value="600">
+        <span class="alt-inputwrap__suffix">€/gg</span>
+      </div>
+      <span class="alt-prov alt-prov--input"><span class="alt-prov__key" aria-hidden="true">I</span>listino, da confermare</span>
+    </div>
+    <div class="alt-field">
+      <label class="alt-label" for="f2">Volume annuo</label>
+      <div class="alt-inputwrap">
+        <input class="alt-input" id="f2" type="text" inputmode="numeric" value="20.000">
+        <span class="alt-inputwrap__suffix">transazioni</span>
+      </div>
+      <span class="alt-prov alt-prov--scelta"><span class="alt-prov__key" aria-hidden="true">S</span>ipotesi: da confermare col cliente</span>
+    </div>
+    <div class="alt-field">
+      <label class="alt-label" for="f3">Metrica di consumo</label>
+      <select class="alt-select" id="f3" aria-describedby="f3-h">
+        <option>Da definire in offerta</option>
+        <option>Pratica avviata</option>
+        <option>Pratica completata</option>
+      </select>
+      <span id="f3-h" class="alt-prov alt-prov--aperto"><span class="alt-prov__key" aria-hidden="true">?</span>cambia il fatturato a pari volume</span>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:end">
+    <div class="alt-field">
+      <label class="alt-label" for="f4">Full cost giornaliero</label>
+      <div class="alt-inputwrap alt-inputwrap--open">
+        <input class="alt-input" id="f4" type="text" inputmode="decimal" value="330" aria-describedby="f4-e">
+        <span class="alt-inputwrap__suffix">€/gg</span>
+      </div>
+      <span id="f4-e" class="alt-prov alt-prov--scelta"><span class="alt-prov__key" aria-hidden="true">S</span>segnaposto: sostituire col dato del controlling</span>
+    </div>
+    <div class="alt-field">
+      <span class="alt-label">Orizzonte di confronto</span>
+      <div class="alt-seg" role="group" aria-label="Orizzonte di confronto">
+        <button class="alt-seg__btn" type="button" aria-pressed="false">1 anno</button>
+        <button class="alt-seg__btn" type="button" aria-pressed="true">3 anni</button>
+        <button class="alt-seg__btn" type="button" aria-pressed="false">5 anni</button>
+      </div>
+    </div>
+    <div class="alt-field">
+      <span class="alt-label">Costo AI on-premise</span>
+      <label class="alt-switch">
+        <input type="checkbox" checked>
+        <span class="alt-switch__box" aria-hidden="true"></span>
+        <span>A carico ALTEN</span>
+      </label>
+      <span class="alt-prov alt-prov--aperto"><span class="alt-prov__key" aria-hidden="true">?</span>da decidere col cliente chi paga i modelli</span>
+    </div>
+  </div>
+</div>

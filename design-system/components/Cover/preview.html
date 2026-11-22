@@ -1,0 +1,48 @@
+<!-- @dsCard height=288 -->
+<style>
+  .cv{position:relative;width:960px;height:288px;background:var(--surface-canvas);overflow:hidden;
+    font-family:var(--font-sans)}
+  .cv__name{position:absolute;left:48px;bottom:56px;margin:0;max-width:440px;font-size:76px;line-height:.95;
+    font-weight:800;letter-spacing:-.02em;color:var(--ink-primary)}
+  .cv__tag{position:absolute;left:48px;bottom:28px;margin:0;max-width:440px;font-size:13px;line-height:18px;
+    color:var(--ink-secondary)}
+  .cv__art{position:absolute;left:480px;top:0;width:480px;height:288px}
+  .navy{fill:var(--surface-brand)}
+  .azure{fill:var(--accent-azure)}
+  .ochre{fill:var(--brand-ochre)}
+  .pale{fill:var(--accent-azure-pale)}
+  .deep{fill:var(--surface-brand-deep)}
+</style>
+<div class="cv">
+  <!--
+    blocchi: surface-brand slab 96×288 (bleed alto e basso) · accent-azure 120×96 · brand-ochre 96×72
+             accent-azure-pale 144×48 · surface-brand-deep 48×48 — insieme ~40% della copertina
+    disposizione: slab navy verticale a x=0 del box, poi una scalinata discendente di tessere verso il
+             bordo destro, che esce dalla copertina a destra: il profilo degli scaglioni marginali
+    pattern: tessere modulari tagliate dai raggi (riga «geometric, modular, dense UI»), scelta perché
+             questo strumento è una tabella di fasce a prezzo decrescente — la scalinata È il listino
+    scala: passo space-6 (24px), lati multipli di 24, raggi radius-sm (5px) e radius-xs (3px)
+  -->
+  <svg class="cv__art" viewBox="0 0 480 288" width="480" height="288" aria-hidden="true">
+    <rect class="navy" x="0" y="-24" width="96" height="336"/>
+    <rect class="azure" x="120" y="24" width="120" height="96" rx="5"/>
+    <rect class="pale" x="120" y="144" width="144" height="48" rx="5"/>
+    <rect class="ochre" x="264" y="96" width="96" height="72" rx="5"/>
+    <rect class="deep" x="288" y="192" width="48" height="48" rx="3"/>
+    <rect class="azure" x="384" y="168" width="120" height="48" rx="5"/>
+    <rect class="pale" x="360" y="24" width="48" height="48" rx="3"/>
+    <rect class="ochre" x="432" y="72" width="72" height="72" rx="5"/>
+    <g class="deep">
+      <rect x="120" y="216" width="24" height="24" rx="3"/>
+      <rect x="168" y="216" width="24" height="24" rx="3"/>
+      <rect x="216" y="216" width="24" height="24" rx="3"/>
+    </g>
+    <g class="azure">
+      <rect x="144" y="240" width="24" height="24" rx="3"/>
+      <rect x="192" y="240" width="24" height="24" rx="3"/>
+    </g>
+  </svg>
+  <p class="cv__name">ALTEN<br>Quotation</p>
+  <p class="cv__tag">Lo strumento che quota la piattaforma Digital Onboarding nei due scenari, con l'origine
+    di ogni numero in chiaro.</p>
+</div>

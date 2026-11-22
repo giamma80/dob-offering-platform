@@ -1,0 +1,55 @@
+<!-- @dsCard group="Leve" height=330 subtitle="La manopola commerciale, con il suo effetto in chiaro" -->
+<div class="alt-root" style="padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:16px">
+  <div class="alt-lever alt-lever--active">
+    <div class="alt-lever__head">
+      <label class="alt-lever__name" for="lv-canone">Canone annuale SaaS</label>
+      <p class="alt-lever__value">140.000<span class="alt-unit">&nbsp;€</span></p>
+    </div>
+    <input class="alt-range" id="lv-canone" type="range" min="80000" max="220000" step="5000" value="140000"
+      aria-describedby="lv-canone-eff">
+    <div class="alt-lever__scale"><span>80.000&nbsp;€</span><span>220.000&nbsp;€</span></div>
+    <div class="alt-lever__foot">
+      <span class="alt-prov alt-prov--input"><span class="alt-prov__key" aria-hidden="true">I</span>input commerciale</span>
+      <span id="lv-canone-eff" class="alt-kpi__delta alt-kpi__delta--up">margine A 66,5% &middot; +0 € vs base</span>
+    </div>
+  </div>
+  <div class="alt-lever">
+    <div class="alt-lever__head">
+      <label class="alt-lever__name" for="lv-sconto">Sconto consumo on-premise</label>
+      <p class="alt-lever__value">40<span class="alt-unit">&nbsp;%</span></p>
+    </div>
+    <input class="alt-range" id="lv-sconto" type="range" min="0" max="80" step="5" value="40"
+      aria-describedby="lv-sconto-eff">
+    <div class="alt-lever__scale"><span>0%</span><span>80%</span></div>
+    <div class="alt-lever__foot">
+      <span class="alt-prov alt-prov--input"><span class="alt-prov__key" aria-hidden="true">I</span>input commerciale</span>
+      <span id="lv-sconto-eff" class="alt-kpi__delta alt-kpi__delta--flat">consumo B 37.000&nbsp;€ &middot; era 92.500&nbsp;€</span>
+    </div>
+  </div>
+  <div class="alt-lever">
+    <div class="alt-lever__head">
+      <label class="alt-lever__name" for="lv-clienti">Clienti attivi sul multi-tenant</label>
+      <p class="alt-lever__value">4</p>
+    </div>
+    <input class="alt-range" id="lv-clienti" type="range" min="1" max="8" step="1" value="4"
+      aria-describedby="lv-clienti-eff">
+    <div class="alt-lever__scale"><span>1</span><span>8</span></div>
+    <div class="alt-lever__foot">
+      <span class="alt-prov alt-prov--scelta"><span class="alt-prov__key" aria-hidden="true">S</span>assunzione più fragile del modello</span>
+      <span id="lv-clienti-eff" class="alt-kpi__delta alt-kpi__delta--down">a 1 cliente il margine SaaS è &minus;26%</span>
+    </div>
+  </div>
+  <div class="alt-lever">
+    <div class="alt-lever__head">
+      <label class="alt-lever__name" for="lv-ams">AMS on-premise a consumo</label>
+      <p class="alt-lever__value">70.000<span class="alt-unit">&nbsp;€</span></p>
+    </div>
+    <input class="alt-range" id="lv-ams" type="range" min="0" max="150000" step="5000" value="70000"
+      aria-describedby="lv-ams-eff">
+    <div class="alt-lever__scale"><span>0&nbsp;€</span><span>150.000&nbsp;€</span></div>
+    <div class="alt-lever__foot">
+      <span class="alt-badge alt-badge--escluso">Fuori dai totali</span>
+      <span id="lv-ams-eff" class="alt-kpi__delta alt-kpi__delta--flat">quotato a parte se richiesto</span>
+    </div>
+  </div>
+</div>

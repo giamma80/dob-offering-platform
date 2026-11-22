@@ -1,0 +1,60 @@
+/* Regole dell'app che non stanno nel mockup. Ogni valore passa dai token. */
+html, body { margin: 0; height: 100%; }
+body { font-family: var(--font-sans); background: var(--surface-canvas); color: var(--ink-primary); }
+.alt-root { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+/* marchio in testata */
+.brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: #fff; white-space: nowrap; }
+.brand img { display: block; border-radius: 2px; }
+.brand b { font-size: 15px; font-weight: 800; letter-spacing: .12em; }
+.brand__sep { width: 1px; height: 22px; background: rgba(255, 255, 255, .3); }
+.brand__p { font-size: 14px; font-weight: 600; color: var(--accent-azure-pale); }
+
+/* colonne numeriche: intestazione e celle sullo stesso bordo */
+.alt-table th, .alt-table td { vertical-align: middle; }
+.alt-table th.is-num, .alt-table td.is-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.alt-table th:not(.is-num), .alt-table td:not(.is-num) { text-align: left; }
+.alt-sortable th.is-num .th-sort { flex-direction: row-reverse; justify-content: flex-start; text-align: right; }
+
+/* stato del valore */
+.st-a .alt-input, .alt-input.st-a { border-style: dashed; background: var(--surface-sunken); }
+.st-c .alt-input, .alt-input.st-c { border-color: var(--signal-positive); }
+.stv { display: inline-flex; gap: 2px; margin-left: 6px; }
+.stv button { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--surface-card);
+  font-size: 10px; line-height: 1; cursor: pointer; color: var(--ink-muted); padding: 0; }
+.stv button[aria-pressed="true"] { background: var(--accent-azure); border-color: var(--accent-azure); color: #fff; }
+.stv button.c[aria-pressed="true"] { background: var(--signal-positive); border-color: var(--signal-positive); }
+
+/* login */
+.login { min-height: 100vh; display: grid; place-items: center; background: var(--surface-brand); }
+.login__card { width: min(400px, 92vw); background: var(--surface-card); border-radius: var(--radius-lg); padding: 32px; box-shadow: var(--shadow-raised); }
+.login__card h1 { margin: 12px 0 20px; font-size: 22px; }
+.login form { display: grid; gap: 12px; }
+
+/* toast */
+.toast { position: fixed; right: 24px; bottom: 120px; z-index: 50; padding: 12px 16px; border-radius: var(--radius-md);
+  background: var(--surface-brand); color: #fff; font-size: 14px; box-shadow: var(--shadow-raised); }
+.toast--avviso { background: var(--signal-open); color: var(--signal-open-ink); }
+.toast--errore { background: var(--signal-negative); }
+
+.campo { display: grid; gap: 4px; }
+.campo > span { font-size: 12px; font-weight: 600; color: var(--ink-secondary); }
+.griglia-campi { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+.azioni { display: flex; gap: 10px; align-items: center; }
+.vuoto { padding: 24px; color: var(--ink-muted); }
+
+/* selettore lingua: stesso segmented control dell'interruttore d'area */
+.area button { padding: 6px 12px; border: 0; border-radius: var(--radius-pill); background: none; font: inherit; font-size: 12px;
+  font-weight: 700; color: var(--accent-azure-pale); cursor: pointer; }
+.area button[aria-current] { background: #fff; color: var(--surface-brand); }
+.area--chiaro { background: var(--surface-sunken); }
+.area--chiaro button { color: var(--ink-secondary); }
+.area--chiaro button[aria-current] { background: var(--surface-brand); color: #fff; }
+.login__top { position: fixed; top: 14px; right: 24px; }
+.area__off { padding: 6px 16px; font-size: 13px; font-weight: 700; color: rgba(255, 255, 255, .35); }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.alt-field__msg.alt-field--err { color: var(--signal-negative); }
+.alt-inputwrap[data-err] { border-color: var(--signal-negative); background: var(--signal-negative-soft); }
+.scelta__c { position: relative; cursor: pointer; }
+.scelta__c input { position: absolute; opacity: 0; pointer-events: none; }
+.scelta__c:focus-within { outline: 2px solid var(--focus-ring); outline-offset: 2px; }

@@ -1,0 +1,40 @@
+<!-- @dsCard group="Lettura" height=360 subtitle="Un grafico solo: come cambia il totale al variare del volume" -->
+<div class="alt-root" style="padding:20px">
+  <div class="alt-card"><div class="alt-card__body">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+      <p class="alt-card__title" style="font-size:15px">Totale a 3 anni per volume annuo</p>
+      <ul class="alt-legend">
+        <li><i style="background:var(--accent-azure)"></i>A &mdash; SaaS</li>
+        <li><i style="background:var(--surface-brand)"></i>B &mdash; on-premise</li>
+        <li><i style="background:var(--signal-open)"></i>volume ipotizzato</li>
+      </ul>
+    </div>
+    <svg viewBox="0 0 640 220" width="100%" height="220" role="img"
+      aria-label="Al crescere del volume da 10.000 a 50.000 transazioni annue il totale a tre anni dello scenario A passa da 768.000 a 1.143.000 euro, quello dello scenario B da 464.000 a 614.000 euro. Lo scenario B resta sempre sotto.">
+      <g stroke="var(--line-soft)" stroke-width="1">
+        <line x1="56" y1="20" x2="624" y2="20"/><line x1="56" y1="68" x2="624" y2="68"/>
+        <line x1="56" y1="116" x2="624" y2="116"/><line x1="56" y1="164" x2="624" y2="164"/>
+      </g>
+      <line x1="56" y1="180" x2="624" y2="180" stroke="var(--line-strong)" stroke-width="1"/>
+      <g font-size="11" fill="var(--ink-secondary)" font-family="var(--font-sans)">
+        <text x="48" y="24" text-anchor="end">1,2 M</text><text x="48" y="72" text-anchor="end">900 k</text>
+        <text x="48" y="120" text-anchor="end">600 k</text><text x="48" y="168" text-anchor="end">300 k</text>
+        <text x="56" y="196">10.000</text><text x="198" y="196" text-anchor="middle">20.000</text>
+        <text x="411" y="196" text-anchor="middle">35.000</text><text x="624" y="196" text-anchor="end">50.000</text>
+      </g>
+      <line x1="198" y1="20" x2="198" y2="180" stroke="var(--signal-open)" stroke-width="2" stroke-dasharray="4 3"/>
+      <polyline fill="none" stroke="var(--accent-azure)" stroke-width="2.5" stroke-linejoin="round"
+        points="56,57 198,38 411,16 624,-2" clip-path="inset(0 0 0 0)"/>
+      <polyline fill="none" stroke="var(--surface-brand)" stroke-width="2.5" stroke-linejoin="round"
+        points="56,131 198,124 411,115 624,108"/>
+      <circle cx="198" cy="38" r="4.5" fill="var(--accent-azure)"/>
+      <circle cx="198" cy="124" r="4.5" fill="var(--surface-brand)"/>
+      <g font-size="12" font-weight="600" font-family="var(--font-sans)">
+        <text x="210" y="34" fill="var(--accent-azure-text)">888.244 €</text>
+        <text x="210" y="120" fill="var(--ink-primary)">511.797 €</text>
+      </g>
+    </svg>
+    <p class="alt-note" style="margin-top:8px">A ogni volume l'on-premise costa meno al cliente: il maggior costo di primo
+    impianto si recupera in sette mesi. Le leve per cambiare questo esito sono il canone SaaS e lo sconto consumo.</p>
+  </div></div>
+</div>

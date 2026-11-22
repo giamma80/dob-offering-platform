@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Monitoraggio — Business plan</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="../../app/styles/components.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#f4f7fa}
+/* stepper del flusso guidato: dice sempre a che punto siamo e cosa manca */
+.step{display:flex;align-items:center;gap:0;padding:10px 22px 0;background:#f4f7fa;flex:0 0 auto}
+.step__i{display:flex;align-items:center;gap:8px;padding:7px 14px 7px 12px;border-radius:var(--radius-pill);
+  text-decoration:none;font-size:12.5px;font-weight:600;color:var(--ink-muted);white-space:nowrap}
+.step__i b{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;
+  background:var(--surface-sunken);color:var(--ink-muted);font-size:11px;font-weight:700}
+.step__i.ok{color:var(--signal-positive)}
+.step__i.ok b{background:var(--signal-positive);color:#fff}
+.step__i.now{background:var(--surface-card);color:var(--ink-primary);box-shadow:var(--shadow-card)}
+.step__i.now b{background:var(--accent-azure);color:#fff}
+.step__s{flex:1;height:2px;background:var(--line-soft);min-width:14px}
+.step__s.ok{background:var(--signal-positive)}
+a{color:#00689e}a:hover{color:#043962}
+.alt-tab,.alt-tab:hover{text-decoration:none}
+/* guscio: testata e leve fisse, scorre solo la colonna centrale */
+.alt-root{display:flex;flex-direction:column;height:100%;min-height:0}
+.shell{flex:1;min-height:0;display:grid;grid-template-columns:196px minmax(0,1fr) 300px;
+  gap:18px;padding:16px 22px 0}
+.subnav{display:flex;flex-direction:column;gap:2px;overflow-y:auto;padding-bottom:18px}
+.rail{display:flex;flex-direction:column;gap:12px;overflow-y:auto;padding-bottom:18px}
+.content{overflow-y:auto;padding:0 4px 28px;scroll-behavior:smooth}
+.content::-webkit-scrollbar,.rail::-webkit-scrollbar,.subnav::-webkit-scrollbar{width:9px}
+.content::-webkit-scrollbar-thumb,.rail::-webkit-scrollbar-thumb{background:#c9d3dd;border-radius:9px;
+  border:2px solid #f4f7fa}
+.content::-webkit-scrollbar-thumb:hover{background:#8d9cad}
+.subnav__title{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-muted);padding:0 10px 7px;margin:0}
+.subnav__a{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:8px 10px;
+  border-radius:var(--radius-sm);border-left:3px solid transparent;text-decoration:none;
+  font-size:13.5px;font-weight:600;color:var(--ink-secondary);transition:background .12s,color .12s}
+.subnav__a:hover{background:var(--surface-sunken);color:var(--ink-primary)}
+.subnav__a[aria-current]{background:var(--surface-card);border-left-color:var(--accent-azure);
+  color:var(--ink-primary);box-shadow:var(--shadow-card)}
+.subnav__a small{font-weight:600;font-size:10.5px;color:var(--ink-muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.rail__card{background:var(--surface-card);border:1px solid var(--line-soft);border-radius:var(--radius-md);
+  padding:13px 14px;box-shadow:var(--shadow-card)}
+.rail__card--brand{background:var(--surface-brand);border-color:var(--surface-brand)}
+.rail__card--brand .rail__h{color:var(--accent-azure-pale)}
+.rail__card--brand .rail__stat{border-bottom-color:rgba(255,255,255,.18)}
+.rail__card--brand .rail__stat span{color:var(--accent-azure-pale)}
+.rail__card--brand .rail__stat b{color:#fff}
+.rail__h{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-muted);margin:0 0 9px}
+.rail__stat{display:flex;justify-content:space-between;align-items:baseline;gap:9px;padding:5px 0;
+  border-bottom:1px solid var(--line-soft)}
+.rail__stat:last-child{border-bottom:0}
+.rail__stat span{font-size:12px;font-weight:600;color:var(--ink-secondary)}
+.rail__stat b{font-family:var(--font-numeric);font-size:15px;font-weight:700;color:var(--ink-primary);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.rail__note{font-size:12px;line-height:17px;color:var(--ink-secondary);margin:0 0 7px}
+.rail__note:last-child{margin-bottom:0}
+.rail__note strong{color:var(--ink-primary)}
+.content>*+*{margin-top:14px}
+.crumb{font-size:11.5px;font-weight:600;color:var(--ink-muted);margin:0 0 2px}
+h1.ttl{font-size:24px;line-height:30px;font-weight:700;color:var(--ink-primary);margin:0;letter-spacing:-.01em}
+.sublead{display:none}
+.tip{display:inline-flex;align-items:center;gap:4px;height:19px;padding:0 7px;border:1px solid var(--line-soft);
+  border-radius:var(--radius-pill);background:var(--surface-card);font-size:10.5px;font-weight:700;
+  color:var(--ink-muted);cursor:help;white-space:nowrap}
+.tip--open{border-color:var(--signal-open);background:var(--signal-open-soft);color:var(--signal-open-ink)}
+.alt-card{scroll-margin-top:8px}
+.alt-table th,.alt-table td{white-space:nowrap}
+.alt-table th:first-child,.alt-table td:first-child{white-space:normal}
+</style>
+</helmet>
+<style>
+/* interruttore delle due macro-aree */
+.area{display:inline-flex;gap:2px;padding:3px;border-radius:var(--radius-pill);background:rgba(255,255,255,.10)}
+.area a{padding:6px 16px;border-radius:var(--radius-pill);font-size:13px;font-weight:700;color:var(--accent-azure-pale);
+  text-decoration:none;letter-spacing:.01em}
+.area a[aria-current]{background:#fff;color:var(--surface-brand)}
+/* timeline dell'offerta */
+.tl{display:flex;align-items:center;padding:10px 26px 10px;background:var(--surface-card);
+  border-bottom:1px solid var(--line-soft);flex:0 0 auto}
+.tl__n{display:flex;align-items:center;gap:10px;text-decoration:none;flex:0 0 auto;padding:4px 8px 4px 4px;border-radius:var(--radius-pill)}
+.tl__n:hover{background:var(--surface-sunken)}
+.tl__r{position:relative;width:38px;height:38px;flex:0 0 auto}
+.tl__r svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.tl__r b{position:absolute;inset:0;display:grid;place-items:center;font-size:13px;font-weight:800;color:var(--ink-secondary)}
+.tl__t{display:flex;flex-direction:column;line-height:1.15}
+.tl__t strong{font-size:13.5px;font-weight:700;color:var(--ink-secondary)}
+.tl__t small{font-size:11px;font-weight:600;color:var(--ink-muted);font-variant-numeric:tabular-nums}
+.tl__n[aria-current] b{color:var(--accent-azure)}
+.tl__n[aria-current] .tl__t strong{color:var(--ink-primary)}
+.tl__n[aria-current]{background:var(--surface-accent-soft)}
+.tl__s{flex:1;height:2px;margin:0 6px;background:var(--line-soft);border-radius:2px;min-width:18px}
+.tl__s.on{background:var(--accent-azure)}
+/* stato del valore: assunto, dichiarato, confermato */
+.st{display:inline-block;width:9px;height:9px;border-radius:50%;flex:0 0 auto;vertical-align:1px}
+.st--a{border:1.5px solid var(--ink-muted);background:transparent}
+.st--d{background:var(--accent-azure)}
+.st--c{background:var(--signal-positive);box-shadow:0 0 0 2px var(--surface-card),0 0 0 3.5px var(--signal-positive)}
+.alt-field.is-assunto .alt-inputwrap{background:var(--surface-sunken);border-style:dashed}
+.ring-legend{display:flex;gap:14px;align-items:center;margin-left:auto;font-size:11.5px;font-weight:600;color:var(--ink-muted)}
+.ring-legend span{display:inline-flex;align-items:center;gap:5px}
+/* uscite dell'offerta, nella stessa riga della timeline */
+.tl__out{display:flex;gap:2px;margin-left:22px;padding-left:18px;border-left:1px solid var(--line-soft)}
+.tl__out a{display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:var(--radius-sm);text-decoration:none;
+  font-size:13px;font-weight:700;color:var(--ink-secondary);white-space:nowrap}
+.tl__out a:hover{background:var(--surface-sunken)}
+.tl__out a[aria-current]{background:var(--surface-brand);color:#fff}
+.tl__out a.is-locked{color:var(--ink-muted)}
+.lk{display:inline-grid;place-items:center;width:16px;height:16px}
+/* footer: leve commerciali dell'offerta su due righe — etichette sopra, controlli sotto */
+.foot{flex:0 0 auto;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.2fr) minmax(0,1.15fr) auto auto;
+  grid-template-rows:auto auto;column-gap:22px;row-gap:5px;padding:9px 24px 11px;background:var(--surface-brand);
+  box-shadow:0 -6px 18px rgba(4,57,98,.18);z-index:30;align-items:center}
+.foot__n{grid-row:1;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-azure-pale);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.foot__n.r{text-align:right}
+.foot__c{grid-row:2;display:flex;align-items:center;gap:10px;min-width:0}
+.foot__v{flex:0 0 112px;display:flex;align-items:center;height:32px;padding:0 10px;border-radius:var(--radius-sm);
+  background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.22)}
+.foot__v input{width:100%;min-width:0;border:0;background:transparent;color:#fff;font-family:var(--font-numeric);font-size:14.5px;
+  font-weight:700;text-align:right;font-variant-numeric:tabular-nums;outline:0}
+.foot__v span{font-size:12px;font-weight:600;color:var(--accent-azure-pale);margin-left:4px}
+.foot__r{flex:1 1 auto;min-width:40px;accent-color:var(--brand-ochre)}
+.foot__seg{display:inline-flex;gap:2px;padding:2px;border-radius:var(--radius-pill);background:rgba(255,255,255,.10);max-width:100%}
+.foot__seg b{padding:5px 8px;border-radius:var(--radius-pill);font-size:12px;font-weight:700;color:var(--accent-azure-pale);white-space:nowrap}
+.foot__seg b.on{background:#fff;color:var(--surface-brand)}
+.foot__t{grid-row:2;justify-self:end;font-family:var(--font-numeric);font-size:19px;font-weight:800;color:#fff;
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+/* tabelle ordinabili */
+.alt-sortable th{padding:0}
+.th-sort{display:flex;align-items:center;gap:6px;width:100%;padding:var(--space-3) var(--space-3) var(--space-2);border:0;background:none;
+  font:inherit;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:inherit;cursor:pointer;text-align:left}
+/* allineamento colonne: intestazione e celle sullo stesso bordo */
+.alt-table th,.alt-table td{vertical-align:middle}
+.alt-table th.is-num,.alt-table td.is-num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.alt-table th:not(.is-num),.alt-table td:not(.is-num){text-align:left}
+.alt-sortable th.is-num .th-sort{flex-direction:row-reverse;justify-content:flex-start;text-align:right}
+/* marchio */
+.brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:#fff;white-space:nowrap}
+.brand img{display:block;border-radius:2px}
+.brand b{font-size:15px;font-weight:800;letter-spacing:.12em}
+.brand__sep{width:1px;height:22px;background:rgba(255,255,255,.3)}
+.brand__p{font-size:14px;font-weight:600;color:var(--accent-azure-pale)}
+.th-sort:hover{color:var(--ink-primary)}
+.th-sort:focus-visible{outline:2px solid var(--focus-ring);outline-offset:-2px}
+.th-ico{opacity:.35;flex:0 0 auto}
+th[aria-sort="ascending"] .th-ico,th[aria-sort="descending"] .th-ico{opacity:1;color:var(--accent-azure)}
+/* stato del valore sui campi delle tabelle */
+.st-a .alt-inputwrap{border-style:dashed;background:var(--surface-sunken)}
+.st-c .alt-inputwrap{border-color:var(--signal-positive)}
+/* riga per aggiungere al volo */
+.riga-piu td{border-bottom:0;padding-top:6px}
+.btn-piu{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px dashed var(--line-strong);
+  border-radius:var(--radius-sm);background:transparent;font:inherit;font-size:12.5px;font-weight:700;color:var(--accent-azure-text);cursor:pointer}
+.btn-piu:hover{border-color:var(--accent-azure);background:var(--surface-accent-soft)}
+.opt--piu{border-style:dashed;justify-content:center;align-items:center;color:var(--accent-azure-text);font-weight:700}
+/* componenti governati dai vincoli */
+.vinc{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:var(--radius-pill);font-size:11px;
+  font-weight:700;white-space:nowrap}
+.vinc--on{background:var(--surface-accent-soft);color:var(--accent-azure-text)}
+.vinc--off{background:var(--surface-sunken);color:var(--ink-muted)}
+.is-bloccato{opacity:.45;pointer-events:none;filter:grayscale(.4)}
+</style>
+<div class="alt-root" style="min-height:100%">
+<header style="background:var(--surface-brand);flex:0 0 auto">
+<div style="display:flex;align-items:center;gap:22px;padding:0 24px;height:56px">
+<a class="brand" href="Assessment.dc.html" aria-label="ALTEN · DOB Offering Platform"><img src="data:image/png;base64,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" alt="" width="19" height="28"><b>ALTEN</b><span class="brand__sep"></span><span class="brand__p">DOB Offering Platform</span></a>
+<nav class="area" aria-label="Area"><a href="Assessment.dc.html">Offerta</a><a href="Offerte.dc.html" aria-current="page">Monitoraggio</a></nav>
+<div style="display:flex;align-items:center"><span style="font-size:15px;font-weight:600;color:var(--accent-azure-pale)">Tutte le offerte</span></div>
+<div style="margin-left:auto;display:flex;gap:10px">
+<button class="alt-btn alt-btn--ghost" type="button" style="color:#fff;border-color:rgba(255,255,255,.4)">Salva</button>
+
+</div></div></header>
+<nav class="alt-tabs" style="background:var(--surface-card);padding:0 24px;border-bottom:1px solid var(--line-soft);flex:0 0 auto"><a class="alt-tab" href="Offerte.dc.html">Offerte</a><a class="alt-tab" href="BusinessPlan.dc.html" aria-current="page">Business plan</a><a class="alt-tab" href="Sistema.dc.html">Parametri di sistema</a></nav>
+<div class="shell">
+<aside class="subnav" aria-label="Sottosezioni">
+<p class="subnav__title">Business plan</p><a class="subnav__a" href="#" aria-current="page"><span style="display:inline-flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:0 0 auto;opacity:.75"><path d="M2.5 13.5h11M3.5 10.5l3-3 2 2 4.5-5"/><path d="M10.5 4.5h2.5V7"/></svg>Abbattimento</span><small>2027 T2</small></a><a class="subnav__a" href="#"><span style="display:inline-flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:0 0 auto;opacity:.75"><path d="M3 4h10M3 8h10M3 12h6"/></svg>Timeline</span><small>3</small></a><a class="subnav__a" href="#"><span style="display:inline-flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:0 0 auto;opacity:.75"><rect x="2.5" y="3" width="11" height="10" rx="1"/><path d="M2.5 6.5h11M6.5 6.5V13"/></svg>Contributi</span></a>
+</aside>
+<main class="content">
+<style>
+.opt{display:flex;align-items:flex-start;gap:9px;padding:10px 12px;border:1px solid var(--line-soft);
+  border-radius:var(--radius-sm);background:var(--surface-card);cursor:pointer;transition:border-color .12s,background .12s}
+.opt:hover{border-color:var(--accent-azure-mid)}
+.opt--on{border-color:var(--accent-azure);background:var(--surface-accent-soft)}
+.opt input{position:absolute;opacity:0;width:1px;height:1px}
+.opt__box{flex:0 0 auto;width:17px;height:17px;margin-top:1px;border:2px solid var(--line-strong);
+  border-radius:4px;background:#fff}
+.opt--on .opt__box{border-color:var(--accent-azure);background:var(--accent-azure);
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M3.5 8.5l3 3 6-7' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/></svg>")}
+.opt__t{font-size:13.5px;font-weight:600;color:var(--ink-primary);line-height:18px;display:flex;flex-direction:column;gap:1px}
+.opt__sub{font-size:11.5px;font-weight:500;color:var(--ink-muted)}
+.griglia{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:10px}
+.scelta{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.scelta__c{position:relative;padding:16px;border:2px solid var(--line-soft);border-radius:var(--radius-md);
+  background:var(--surface-card);cursor:pointer}
+.scelta__c.on{border-color:var(--accent-azure);box-shadow:0 0 0 4px var(--surface-accent-soft)}
+.scelta__c h3{margin:0 0 4px;font-size:15px;font-weight:700;color:var(--ink-primary)}
+.scelta__c p{margin:0;font-size:12px;line-height:17px;color:var(--ink-secondary)}
+.scelta__c .v{display:block;margin-top:10px;font-family:var(--font-numeric);font-size:21px;font-weight:700;
+  color:var(--ink-primary);font-variant-numeric:tabular-nums}
+.bar{display:flex;height:30px;border-radius:var(--radius-sm);overflow:hidden;background:var(--surface-sunken)}
+.bar>span{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;
+  min-width:0;overflow:hidden;white-space:nowrap}
+.bar--xs{height:9px}
+.bar .s1{background:var(--surface-brand)}.bar .s2{background:var(--accent-azure-text)}
+.bar .s3{background:var(--accent-azure)}.bar .s4{background:var(--accent-azure-mid);color:var(--ink-primary)}
+.bar .sm{background:var(--signal-positive)}
+.lg{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:9px;margin-top:11px}
+.lg__v{display:flex;flex-direction:column;gap:1px;padding-left:9px;border-left:3px solid var(--line-soft)}
+.lg__v.s1{border-left-color:var(--surface-brand)}.lg__v.s2{border-left-color:var(--accent-azure-text)}
+.lg__v.s3{border-left-color:var(--accent-azure)}.lg__v.s4{border-left-color:var(--accent-azure-mid)}
+.lg__v.sm{border-left-color:var(--signal-positive)}
+.lg__n{font-size:10.5px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.05em}
+.lg__a{font-family:var(--font-numeric);font-variant-numeric:tabular-nums;font-weight:700;color:var(--ink-primary);font-size:17px}
+.lg__b{font-family:var(--font-numeric);font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink-muted);font-size:11.5px}
+.seg{display:inline-flex;gap:2px;padding:2px;background:var(--surface-sunken);border-radius:var(--radius-pill)}
+.seg b{padding:4px 11px;border-radius:var(--radius-pill);font-size:12px;font-weight:600;color:var(--ink-secondary)}
+.seg b.on{background:var(--surface-card);color:var(--ink-primary);box-shadow:var(--shadow-card)}
+</style><div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap"><div><h1 class="ttl">Business plan</h1></div></div><div class="alt-confid"><span class="alt-badge alt-badge--riservato">Riservato ALTEN</span></div><div class="alt-card" id="bp-curva"><div class="alt-card__head"><h2 class="alt-card__title" style="display:flex;align-items:center;gap:8px"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:0 0 auto;opacity:.75"><path d="M2.5 13.5h11M3.5 10.5l3-3 2 2 4.5-5"/><path d="M10.5 4.5h2.5V7"/></svg>Margine cumulato contro l’investimento</h2><span class="seg"><b class="on">Con Findomestic</b><b>Senza</b></span></div><div class="alt-card__body"><svg viewBox="0 0 660 232" width="100%" height="232" role="img"
+ aria-label="Margine cumulato dei progetti contro l'investimento di piattaforma: il pareggio cade nel secondo trimestre 2027">
+<g font-family="Metropolis, Arial">
+<rect x="64" y="24" width="560" height="109" fill="#eef7ec"/>
+<rect x="64" y="133" width="560" height="63" fill="#fdeeee"/>
+<line x1="64" y1="133" x2="624" y2="133" stroke="#8d9cad" stroke-width="1.5"/>
+<text x="58" y="136" text-anchor="end" font-size="9.5" fill="#5f7285">0</text>
+<text x="58" y="28" text-anchor="end" font-size="9.5" fill="#5f7285">+380 k</text>
+<text x="58" y="199" text-anchor="end" font-size="9.5" fill="#5f7285">&#8722;220 k</text>
+<polygon points="64,133 64,189 126,182 188,174 251,164 313,145 375,124 437,102 500,80 562,57 624,33 624,133" fill="#008bd2" opacity="0.12"/>
+<polyline points="64,189 126,182 188,174 251,164 313,145 375,124 437,102 500,80 562,57 624,33" fill="none" stroke="#008bd2" stroke-width="2.5"/>
+<circle cx="64" cy="189" r="3" fill="#043962"/><circle cx="126" cy="182" r="3" fill="#043962"/><circle cx="188" cy="174" r="3" fill="#043962"/><circle cx="251" cy="164" r="3" fill="#043962"/><circle cx="313" cy="145" r="3" fill="#043962"/><circle cx="375" cy="124" r="3" fill="#0d7163"/><circle cx="437" cy="102" r="3" fill="#0d7163"/><circle cx="500" cy="80" r="3" fill="#0d7163"/><circle cx="562" cy="57" r="3" fill="#0d7163"/><circle cx="624" cy="33" r="3" fill="#0d7163"/>
+<line x1="375" y1="24" x2="375" y2="196" stroke="#0d7163" stroke-width="1.5" stroke-dasharray="4 3"/>
+<text x="381" y="38" font-size="10.5" font-weight="700" fill="#0d7163">pareggio &middot; 2027 T2</text>
+<text x="64" y="212" text-anchor="middle" font-size="9.5" fill="#5f7285">2026 T1</text><text x="188" y="212" text-anchor="middle" font-size="9.5" fill="#5f7285">2026 T3</text><text x="313" y="212" text-anchor="middle" font-size="9.5" fill="#5f7285">2027 T1</text><text x="437" y="212" text-anchor="middle" font-size="9.5" fill="#5f7285">2027 T3</text><text x="562" y="212" text-anchor="middle" font-size="9.5" fill="#5f7285">2028 T1</text>
+</g></svg></div></div><div class="alt-card" id="bp-tl"><div class="alt-card__head"><h2 class="alt-card__title" style="display:flex;align-items:center;gap:8px"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:0 0 auto;opacity:.75"><path d="M3 4h10M3 8h10M3 12h6"/></svg>Progetti sulla timeline</h2></div><div class="alt-card__body"><div style="display:flex;flex-direction:column;gap:9px">
+<div style="display:flex;align-items:center;gap:10px">
+  <span style="width:112px;font-size:12.5px;font-weight:700;color:var(--ink-primary)">Numia</span>
+  <span style="flex:0 0 8%"></span>
+  <span style="flex:1;height:22px;border-radius:4px;background:var(--surface-brand);display:flex;align-items:center;padding:0 9px;font-size:11px;font-weight:700;color:#fff">feb 2026 &rarr; gen 2029 &middot; 120.000,00 &euro;/anno</span>
+</div>
+<div style="display:flex;align-items:center;gap:10px">
+  <span style="width:112px;font-size:12.5px;font-weight:700;color:var(--ink-primary)">Alba Leasing</span>
+  <span style="flex:0 0 12%"></span>
+  <span style="flex:1;height:22px;border-radius:4px;background:var(--accent-azure-text);display:flex;align-items:center;padding:0 9px;font-size:11px;font-weight:700;color:#fff">mar 2026 &rarr; feb 2029 &middot; 10.000,00 &euro;/anno</span>
+</div>
+<div style="display:flex;align-items:center;gap:10px">
+  <span style="width:112px;font-size:12.5px;font-weight:700;color:var(--accent-azure-text)">Findomestic</span>
+  <span style="flex:0 0 36%"></span>
+  <span style="flex:1;height:22px;border-radius:4px;background:var(--accent-azure);border:2px dashed var(--brand-ochre);display:flex;align-items:center;padding:0 9px;font-size:11px;font-weight:700;color:#fff">gen 2027 &rarr; dic 2029 &middot; 232.500,00 &euro;/anno</span>
+</div>
+<div style="display:flex;gap:10px;margin-top:2px"><span style="width:112px"></span>
+<span style="flex:1;display:flex;justify-content:space-between;font-size:10px;color:var(--ink-muted);font-weight:600">
+<span>2026</span><span>2027</span><span>2028</span><span>2029</span></span></div>
+</div></div></div><div class="alt-card" id="bp-con"><div class="alt-card__head"><h2 class="alt-card__title" style="display:flex;align-items:center;gap:8px"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:0 0 auto;opacity:.75"><rect x="2.5" y="3" width="11" height="10" rx="1"/><path d="M2.5 6.5h11M6.5 6.5V13"/></svg>Contributo per progetto</h2></div><div class="alt-card__body"><table class="alt-table alt-sortable "><thead><tr><th aria-sort="none"><button type="button" class="th-sort">Progetto<svg class="th-ico" width="10" height="12" viewBox="0 0 10 12" aria-hidden="true"><path d="M2 4.5L5 1.5l3 3M2 7.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></th><th class="is-num" aria-sort="none"><button type="button" class="th-sort">Margine annuo<svg class="th-ico" width="10" height="12" viewBox="0 0 10 12" aria-hidden="true"><path d="M2 4.5L5 1.5l3 3M2 7.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></th><th class="is-num" aria-sort="none"><button type="button" class="th-sort">Mesi<svg class="th-ico" width="10" height="12" viewBox="0 0 10 12" aria-hidden="true"><path d="M2 4.5L5 1.5l3 3M2 7.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></th><th class="is-num" aria-sort="none"><button type="button" class="th-sort">Contributo<svg class="th-ico" width="10" height="12" viewBox="0 0 10 12" aria-hidden="true"><path d="M2 4.5L5 1.5l3 3M2 7.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></th></tr></thead><tbody><tr><td>Numia</td><td class="is-num">38.400,00&nbsp;&euro;</td><td class="is-num">34</td><td class="is-num">108.800,00&nbsp;&euro;</td></tr><tr><td>Alba Leasing</td><td class="is-num">4.200,00&nbsp;&euro;</td><td class="is-num">33</td><td class="is-num">11.550,00&nbsp;&euro;</td></tr><tr class="is-sub"><td>Findomestic &middot; in corso</td><td class="is-num">204.248,89&nbsp;&euro;</td><td class="is-num">24</td><td class="is-num">408.498,00&nbsp;&euro;</td></tr></tbody><tfoot><tr class="is-total"><td>Cumulato a fine 2028</td><td class="is-num"></td><td class="is-num"></td><td class="is-num">528.848,00&nbsp;&euro;</td></tr></tfoot></table></div></div>
+</main>
+<aside class="rail" aria-label="Statistiche">
+<div class="rail__card rail__card--brand"><p class="rail__h">Investimento</p><div class="rail__stat"><span>Sviluppo prodotto</span><b>174.209,00&nbsp;&euro;</b></div><div class="rail__stat"><span>AM primo anno</span><b>20.000,00&nbsp;&euro;</b></div><div class="rail__stat"><span>Da recuperare</span><b>194.209,00&nbsp;&euro;</b></div></div><div class="rail__card"><p class="rail__h">Pareggio</p><div class="rail__stat"><span>Con Findomestic</span><b>2027 T2</b></div><div class="rail__stat"><span>Senza</span><b>non raggiunto</b></div></div>
+</aside>
+</div>
+
+</div>
+<script>
+document.addEventListener('click', function (e) {
+  var b = e.target.closest && e.target.closest('.th-sort'); if (!b) return;
+  var th = b.closest('th'), tr = th.parentNode, i = Array.prototype.indexOf.call(tr.children, th);
+  var tb = th.closest('table').tBodies[0], dir = th.getAttribute('aria-sort') === 'ascending' ? -1 : 1;
+  Array.prototype.forEach.call(tr.children, function (x) { x.setAttribute('aria-sort', 'none'); });
+  th.setAttribute('aria-sort', dir === 1 ? 'ascending' : 'descending');
+  var val = function (r) { var c = r.children[i]; if (!c) return '';
+    var inp = c.querySelector('input'); var t = (inp ? inp.value : c.textContent).trim();
+    var n = parseFloat(t.replace(/[^0-9,\-]/g, '').replace(',', '.')); return isNaN(n) ? t.toLowerCase() : n; };
+  var fisse = [], righe = [];
+  Array.prototype.forEach.call(tb.rows, function (r) { (r.classList.contains('riga-piu') ? fisse : righe).push(r); });
+  righe.sort(function (a, b) { var x = val(a), y = val(b); return (x > y ? 1 : x < y ? -1 : 0) * dir; });
+  righe.concat(fisse).forEach(function (r) { tb.appendChild(r); });
+});
+</script>
+</x-dc>
+</body>
+</html>

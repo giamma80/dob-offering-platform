@@ -1,0 +1,26 @@
+<!-- @dsCard group="Navigazione" height=230 subtitle="Tab dei fogli e selettore di scenario" -->
+<div class="alt-root" style="padding:20px;display:flex;flex-direction:column;gap:16px">
+  <nav class="alt-tabs" aria-label="Sezioni del preventivo">
+    <button class="alt-tab" type="button">Home</button>
+    <button class="alt-tab" type="button">Perimetro</button>
+    <button class="alt-tab" type="button">Parametri <span class="alt-tab__dot" aria-hidden="true"></span></button>
+    <button class="alt-tab" type="button">Servizi professionali</button>
+    <button class="alt-tab" type="button" aria-current="page">Scenario A &mdash; SaaS</button>
+    <button class="alt-tab" type="button">Scenario B &mdash; On-premise</button>
+    <button class="alt-tab" type="button">Confronto</button>
+    <button class="alt-tab" type="button">Sostenibilità <span class="alt-badge alt-badge--riservato" style="margin-left:2px">Riservato</span></button>
+  </nav>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+    <div class="alt-seg" role="group" aria-label="Scenario mostrato">
+      <button class="alt-seg__btn" type="button" aria-pressed="true">A &mdash; SaaS</button>
+      <button class="alt-seg__btn" type="button" aria-pressed="false">B &mdash; On-premise</button>
+      <button class="alt-seg__btn" type="button" aria-pressed="false">Affiancati</button>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="alt-btn alt-btn--ghost" type="button">Esporta per il cliente</button>
+      <button class="alt-btn alt-btn--primary" type="button">Salva versione</button>
+    </div>
+  </div>
+  <p class="alt-note">Il pallino giallo sul tab segnala che quella sezione contiene punti aperti.
+  «Esporta per il cliente» resta non disponibile finché gli scaglioni non sono fissati, e dice perché.</p>
+</div>
