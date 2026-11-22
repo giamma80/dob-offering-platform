@@ -87,6 +87,8 @@ export interface Offerta {
   cliente: string;
   approccio: Approccio;
   assessment: {
+    settore?: string;
+    referente?: string;
     volumeAnnuo: number;
     crescita: number;
     documentiPerPratica: number;

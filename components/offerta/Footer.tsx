@@ -38,7 +38,12 @@ export function Footer({ o, r, solaLettura, onCanone, onSoftware, onAi }: {
   return (
     <footer className="foot" aria-label={t('leva.canoneSaas')}>
       <span className="foot__n">{t('leva.canoneSaas')}</span>
-      <span className="foot__n">{t('leva.softwareOnp')}</span>
+      <span className="foot__n" title={onp ? `${t('pr.software')} ${euro(r.onPremise.licenza.software)} + ${t('so.manutenzione')} ${euro(r.onPremise.licenza.manutenzione)} + ${t('pr.aiRif')} ${euro(r.onPremise.licenza.aiRifatturata)}` : undefined}>
+        {t('leva.softwareOnp')}
+        {onp && r.onPremise.licenza.totale !== o.leve.softwareOnPremise && (
+          <span className="foot__lic"> · {t('leva.licenzaOnp', { v: euro(r.onPremise.licenza.totale) })}</span>
+        )}
+      </span>
       <span className="foot__n">{t('leva.aiOnp')}</span>
       <span className="foot__n r">{t('leva.primoSaas')}</span>
       <span className="foot__n r">{t('leva.primoOnp')}</span>
