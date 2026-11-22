@@ -13,8 +13,7 @@ import './styles/app.css';
 
 export const metadata: Metadata = {
   title: 'DOB Offering Platform',
-  robots: { index: false, follow: false },
-  icons: { icon: '/alten-mark.png' }
+  robots: { index: false, follow: false }
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
