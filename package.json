@@ -9,7 +9,8 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "tokens": "node scripts/tokens.mjs"
+    "tokens": "node scripts/tokens.mjs",
+    "seed": "tsx scripts/seed-json.mjs && tsx scripts/seed-offerte.mjs"
   },
   "dependencies": {
     "@fontsource/metropolis": "^5.1.0",
@@ -24,6 +25,7 @@
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "tsx": "^4.23.15",
     "typescript": "^5.7.0",
     "vitest": "^2.1.0"
   }

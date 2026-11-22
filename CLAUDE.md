@@ -34,7 +34,7 @@ Strumento interno ALTEN per quotare la piattaforma Digital Onboarding (DOB). Nex
 - `public.configurazione` — parametri di sistema, una riga per versione; la vista `configurazione_attiva` dà l'ultima. Un'offerta registra la versione con cui è calcolata (`config_versione`).
 - `public.offerte` — input in `dati` (jsonb, tipo `Offerta`), stati dei valori in `stati_valore`, sintesi calcolata in `sintesi`.
 - `public.offerte_versioni` — storico a ogni salvataggio esplicito e cambio di stato.
-- Migrazioni in `supabase/migrations/`, seed in `supabase/seed/` (generato da `lib/engine/defaults.ts` con `node --experimental-strip-types scripts/seed-json.mjs`).
+- Migrazioni in `supabase/migrations/`. Seed in `supabase/seed/`, da applicare in ordine: `01_configurazione.sql` (parametri di sistema, da `lib/engine/defaults.ts`) e `02_offerte.sql` (Findomestic, Numia, Alba Leasing, Unipol). Si rigenerano con `npm run seed`; sono idempotenti.
 
 ## Comandi
 
