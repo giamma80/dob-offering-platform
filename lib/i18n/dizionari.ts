@@ -2,6 +2,15 @@
    ogni chiave aggiunta qui deve avere la sua traduzione in `en`, altrimenti il typecheck fallisce. */
 
 export const it = {
+  "st.quoteSuCustom": "Sulle customizzazioni",
+  "st.quoteSuBase": "Sulla base applicativa",
+  "st.quoteBaseTip": "Giornate su cui si calcolano le voci parametriche, a cascata",
+  "st.totBase": "Totale base applicativa",
+  "st.totCustom": "Totale customizzazioni",
+  "st.totQuote": "Totale voci parametriche",
+  "st.totMessa": "Totale messa in opera",
+  "st.infra": "Adeguamento infrastruttura",
+  "st.totInfra": "Totale adeguamento infrastruttura",
   "so.soloOnPremise": "Disponibile solo con l’approccio on-premise, scelto in Assessment",
   "st.scenario": "Scenario",
   "st.ggQuotate": "Giornate quotate",
@@ -419,6 +428,15 @@ export const it = {
 export type Chiave = keyof typeof it;
 
 export const en: Record<Chiave, string> = {
+  "st.quoteSuCustom": "On customisations",
+  "st.quoteSuBase": "On the application baseline",
+  "st.quoteBaseTip": "Days the parametric items are calculated on, cascading",
+  "st.totBase": "Application baseline total",
+  "st.totCustom": "Customisations total",
+  "st.totQuote": "Parametric items total",
+  "st.totMessa": "Deployment total",
+  "st.infra": "Infrastructure adaptation",
+  "st.totInfra": "Infrastructure adaptation total",
   "so.soloOnPremise": "Available only with the on-premise approach, chosen in Assessment",
   "st.scenario": "Scenario",
   "st.ggQuotate": "Quoted days",

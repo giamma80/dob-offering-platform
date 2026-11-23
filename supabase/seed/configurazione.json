@@ -446,12 +446,6 @@
       "numero": 3,
       "ggPerAmbiente": 10,
       "figura": "devops"
-    },
-    "passaggioConsegne": {
-      "id": "consegne",
-      "nome": "Passaggio di consegne",
-      "gg": 30,
-      "figura": "arch"
     }
   },
   "vincoli": [

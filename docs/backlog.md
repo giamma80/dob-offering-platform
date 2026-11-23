@@ -18,7 +18,7 @@ Stato al primo rilascio. In ordine di priorità; ogni voce indica la schermata d
 
 1. **Chi approva** (design §15.1). Introdurre un ruolo `approvatore` (tabella `profili` con RLS) e limitare `approva()` e la policy di update sullo stato.
 5. **Assessment** (`Assessment.dc.html`): dati del cliente, sistemi da integrare come chip.
-7. **Stima**: riga "+ voce" nella base applicativa; stato del valore anche su customizzazioni e messa in opera.
+7. **Stima**: riga "+ voce" nella base applicativa.
 9. **Parametri di sistema** (`Sistema.dc.html`): modifica del catalogo (aggiunta e rimozione voci), vincoli e scaglioni di default; storico delle versioni.
 10. **Specchietto**: esportazione PDF e DOCX dalla sola funzione `specchietto()`.
 11. **Storico degli stati**: registrare chi e quando per ogni passaggio assunto → dichiarato → confermato (oggi c'è solo lo snapshot per offerta).

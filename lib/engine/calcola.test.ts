@@ -132,11 +132,37 @@ describe('interruttori della Soluzione', () => {
     x.soluzione.sezioniOff = ['connettori'];
     expect(calcola(cfg, x).saas.customizzazione.gg).toBeLessThan(con);
   });
-  it('CI/CD spento: resta solo il passaggio di consegne nel setup on-premise', () => {
+  it('CI/CD spento: nessun adeguamento di infrastruttura on-premise, e nessun passaggio di consegne', () => {
     const x = o(); x.soluzione.sezioniOff = ['cicd'];
-    const ids = calcola(cfg, x).onPremise.setup.righe.map((r) => r.id);
-    expect(ids).toContain('consegne');
-    expect(ids).not.toContain('openshift');
+    const s = calcola(cfg, x).onPremise;
+    expect(s.setup.righe.map((r) => r.id)).not.toContain('openshift');
+    expect(s.setup.righe.map((r) => r.id)).not.toContain('consegne');
+    expect(s.infrastruttura.gg).toBe(0);
+  });
+});
+
+describe('messa in opera e infrastruttura', () => {
+  it('le voci parametriche del setup non si applicano all\'adeguamento dell\'infrastruttura', () => {
+    const x = o(); x.approccio = 'on_premise'; x.soluzione.cicd = 'openshift';
+    const con = calcola(cfg, x).onPremise;
+    x.soluzione.sezioniOff = ['cicd'];
+    const senza = calcola(cfg, x).onPremise;
+    expect(con.setup.quote.map((q) => q.gg)).toEqual(senza.setup.quote.map((q) => q.gg));
+    expect(con.infrastruttura.gg).toBe(150);
+  });
+  it('messa in opera = base applicativa + customizzazioni + voci parametriche', () => {
+    const x = o(); x.approccio = 'on_premise';
+    const s = calcola(cfg, x).onPremise;
+    const base = s.setup.righe.filter((r) => !s.setup.infrastruttura.includes(r));
+    const gg = base.reduce((a, r) => a + r.gg, 0) + s.setup.quote.reduce((a, q) => a + q.gg, 0) + s.customizzazione.gg;
+    expect(s.messaInOpera.gg).toBeCloseTo(gg, 6);
+    expect(s.messaInOpera.prezzo + s.infrastruttura.prezzo).toBeCloseTo(s.setup.prezzo + s.customizzazione.prezzo, 6);
+  });
+  it('SaaS: ambienti e servizi una tantum ReeVo stanno nell\'infrastruttura', () => {
+    const x = o(); x.approccio = 'saas';
+    const s = calcola(cfg, x).saas;
+    expect(s.setup.infrastruttura.map((r) => r.id)).toEqual(['ambienti-saas']);
+    expect(s.infrastruttura.costo).toBeCloseTo(s.setup.infrastruttura[0].costo + s.setup.reevoServizi, 6);
   });
 });
 

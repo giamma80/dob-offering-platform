@@ -51,8 +51,8 @@ export function Sintesi({ cfg, o, r }: Props) {
   };
   const barre = (s: Scenario) => {
     const c = composizioneRicavo(s, extra);
-    const nomi: Record<string, Chiave> = { custom: 're.custom', setup: 're.setup', licenza: 'gr.licenza3', extra: 'gr.extra' };
-    const cls: Record<string, string> = { custom: 's2', setup: 's1', licenza: 's3', extra: 's4' };
+    const nomi: Record<string, Chiave> = { messa: 'st.messa', infra: 'st.infra', licenza: 'gr.licenza3', extra: 'gr.extra' };
+    const cls: Record<string, string> = { messa: 's1', infra: 's2', licenza: 's3', extra: 's4' };
     return <BarraComposizione etichetta={t('re.ricavo36')} parti={c.map((f) => ({ cls: cls[f.id], nome: t(nomi[f.id]), valore: f.valore }))} />;
   };
   return (
@@ -81,7 +81,7 @@ export function Sintesi({ cfg, o, r }: Props) {
           <table className="alt-table">
             <thead><tr><th>{t('st.voce')}</th>{r.saas.attivo && <th className="is-num">SaaS</th>}{r.onPremise.attivo && <th className="is-num">On-premise</th>}</tr></thead>
             <tbody>
-              {([['re.setup', (x: Scenario) => x.setup.prezzo], ['re.custom', (x: Scenario) => x.customizzazione.prezzo],
+              {([['st.messa', (x: Scenario) => x.messaInOpera.prezzo], ['st.infra', (x: Scenario) => x.infrastruttura.prezzo],
                 ['re.licenza', (x: Scenario) => x.licenza.totale]] as const).map(([k, f]) => (
                 <tr key={k}><td>{t(k)}</td>
                   {r.saas.attivo && <td className="is-num">{euro(f(r.saas))}</td>}
@@ -247,8 +247,8 @@ export function DettaglioCosti({ r }: Props) {
     const vincoliRic = s.ricorrenti.filter((x) => ['normativo', 'kpi', 'audit'].includes(x.id)).reduce((a, x) => a + x.costo, 0);
     const extra = r.vincoliUnaTantum;
     const righe = [
-      { id: 'custom', nome: t('re.custom'), gg: s.customizzazione.gg, costo: s.customizzazione.costo, prezzo: s.customizzazione.prezzo },
-      { id: 'setup', nome: t('re.setup'), gg: s.setup.gg, costo: s.setup.costo, prezzo: s.setup.prezzo },
+      { id: 'messa', nome: t('st.messa'), gg: s.messaInOpera.gg, costo: s.messaInOpera.costo, prezzo: s.messaInOpera.prezzo },
+      { id: 'infra', nome: t('st.infra'), gg: s.infrastruttura.gg, costo: s.infrastruttura.costo, prezzo: s.infrastruttura.prezzo },
       { id: 'lic', nome: t('gr.licenza3'), gg: null, costo: (s.costoRicorrente - vincoliRic) * 3, prezzo: s.licenza.totale * 3 },
       { id: 'vinc', nome: t('re.vincoliRic3'), gg: null, costo: vincoliRic * 3, prezzo: null },
       ...extra.map((e) => ({ id: e.id, nome: e.nome, gg: e.gg, costo: e.costo, prezzo: e.prezzo }))

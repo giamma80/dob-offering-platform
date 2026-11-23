@@ -93,8 +93,7 @@ export const CONFIG_DEFAULT: Config = {
       { id: 'gcp',       nome: 'GCP',        gg: 130, figura: 'devops' },
       { id: 'azure',     nome: 'Azure',      gg: 130, figura: 'devops' }
     ],
-    ambientiSaas: { numero: 3, ggPerAmbiente: 10, figura: 'devops' },
-    passaggioConsegne: { id: 'consegne', nome: 'Passaggio di consegne', gg: 30, figura: 'arch' }
+    ambientiSaas: { numero: 3, ggPerAmbiente: 10, figura: 'devops' }
   },
   vincoli: [
     { id: 'ue',        nome: 'Dati in UE',               effetto: { tipo: 'nessuno' },                                  specchietto: null, default: true },
@@ -134,8 +133,7 @@ export function nuovaOfferta(cfg: Config, cliente = ''): Offerta {
       connettoriCustom: [],
       integrazioni: cfg.catalogo.integrazioni.filter((c) => c.default).map((c) => c.id),
       integrazioniCustom: [],
-      cicd: cfg.catalogo.cicd[0].id,
-      passaggioConsegne: true
+      cicd: cfg.catalogo.cicd[0].id
     },
     stima: {
       base: cfg.catalogo.base.map((v) => ({ ...v })),

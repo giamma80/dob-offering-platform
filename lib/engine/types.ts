@@ -93,7 +93,8 @@ export interface Config {
     integrazioni: (VoceCatalogo & { default: boolean; vincolo?: VincoloDef['id']; area?: AreaArchitettura })[];
     cicd: TargetCicd[];
     ambientiSaas: { numero: number; ggPerAmbiente: number; figura: FiguraId };
-    passaggioConsegne: VoceCatalogo;
+    /** non più usato (rimosso il 23/11/2026); resta opzionale per le configurazioni storiche */
+    passaggioConsegne?: VoceCatalogo;
   };
   vincoli: VincoloDef[];
   leve: {
@@ -156,7 +157,8 @@ export interface Offerta {
     integrazioni: string[];
     integrazioniCustom: RigaGg[];
     cicd: string;                         // id del target CI/CD on-premise
-    passaggioConsegne: boolean;
+    /** non più usato */
+    passaggioConsegne?: boolean;
     /** sottosezioni della Soluzione spente con l'interruttore: non entrano nel calcolo */
     sezioniOff?: ('connettori' | 'integrazioni' | 'cicd')[];
   };

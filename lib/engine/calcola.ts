@@ -25,8 +25,13 @@ export interface VoceRicorrente { id: string; nome: string; costo: number }
 
 export interface Scenario {
   attivo: boolean;
-  setup: Blocco & { reevoServizi: number };
+  /** setup = base applicativa con le sue voci parametriche + adeguamento dell'infrastruttura (voce libera) */
+  setup: Blocco & { reevoServizi: number; infrastruttura: Riga[] };
   customizzazione: Blocco;
+  /** messa in opera = base applicativa + customizzazioni + voci parametriche (senza infrastruttura) */
+  messaInOpera: { gg: number; costo: number; prezzo: number };
+  /** adeguamento dell'infrastruttura: target CI/CD on-premise o ambienti SaaS, più i servizi una tantum ReeVo; fuori dalle voci parametriche */
+  infrastruttura: { gg: number; costo: number; prezzo: number };
   licenza: { totale: number; software: number; consumo: number; manutenzione: number; aiRifatturata: number };
   ricorrenti: VoceRicorrente[];
   costoRicorrente: number;
@@ -204,18 +209,28 @@ export function calcola(cfg: Config, o: Offerta): Risultato {
   const n = Math.max(1, cc.clientiAttivi + 1);
   const volume = o.assessment.volumeAnnuo;
   const quoteCust = cfg.quote.filter((q) => q.ambito === 'customizzazione');
-  /* il setup comprende l'impianto della piattaforma: prende testing, PM e contingenza, più la garanzia */
+  /* le voci parametriche del setup (testing, PM, contingenza, garanzia) si applicano alla sola base applicativa */
   const quoteSetup = cfg.quote;
   const base = vociBase(cfg, o);
+  /* setup = base con le voci parametriche, più l'adeguamento dell'infrastruttura come voce libera */
+  const setupCon = (infra: RigaGg[]) => {
+    const b = blocco(cfg, t, base, quoteSetup, o.stima.quote);
+    const ri = infra.map((v) => riga(cfg, t, v));
+    return {
+      ...b, righe: [...b.righe, ...ri], infrastruttura: ri,
+      gg: b.gg + ri.reduce((a, r) => a + r.gg, 0),
+      costo: b.costo + ri.reduce((a, r) => a + r.costo, 0),
+      prezzo: b.prezzo + ri.reduce((a, r) => a + r.prezzo, 0)
+    };
+  };
 
   /* Customizzazione: identica nei due scenari */
   const customizzazione = blocco(cfg, t, vociCustomizzazione(cfg, o), quoteCust, o.stima.quote);
 
   /* Setup SaaS: ambienti sul nostro cloud + quota dei servizi ReeVo */
   const amb = cfg.catalogo.ambientiSaas;
-  const setupSaasBase = blocco(cfg, t,
-    [...base, { id: 'ambienti-saas', nome: 'Ambienti SaaS', gg: o.stima.gg['ambienti-saas'] ?? amb.numero * amb.ggPerAmbiente, figura: amb.figura }],
-    quoteSetup, o.stima.quote);
+  const setupSaasBase = setupCon(
+    [{ id: 'ambienti-saas', nome: 'Ambienti SaaS', gg: o.stima.gg['ambienti-saas'] ?? amb.numero * amb.ggPerAmbiente, figura: amb.figura }]);
   const reevoServizi = cc.reevoServiziUnaTantum / n;
   const setupSaas = {
     ...setupSaasBase,
@@ -224,16 +239,11 @@ export function calcola(cfg: Config, o: Offerta): Risultato {
     prezzo: setupSaasBase.prezzo + (m >= 1 ? 0 : reevoServizi / (1 - m))
   };
 
-  /* Setup on-premise: adeguamento al target CI/CD del cliente + passaggio di consegne */
+  /* Setup on-premise: adeguamento al target CI/CD del cliente, voce libera */
   const target = cfg.catalogo.cicd.find((c) => c.id === o.soluzione.cicd) ?? cfg.catalogo.cicd[0];
-  const pc = cfg.catalogo.passaggioConsegne;
   const cicdOn = !(o.soluzione.sezioniOff ?? []).includes('cicd');
-  const vociOnp: RigaGg[] = [
-    ...base,
-    ...(cicdOn ? [{ id: target.id, nome: `Adeguamento ${target.nome}`, gg: o.stima.gg[target.id] ?? target.gg, figura: target.figura }] : []),
-    ...(o.soluzione.passaggioConsegne ? [{ ...pc, gg: o.stima.gg[pc.id] ?? pc.gg }] : [])
-  ];
-  const setupOnp = { ...blocco(cfg, t, vociOnp, quoteSetup, o.stima.quote), reevoServizi: 0 };
+  const setupOnp = { ...setupCon(cicdOn
+    ? [{ id: target.id, nome: `Adeguamento ${target.nome}`, gg: o.stima.gg[target.id] ?? target.gg, figura: target.figura }] : []), reevoServizi: 0 };
 
   /* Consumo a scaglioni */
   const cons = consumo(o.prezzo.scaglioni, volume);
@@ -303,10 +313,22 @@ function scenario(
   canone: number
 ): Scenario {
   const costoRicorrente = ricorrenti.reduce((a, v) => a + v.costo, 0);
+  const infra = setup.infrastruttura;
+  const reevoPrezzo = setup.prezzo - setup.righe.concat(setup.quote).reduce((a, r) => a + r.prezzo, 0);
+  const infrastruttura = {
+    gg: infra.reduce((a, r) => a + r.gg, 0),
+    costo: infra.reduce((a, r) => a + r.costo, 0) + setup.reevoServizi,
+    prezzo: infra.reduce((a, r) => a + r.prezzo, 0) + reevoPrezzo
+  };
+  const messaInOpera = {
+    gg: setup.gg - infrastruttura.gg + customizzazione.gg,
+    costo: setup.costo - infrastruttura.costo + customizzazione.costo,
+    prezzo: setup.prezzo - infrastruttura.prezzo + customizzazione.prezzo
+  };
   const prezzo = setup.prezzo + customizzazione.prezzo + licenza.totale;
   const costo = setup.costo + customizzazione.costo + costoRicorrente;
   return {
-    attivo, setup, customizzazione, licenza, ricorrenti, costoRicorrente,
+    attivo, setup, customizzazione, messaInOpera, infrastruttura, licenza, ricorrenti, costoRicorrente,
     primoAnno: { prezzo, costo, margine: prezzo - costo, marginePct: prezzo ? (prezzo - costo) / prezzo : 0 },
     annuo: {
       margine: licenza.totale - costoRicorrente,
@@ -354,11 +376,11 @@ export function serieMensile(s: Scenario, extra: Riga[], mesi = 36): PuntoMese[]
 
 export interface Fetta { id: string; valore: number }
 
-/** Composizione del ricavo sull'orizzonte: customizzazione, setup, licenza × anni, voci dai vincoli. */
+/** Composizione del ricavo sull'orizzonte: messa in opera, adeguamento dell'infrastruttura, canone annuo × anni, voci dai vincoli. */
 export function composizioneRicavo(s: Scenario, extra: Riga[], anni = 3): Fetta[] {
   return [
-    { id: 'custom', valore: s.customizzazione.prezzo },
-    { id: 'setup', valore: s.setup.prezzo },
+    { id: 'messa', valore: s.messaInOpera.prezzo },
+    { id: 'infra', valore: s.infrastruttura.prezzo },
     { id: 'licenza', valore: s.licenza.totale * anni },
     { id: 'extra', valore: extra.reduce((a, r) => a + r.prezzo, 0) }
   ];

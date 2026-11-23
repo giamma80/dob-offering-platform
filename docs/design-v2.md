@@ -61,7 +61,9 @@ Le fasi non si bloccano e i valori non hanno stati: niente assunto / dichiarato 
 
 **Prezzo = costo ÷ (1 − margine sul venduto).** Margine di sistema 30% sul venduto, pari a un ricarico del 42,9%. Modificabile per figura e per offerta.
 
-**Voci parametriche** sul subtotale: testing 10%, project management 12%, contingenza 10%; garanzia post go-live 5% sulle giornate di messa in opera.
+**Voci parametriche**, a cascata: sulle customizzazioni testing 10%, project management 12%, contingenza 10%; sulla base applicativa le stesse più la garanzia post go-live 5%. L'adeguamento dell'infrastruttura (target CI/CD on-premise, ambienti SaaS) è una **voce libera**, fuori dalle voci parametriche.
+
+In Stima le card sono: Base applicativa, Customizzazioni, Voci parametriche, **Messa in opera** (riepilogo: base applicativa + customizzazioni + voci parametriche = totale messa in opera) e **Adeguamento infrastruttura**. Ogni subtotale porta il nome della sua voce ("Totale messa in opera"). Il passaggio di consegne non esiste più (rimosso il 23/11/2026).
 
 ### 5.2 Infrastruttura e terze parti — ricorrente
 
@@ -84,13 +86,13 @@ N = clienti **già** attivi, senza contare l'offerta in corso.
 | Elemento | SaaS | On-premise |
 |---|---|---|
 | Base comune e customizzazioni | identica | identica |
-| Setup | tre ambienti sul nostro cloud | adeguamento al target CI/CD del cliente + passaggio di consegne |
+| Setup | tre ambienti sul nostro cloud | adeguamento al target CI/CD del cliente |
 | OpEx infrastruttura | a nostro carico, nel canone annuo | a carico del cliente, senza importo in offerta |
 | Provider AI | nel canone | tre modalità: chiavi del cliente · proxy · a nostro carico |
 | Manutenzione | centralizzata | opzionale, default 1 FTE di sviluppatore |
 | Ricavo ricorrente | canone + consumo a scaglioni | software + manutenzione + AI rifatturata; consumo solo se contrattualizzato |
 
-Target CI/CD: OpenShift 150 gg, Kubernetes 120, VM 180, AWS/GCP/Azure 130 (da verificare), passaggio di consegne 30.
+Target CI/CD: OpenShift 150 gg, Kubernetes 120, VM 180, AWS/GCP/Azure 130 (da verificare).
 
 ## 6-bis. Moduli DOB e configurazione light
 
@@ -178,7 +180,7 @@ Senza on-premise nell'approccio, CI/CD, AI on-premise e manutenzione restano blo
 | Manutenzione on-premise | opzionale, default 220 gg di sviluppatore |
 | Canone annuo on-premise | software (default 40.000 €) + manutenzione + AI rifatturata |
 | AI on-premise | inclusa (costo nostro, pavimento) · proxy (rifatturata col margine) · chiavi del cliente (costo zero) |
-| Garanzia | 5% sulle giornate di messa in opera |
+| Garanzia | 5% sulla base applicativa |
 
 ## 15. Punti aperti
 

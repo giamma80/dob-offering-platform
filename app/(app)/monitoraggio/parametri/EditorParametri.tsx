@@ -74,8 +74,7 @@ export function EditorParametri({ versione, iniziale }: { versione: number; iniz
       def: { on: v.default, set: (b: boolean) => upd((x) => { x.catalogo.integrazioni[i].default = b; }) } })),
     ...c.catalogo.cicd.map((v, i) => ({ v, tipo: 'par.tipoCicd' as Chiave, set: (g: number) => upd((x) => { x.catalogo.cicd[i].gg = g; }) })),
     { v: { id: 'amb', nome: t('par.ambientiSaas', { n: c.catalogo.ambientiSaas.numero }), gg: c.catalogo.ambientiSaas.ggPerAmbiente }, tipo: 'par.tipoMessa' as Chiave,
-      set: (g: number) => upd((x) => { x.catalogo.ambientiSaas.ggPerAmbiente = g; }) },
-    { v: c.catalogo.passaggioConsegne, tipo: 'par.tipoMessa' as Chiave, set: (g: number) => upd((x) => { x.catalogo.passaggioConsegne.gg = g; }) }
+      set: (g: number) => upd((x) => { x.catalogo.ambientiSaas.ggPerAmbiente = g; }) }
   ];
 
   return (

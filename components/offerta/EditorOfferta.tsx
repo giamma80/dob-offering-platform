@@ -47,7 +47,8 @@ const SEZIONI: Record<Fase, Sezione[]> = {
     { id: 'st-base', k: 'st.base', ico: 'stima' },
     { id: 'st-cust', k: 'st.custom', ico: 'integraz' },
     { id: 'st-q', k: 'st.quote', ico: 'quote' },
-    { id: 'st-op', k: 'st.messa', ico: 'cicd' }
+    { id: 'st-op', k: 'st.messa', ico: 'stima' },
+    { id: 'st-inf', k: 'st.infra', ico: 'cicd' }
   ],
   prezzo: [
     { id: 'p-fig', k: 'pr.figure', ico: 'figure' },
@@ -523,12 +524,6 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
                   </label>
                 ))}
               </div>
-              <label className={`opt${o.soluzione.passaggioConsegne ? ' opt--on' : ''}`} style={{ marginTop: 12 }}>
-                <input type="checkbox" checked={o.soluzione.passaggioConsegne} disabled={!onp || solaLettura}
-                  onChange={(e) => upd((x) => { x.soluzione.passaggioConsegne = e.target.checked; }, 'soluzione.cicd')} />
-                <span className="opt__box" aria-hidden="true" />
-                <span className="opt__t">{t('so.consegne')}<span className="opt__sub">{cfg.catalogo.passaggioConsegne.gg} gg</span></span>
-              </label>
             </Card>
             <Card {...cp("s-ai")} bloccata={!onp} motivo={t('so.soloOnPremise')}>
               <div className="scelta">
@@ -586,7 +581,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
                   })} />
                 </tbody>
               </table>
-              <BarraTotale etichetta={t('comune.totale')} valori={[{
+              <BarraTotale etichetta={t('st.totBase')} valori={[{
                 gg: o.stima.base.reduce((a, b) => a + b.gg, 0) * fImp,
                 importo: o.stima.base.reduce((a, b) => a + b.gg * fImp * r.tariffe[b.figura], 0) }]} />
             </Card>
@@ -629,7 +624,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
                   );
                 })}
               </table>
-              <BarraTotale etichetta={t('comune.totale')} valori={[{
+              <BarraTotale etichetta={t('st.totCustom')} valori={[{
                 gg: vociCust.reduce((a, v) => a + v.gg, 0), importo: vociCust.reduce((a, v) => a + v.gg * r.tariffe[v.figura], 0) }]} />
             </Card>
             <Card {...cp("st-q")}>
@@ -639,23 +634,36 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
                   {scen.length > 1
                     ? scen.map((x) => <th key={x.nome} className="is-num">{x.nome}</th>)
                     : <><th className="is-num">{t('st.giornate')}</th><th className="is-num">{t('st.importo')}</th></>}</tr></thead>
-                <tbody>
-                  {cfg.quote.map((q) => {
-                    const val = (s: typeof r.saas) => [s.customizzazione, s.setup].map((b) => b.quote.find((y) => y.id === q.id))
-                      .reduce((a, y) => ({ gg: a.gg + (y?.gg ?? 0), prezzo: a.prezzo + (y?.prezzo ?? 0) }), { gg: 0, prezzo: 0 });
-                    return (
-                      <tr key={q.id}><td>{q.nome}</td>
-                        <td className="is-num"><CampoNumero compatto etichetta={q.nome} valore={(o.stima.quote[q.id] ?? q.pct) * 100} suffisso="%" min={0} max={100}
-                          onChange={(v) => upd((x) => { x.stima.quote[q.id] = v / 100; }, 'stima.quote')} /></td>
+                {(['customizzazione', 'setup'] as const).map((amb) => {
+                  const voci = cfg.quote.filter((q) => amb === 'setup' || q.ambito === 'customizzazione');
+                  const base = (sc: typeof r.saas) => amb === 'customizzazione' ? sc.customizzazione.righe.reduce((a, x) => a + x.gg, 0)
+                    : sc.setup.righe.filter((x) => !sc.setup.infrastruttura.includes(x)).reduce((a, x) => a + x.gg, 0);
+                  return (
+                    <tbody key={amb}>
+                      <tr className="is-gruppo"><td colSpan={2}><strong>{t(amb === 'customizzazione' ? 'st.quoteSuCustom' : 'st.quoteSuBase')}</strong></td>
                         {scen.length > 1
-                          ? scen.map((x) => { const v = val(x.s); return <td key={x.nome} className="is-num">{numero(v.gg)} gg · {euro(v.prezzo)}</td>; })
-                          : (() => { const v = val(scen[0].s); return <><td className="is-num">{numero(v.gg)}</td><td className="is-num">{euro(v.prezzo)}</td></>; })()}
-                      </tr>
-                    );
-                  })}
-                </tbody>
+                          ? scen.map((x) => <td key={x.nome} className="is-num muted">{numero(Math.round(base(x.s) * 10) / 10)} gg</td>)
+                          : <><td className="is-num muted" title={t('st.quoteBaseTip')}>{numero(Math.round(base(scen[0].s) * 10) / 10)}</td><td /></>}</tr>
+                      {voci.map((q) => {
+                        const val = (sc: typeof r.saas) => {
+                          const y = (amb === 'customizzazione' ? sc.customizzazione : sc.setup).quote.find((z) => z.id === q.id);
+                          return { gg: y?.gg ?? 0, prezzo: y?.prezzo ?? 0 };
+                        };
+                        return (
+                          <tr key={`${amb}-${q.id}`}><td>{q.nome}</td>
+                            <td className="is-num"><CampoNumero compatto etichetta={q.nome} valore={(o.stima.quote[q.id] ?? q.pct) * 100} suffisso="%" min={0} max={100}
+                              onChange={(v) => upd((x) => { x.stima.quote[q.id] = v / 100; })} /></td>
+                            {scen.length > 1
+                              ? scen.map((x) => { const v = val(x.s); return <td key={x.nome} className="is-num">{numero(v.gg)} gg · {euro(v.prezzo)}</td>; })
+                              : (() => { const v = val(scen[0].s); return <><td className="is-num">{numero(v.gg)}</td><td className="is-num">{euro(v.prezzo)}</td></>; })()}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  );
+                })}
               </table>
-              <BarraTotale etichetta={t('comune.totale')} valori={scen.map((x) => {
+              <BarraTotale etichetta={t('st.totQuote')} valori={scen.map((x) => {
                 const tutte = [...x.s.customizzazione.quote, ...x.s.setup.quote];
                 return { scenario: scen.length > 1 ? x.nome : undefined, gg: tutte.reduce((a, y) => a + y.gg, 0), importo: tutte.reduce((a, y) => a + y.prezzo, 0) };
               })} />
@@ -667,34 +675,54 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
                   <th className="is-num">{t('st.giornate')}</th><th className="is-num">{t('st.importo')}</th></tr></thead>
                 <tbody>
                   {scen.map((sc) => {
-                    const base = sc.s.setup.righe.filter((x) => o.stima.base.some((b) => b.id === x.id));
-                    const messa = sc.s.setup.righe.filter((x) => !o.stima.base.some((b) => b.id === x.id));
+                    const base = sc.s.setup.righe.filter((x) => !sc.s.setup.infrastruttura.includes(x));
+                    const quote = [...sc.s.setup.quote, ...sc.s.customizzazione.quote];
                     const nomeSc = scen.length > 1 ? <td className="muted">{sc.nome}</td> : <td />;
-                    const reevo = sc.s.setup.prezzo - sc.s.setup.righe.concat(sc.s.setup.quote).reduce((a, x) => a + x.prezzo, 0);
+                    const righe = [
+                      { id: 'base', nome: t('st.base'), gg: base.reduce((a, x) => a + x.gg, 0), prezzo: base.reduce((a, x) => a + x.prezzo, 0) },
+                      { id: 'custom', nome: t('st.custom'), gg: sc.s.customizzazione.righe.reduce((a, x) => a + x.gg, 0),
+                        prezzo: sc.s.customizzazione.righe.reduce((a, x) => a + x.prezzo, 0) },
+                      { id: 'quote', nome: t('st.quote'), gg: quote.reduce((a, x) => a + x.gg, 0), prezzo: quote.reduce((a, x) => a + x.prezzo, 0) }
+                    ];
                     return (
                       <Fragment key={sc.nome}>
-                        {messa.map((x) => (
+                        {righe.map((x) => (
+                          <tr key={`${sc.nome}-${x.id}`}><td>{x.nome}</td>{nomeSc}
+                            <td className="is-num">{numero(Math.round(x.gg * 10) / 10)}</td><td className="is-num">{euro(x.prezzo)}</td></tr>
+                        ))}
+                      </Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+              <BarraTotale etichetta={t('st.totMessa')} valori={scen.map((x) => ({ scenario: scen.length > 1 ? x.nome : undefined, gg: x.s.messaInOpera.gg, importo: x.s.messaInOpera.prezzo }))} />
+            </Card>
+            <Card {...cp("st-inf")}>
+              <table className="alt-table tab-fissa tab-fissa--b">
+                <colgroup><col /><col style={{ width: 130 }} /><col style={{ width: 130 }} /><col style={{ width: 204 }} /></colgroup>
+                <thead><tr><th>{t('st.voce')}</th>{scen.length > 1 ? <th>{t('st.scenario')}</th> : <th />}
+                  <th className="is-num">{t('st.giornate')}</th><th className="is-num">{t('st.importo')}</th></tr></thead>
+                <tbody>
+                  {scen.map((sc) => {
+                    const nomeSc = scen.length > 1 ? <td className="muted">{sc.nome}</td> : <td />;
+                    const reevo = sc.s.infrastruttura.prezzo - sc.s.setup.infrastruttura.reduce((a, x) => a + x.prezzo, 0);
+                    return (
+                      <Fragment key={sc.nome}>
+                        {sc.s.setup.infrastruttura.map((x) => (
                           <tr key={`${sc.nome}-${x.id}`}><td>{x.nome}</td>{nomeSc}
                             <td className="is-num"><CampoNumero compatto etichetta={x.nome} valore={x.gg} min={0}
-                              onChange={(g) => upd((y) => { y.stima.gg[x.id] = g; }, 'stima.messa')} /></td>
+                              onChange={(g) => upd((y) => { y.stima.gg[x.id] = g; })} /></td>
                             <td className="is-num">{euro(x.prezzo)}</td></tr>
                         ))}
-                        <tr className="is-quota"><td>{t('st.base')}</td>{nomeSc}
-                          <td className="is-num">{numero(base.reduce((a, x) => a + x.gg, 0))}</td>
-                          <td className="is-num">{euro(base.reduce((a, x) => a + x.prezzo, 0))}</td></tr>
-                        <tr className="is-quota"><td>{t('st.quoteSetup')}</td>{nomeSc}
-                          <td className="is-num">{numero(sc.s.setup.quote.reduce((a, q) => a + q.gg, 0))}</td>
-                          <td className="is-num">{euro(sc.s.setup.quote.reduce((a, q) => a + q.prezzo, 0))}</td></tr>
                         {sc.s.setup.reevoServizi > 0 && (
-                          <tr className="is-quota"><td>{t('st.serviziReevo')}</td>{nomeSc}<td className="is-num">—</td>
-                            <td className="is-num">{euro(reevo)}</td></tr>
+                          <tr><td>{t('st.serviziReevo')}</td>{nomeSc}<td className="is-num">—</td><td className="is-num">{euro(reevo)}</td></tr>
                         )}
                       </Fragment>
                     );
                   })}
                 </tbody>
               </table>
-              <BarraTotale etichetta={t('st.totaleSetup')} valori={scen.map((x) => ({ scenario: scen.length > 1 ? x.nome : undefined, gg: x.s.setup.gg, importo: x.s.setup.prezzo }))} />
+              <BarraTotale etichetta={t('st.totInfra')} valori={scen.map((x) => ({ scenario: scen.length > 1 ? x.nome : undefined, gg: x.s.infrastruttura.gg, importo: x.s.infrastruttura.prezzo }))} />
             </Card>
           </>)}
 
