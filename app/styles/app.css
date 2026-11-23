@@ -134,3 +134,8 @@ html, body { overflow: hidden; }
 /* il guscio è ancorato alla finestra: il focus su un campo non può più spostare testata e footer */
 .alt-root { position: fixed; inset: 0; height: auto; }
 .login.alt-root { position: fixed; }
+/* la riga della griglia è vincolata all'altezza disponibile: scorre la colonna, non il guscio */
+.shell { grid-template-rows: minmax(0, 1fr); }
+.shell > * { min-height: 0; }
+/* clip, a differenza di hidden, impedisce anche lo scroll programmatico (focus di un campo) */
+.alt-root { overflow: clip; }
