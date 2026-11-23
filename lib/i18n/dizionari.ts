@@ -2,6 +2,8 @@
    ogni chiave aggiunta qui deve avere la sua traduzione in `en`, altrimenti il typecheck fallisce. */
 
 export const it = {
+  "st.ggQuotate": "Giornate quotate",
+  "st.ggPiattaformaTip": "Giornate per la piattaforma completa",
   "tipo.core": "Sistema core",
   "tipo.crm": "CRM",
   "tipo.dms": "DMS / ECM",
@@ -113,7 +115,7 @@ export const it = {
   'as.moduloCollegati': 'Collegato a: {v}',
   'as.impianto': 'Impianto della piattaforma',
   'so.bloccatoModulo': 'Bloccato: modulo {v} non incluso',
-  'st.baseLight': 'Configurazione light: si quota il {p} dell’impianto, {g} gg',
+  'st.baseLight': 'Configurazione light: si quota il {p} dell’impianto',
   're.moduli': 'Moduli DOB inclusi',
   're.piattaformaCompleta': 'piattaforma completa',
   'sp.moduli': 'Moduli inclusi',
@@ -415,6 +417,8 @@ export const it = {
 export type Chiave = keyof typeof it;
 
 export const en: Record<Chiave, string> = {
+  "st.ggQuotate": "Quoted days",
+  "st.ggPiattaformaTip": "Days for the full platform",
   "tipo.core": "Core system",
   "tipo.crm": "CRM",
   "tipo.dms": "DMS / ECM",
@@ -526,7 +530,7 @@ export const en: Record<Chiave, string> = {
   'as.moduloCollegati': 'Linked to: {v}',
   'as.impianto': 'Platform installation',
   'so.bloccatoModulo': 'Locked: module {v} not included',
-  'st.baseLight': 'Light configuration: {p} of the installation is quoted, {g} days',
+  'st.baseLight': 'Light configuration: {p} of the installation is quoted',
   're.moduli': 'Included DOB modules',
   're.piattaformaCompleta': 'full platform',
   'sp.moduli': 'Included modules',

@@ -92,8 +92,8 @@ function Card({ id, titolo, ico, aside, bloccata, children }: {
   );
 }
 
-function RigaGiornate({ v, onGg, onNome, onFigura, onRimuovi, figure, solaLettura, t, importo, nota, origine }: {
-  importo?: number; nota?: string; origine?: string;
+function RigaGiornate({ v, onGg, onNome, onFigura, onRimuovi, figure, solaLettura, t, importo, nota, origine, ggQuotate }: {
+  importo?: number; nota?: string; origine?: string; ggQuotate?: number;
   v: RigaGg; onGg: (g: number) => void; onNome?: (n: string) => void; onFigura?: (f: FiguraId) => void; onRimuovi?: () => void;
   figure: Config['figure']; solaLettura: boolean; t: ReturnType<typeof useT>;
 }) {
@@ -109,6 +109,7 @@ function RigaGiornate({ v, onGg, onNome, onFigura, onRimuovi, figure, solaLettur
         {origine && <span className="alt-badge alt-badge--neutro origine">{origine}</span>}
       </td>
       <td className="is-num"><CampoNumero compatto etichetta={v.nome} valore={v.gg} min={0} onChange={onGg} /></td>
+      {ggQuotate !== undefined && <td className="is-num">{numero(ggQuotate)}</td>}
       <td>
         {onFigura ? (
           <span className="alt-inputwrap" style={{ maxWidth: 220 }}>
@@ -561,23 +562,23 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
           {fase === 'stima' && (<>
             <Card {...cp("st-base")}>
               <table className="alt-table">
-                <thead><tr><th>{t('st.voce')}</th><th className="is-num">{t('st.giornate')}</th><th>{t('st.figura')}</th><th className="is-num">{t('st.importo')}</th><th /></tr></thead>
+                <thead><tr><th>{t('st.voce')}</th>
+                  <th className="is-num" title={fImp < 1 ? t('st.ggPiattaformaTip') : undefined}>{t('st.giornate')}</th>
+                  {fImp < 1 && <th className="is-num" title={t('st.baseLight', { p: perc(fImp) })}>{t('st.ggQuotate')}</th>}
+                  <th>{t('st.figura')}</th><th className="is-num">{t('st.importo')}</th><th /></tr></thead>
                 <tbody>
-                  {fImp < 1 && (
-                    <tr className="is-sub"><td colSpan={5}>{t('st.baseLight', { p: perc(fImp), g: numero(Math.round(o.stima.base.reduce((a, b) => a + b.gg, 0) * fImp)) })}</td></tr>
-                  )}
                   {o.stima.base.map((b, i) => {
                     const daCatalogo = cfg.catalogo.base.some((c) => c.id === b.id);
                     return (
                       <RigaGiornate key={b.id} v={b} {...comuni}
-                        importo={b.gg * fImp * r.tariffe[b.figura]} nota={fImp < 1 ? t('st.ggEffettive', { g: numero(Math.round(b.gg * fImp * 10) / 10) }) : undefined}
+                        importo={b.gg * fImp * r.tariffe[b.figura]} ggQuotate={fImp < 1 ? Math.round(b.gg * fImp * 10) / 10 : undefined}
                         onGg={(g) => upd((x) => { x.stima.base[i].gg = g; }, `stima.base.${b.id}`)}
                         onNome={daCatalogo ? undefined : (n) => upd((x) => { x.stima.base[i].nome = n; })}
                         onFigura={daCatalogo ? undefined : (f) => upd((x) => { x.stima.base[i].figura = f; })}
                         onRimuovi={() => upd((x) => { x.stima.base.splice(i, 1); })} />
                     );
                   })}
-                  <RigaPiu colonne={5} solaLettura={solaLettura} testo={t('st.aggiungiVoce')} onClick={() => upd((x) => {
+                  <RigaPiu colonne={fImp < 1 ? 6 : 5} solaLettura={solaLettura} testo={t('st.aggiungiVoce')} onClick={() => upd((x) => {
                     x.stima.base.push({ id: nuovoId('base'), nome: t('so.nuovaVoce'), gg: 5, figura: 'dev' });
                   })} />
                 </tbody>
