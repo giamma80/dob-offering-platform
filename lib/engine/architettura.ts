@@ -59,6 +59,8 @@ export function architettura(cfg: Config, o: Offerta): Architettura {
     const a = areaVoce(cfg, o, v.id);
     if (a) perArea.set(a, [...(perArea.get(a) ?? []), { id: v.id, nome: v.nome, gg: v.gg }]);
   }
+  /* configurazioni precedenti ai moduli: piattaforma completa */
+  const senzaModuli = !(cfg.moduli ?? []).length;
   const areeModuli = new Set((cfg.moduli ?? []).filter((m) => att.includes(m.id) && m.area).map((m) => m.area));
   const area = (id: AreaArchitettura, accesa: boolean): Area => {
     const v = perArea.get(id) ?? [];
@@ -73,7 +75,7 @@ export function architettura(cfg: Config, o: Offerta): Architettura {
 
   const voceIds = new Set(voci.map((v) => v.id));
   return {
-    terzi: TERZI.map((a) => area(a, areeModuli.has(a))),
+    terzi: TERZI.map((a) => area(a, senzaModuli || areeModuli.has(a))),
     piattaforma: PIATTAFORMA.map((a) => area(a, true)),
     cliente,
     moduli: (cfg.moduli ?? []).map((m) => ({

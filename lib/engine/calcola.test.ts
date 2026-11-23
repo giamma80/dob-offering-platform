@@ -276,6 +276,10 @@ describe('grafico dell\'architettura', () => {
     expect(b.stato).toBe('sviluppo');
     expect(b.voci.map((v) => v.id)).toEqual(['namirial']);
   });
+  it('configurazione senza moduli (offerte storiche): servizi di terzi tutti inclusi', () => {
+    const a = architettura({ ...cfg, moduli: [] }, o());
+    expect(a.terzi.every((y) => y.stato !== 'spento')).toBe(true);
+  });
   it('i sistemi accendono la casella del loro tipo', () => {
     const x = o(); x.assessment.sistemi = [{ id: 's1', nome: 'Core banking', complessita: 'alta', tipo: 'core' }];
     const a = architettura(cfg, x);

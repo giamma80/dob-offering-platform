@@ -61,13 +61,13 @@ export function MappaArchitettura({ dati, cliente = false, attiva, onAttiva }: {
           <li className="mappa__journey" aria-hidden="true"><Icona nome="journey" size={28} /><b>{t('arch.journey')}</b></li>
           {dati.piattaforma.slice(2).map((x) => casella(x, true))}
         </ul>
-        <ol className="mappa__moduli" aria-label={t('as.moduli')}>
+        {dati.moduli.length > 0 && <ol className="mappa__moduli" aria-label={t('as.moduli')}>
           {dati.moduli.map((m, i) => (
             <li key={m.id} className={`mappa__m mappa__m--${m.stato}`} title={`${String(i + 1).padStart(2, '0')} ${m.nome} · ${t(`arch.stato.${cliente && m.stato === 'sviluppo' ? 'incluso' : m.stato}` as Chiave)}`}>
               {String(i + 1).padStart(2, '0')}
             </li>
           ))}
-        </ol>
+        </ol>}
         <div className="mappa__dep">
           <span className={dati.deployment.saas ? 'is-on' : undefined}><Icona nome="cloud" />SaaS</span>
           <span className={dati.deployment.onPremise ? 'is-on' : undefined}><Icona nome="database" />On-premise</span>
