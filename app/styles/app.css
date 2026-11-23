@@ -131,3 +131,6 @@ tr.is-sub td { font-weight: 700; background: var(--surface-accent-soft); }
 .opt .alt-inputwrap { width: 100%; }
 /* niente scroll della pagina: scorre solo la colonna centrale */
 html, body { overflow: hidden; }
+/* il guscio è ancorato alla finestra: il focus su un campo non può più spostare testata e footer */
+.alt-root { position: fixed; inset: 0; height: auto; }
+.login.alt-root { position: fixed; }
