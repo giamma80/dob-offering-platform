@@ -2,6 +2,9 @@
    ogni chiave aggiunta qui deve avere la sua traduzione in `en`, altrimenti il typecheck fallisce. */
 
 export const it = {
+  'off.unaTantum': 'Una tantum',
+  'off.licenza': 'Licenza/anno',
+  'off.aggiornata': 'Aggiornata',
   'comune.rimuovi': 'Rimuovi',
   'as.cliente': 'Cliente',
   'as.ragioneSociale': 'Ragione sociale',
@@ -212,6 +215,9 @@ export const it = {
 export type Chiave = keyof typeof it;
 
 export const en: Record<Chiave, string> = {
+  'off.unaTantum': 'One-off',
+  'off.licenza': 'Licence/year',
+  'off.aggiornata': 'Updated',
   'comune.rimuovi': 'Remove',
   'as.cliente': 'Client',
   'as.ragioneSociale': 'Company name',

@@ -17,8 +17,10 @@ body { font-family: var(--font-sans); background: var(--surface-canvas); color: 
 .alt-sortable th.is-num .th-sort { flex-direction: row-reverse; justify-content: flex-start; text-align: right; }
 
 /* stato del valore */
-.st-a .alt-input, .alt-input.st-a { border-style: dashed; background: var(--surface-sunken); }
-.st-c .alt-input, .alt-input.st-c { border-color: var(--signal-positive); }
+.alt-input { text-align: left; }
+.alt-inputwrap.st-a { border-style: dashed; background: var(--surface-sunken); }
+.alt-inputwrap.st-a .alt-input { background: transparent; }
+.alt-inputwrap.st-c { border-color: var(--signal-positive); }
 .stv { display: inline-flex; gap: 2px; margin-left: 6px; }
 .stv button { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--surface-card);
   font-size: 10px; line-height: 1; cursor: pointer; color: var(--ink-muted); padding: 0; }
@@ -81,3 +83,18 @@ tr.is-piu td { padding-top: 10px; padding-bottom: 10px; }
 .alt-switch--sm { font-size: 13px; }
 .foot__sub { display: block; margin-top: 2px; font-size: 11px; font-weight: 600; color: var(--ink-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .foot__lic { font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--accent-azure-text); }
+
+/* badge senza pallino (regola utente: niente pallini) */
+.alt-badge::before { display: none; }
+/* card di scelta come nel mockup: titolo, valore sotto, indicatore radio in alto a destra */
+.scelta__c { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; padding-right: 40px; border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md); background: var(--surface-card); }
+.scelta__c h3 { margin: 0; font-size: 15px; font-weight: 700; color: var(--ink-primary); }
+.scelta__c .v { font-size: 13px; font-weight: 600; color: var(--ink-secondary); font-variant-numeric: tabular-nums; }
+.scelta__c::after { content: ""; position: absolute; top: 14px; right: 14px; width: 18px; height: 18px; border-radius: 50%;
+  border: 2px solid var(--line-strong); box-sizing: border-box; }
+.scelta__c.on::after { border: 5px solid var(--accent-azure); }
+.is-bloccato .scelta__c { cursor: not-allowed; }
+.foot__lic { color: var(--brand-ochre); }
+.canoni .griglia-campi { grid-template-columns: minmax(0, 260px); }
+.mini { display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }

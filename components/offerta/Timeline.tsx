@@ -11,7 +11,7 @@ function Anello({ pct, corrente }: { pct: number; corrente: boolean }) {
   return (
     <svg viewBox="0 0 38 38" width="38" height="38" aria-hidden="true">
       <circle cx="19" cy="19" r={r} fill="none" stroke="var(--line-soft)" strokeWidth="4" />
-      <circle cx="19" cy="19" r={r} fill="none" stroke={col} strokeWidth="4" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={off} />
+      <circle cx="19" cy="19" r={r} fill="none" stroke={col} strokeWidth="4" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={off} transform="rotate(-90 19 19)" />
     </svg>
   );
 }

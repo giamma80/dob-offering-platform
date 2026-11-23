@@ -4,7 +4,7 @@ import { useEffect, useId, useState } from 'react';
 import type { StatoValore } from '@/lib/engine';
 import { useT } from '@/lib/i18n/client';
 
-const fmt = (v: number) => (Number.isFinite(v) ? String(v).replace('.', ',') : '');
+const fmt = (v: number) => (Number.isFinite(v) ? v.toLocaleString('it-IT', { useGrouping: 'always', maximumFractionDigits: 4 }) : '');
 
 /** Campo numerico del design system: virgola decimale, errore sotto il campo (componente Validation). */
 export function CampoNumero({ etichetta, valore, onChange, suffisso, min, max, passo, compatto, stato, onStato }: {

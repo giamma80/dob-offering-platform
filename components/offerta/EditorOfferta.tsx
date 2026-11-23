@@ -292,8 +292,8 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                   <label key={a} className={`scelta__c${o.approccio === a ? ' on' : ''}`}>
                     <input type="radio" name="approccio" checked={o.approccio === a} disabled={solaLettura}
                       onChange={() => upd((x) => { x.approccio = a; }, 'approccio')} />
-                    <strong>{t(`approccio.${a}` as Chiave)}</strong>
-                    <span>{a === 'saas' ? euro(r.saas.primoAnno.prezzo) : a === 'on_premise' ? euro(r.onPremise.primoAnno.prezzo) : '—'}</span>
+                    <h3>{t(`approccio.${a}` as Chiave)}</h3>
+                    <span className="v">{a === 'saas' ? euro(r.saas.primoAnno.prezzo) : a === 'on_premise' ? euro(r.onPremise.primoAnno.prezzo) : '—'}</span>
                   </label>
                 ))}
               </div>
@@ -346,7 +346,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                   <label key={c.id} className={`scelta__c${o.soluzione.cicd === c.id ? ' on' : ''}`}>
                     <input type="radio" name="cicd" checked={o.soluzione.cicd === c.id} disabled={!onp || solaLettura}
                       onChange={() => upd((x) => { x.soluzione.cicd = c.id; }, 'soluzione.cicd')} />
-                    <strong>{c.nome}</strong><span>{o.stima.gg[c.id] ?? c.gg} gg</span>
+                    <h3>{c.nome}</h3><span className="v">{o.stima.gg[c.id] ?? c.gg} gg</span>
                   </label>
                 ))}
               </div>
@@ -364,8 +364,8 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                     title={t(`so.ai.${m}.tip` as Chiave)}>
                     <input type="radio" name="ai" checked={o.leve.aiOnPremise === m} disabled={!onp || solaLettura}
                       onChange={() => upd((x) => { x.leve.aiOnPremise = m; }, 'leve.aiOnPremise')} />
-                    <strong>{t(`so.ai.${m}` as Chiave)}</strong>
-                    <span>{m === 'cliente' ? euro(0) : m === 'proxy' ? `+${euro(r.aiAnno / (1 - o.prezzo.margineVenduto))}` : euro(r.aiAnno)}</span>
+                    <h3>{t(`so.ai.${m}` as Chiave)}</h3>
+                    <span className="v">{m === 'cliente' ? euro(0) : m === 'proxy' ? `+${euro(r.aiAnno / (1 - o.prezzo.margineVenduto))}` : euro(r.aiAnno)}</span>
                   </label>
                 ))}
               </div>
@@ -505,9 +505,9 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
               <div className="canoni">
                 {saas && (
                   <div>
-                    <CampoNumero etichetta={t('leva.canoneSaas')} valore={o.leve.canoneSaas} min={0} suffisso="€"
+                    <div className="griglia-campi"><CampoNumero etichetta={t('leva.canoneSaas')} valore={o.leve.canoneSaas} min={0} suffisso="€"
                       stato={st('leve.canoneSaas')} onStato={setSt('leve.canoneSaas')}
-                      onChange={(v) => upd((x) => { x.leve.canoneSaas = v; }, 'leve.canoneSaas')} />
+                      onChange={(v) => upd((x) => { x.leve.canoneSaas = v; }, 'leve.canoneSaas')} /></div>
                     <div className="soglia" role="img" aria-label={t('pr.soglia', { v: euro(r.saas.soglia) })}>
                       <span className="soglia__v" style={{ width: `${Math.min(100, (o.leve.canoneSaas / 300000) * 100)}%` }} />
                       <span className="soglia__m" style={{ left: `${Math.min(100, (r.saas.soglia / 300000) * 100)}%` }} title={t('pr.soglia', { v: euro(r.saas.soglia) })} />
@@ -525,9 +525,9 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                 )}
                 {onp && (
                   <div>
-                    <CampoNumero etichetta={t('leva.softwareOnp')} valore={o.leve.softwareOnPremise} min={0} suffisso="€"
+                    <div className="griglia-campi"><CampoNumero etichetta={t('leva.softwareOnp')} valore={o.leve.softwareOnPremise} min={0} suffisso="€"
                       stato={st('leve.softwareOnPremise')} onStato={setSt('leve.softwareOnPremise')}
-                      onChange={(v) => upd((x) => { x.leve.softwareOnPremise = v; }, 'leve.softwareOnPremise')} />
+                      onChange={(v) => upd((x) => { x.leve.softwareOnPremise = v; }, 'leve.softwareOnPremise')} /></div>
                     <Barra etichetta={t('pr.licenzaOnp')} parti={[
                       { v: r.onPremise.licenza.software, cls: 's1', titolo: t('pr.software') },
                       { v: r.onPremise.licenza.manutenzione, cls: 's3', titolo: t('so.manutenzione') },
@@ -555,7 +555,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
               </div>
             </Card>
 
-            <Card {...cp("p-sca")} aside={<StatoPulsanti stato={st('prezzo.scaglioni')} onStato={setSt('prezzo.scaglioni')} />}>
+            <Card {...cp("p-sca")} bloccata={!saas && !o.prezzo.consumoOnPremise} aside={<StatoPulsanti stato={st('prezzo.scaglioni')} onStato={setSt('prezzo.scaglioni')} />}>
               <table className="alt-table">
                 <thead><tr><th className="is-num">{t('pr.da')}</th><th className="is-num">{t('pr.a')}</th><th className="is-num">{t('pr.euroTx')}</th>
                   <th className="is-num">{t('pr.transazioni')}</th><th className="is-num">{t('pr.importo')}</th></tr></thead>
@@ -712,7 +712,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
             {onp && <div className="rail__stat"><span>On-premise</span><b>{perc(r.onPremise.annuo.marginePct)}</b></div>}
           </div>
           <div className="rail__card">
-            <p className="rail__h">{t('re.critici')}</p>
+            <p className="rail__h">{t('re.approvazione')}</p>
             <div className="rail__stat"><span>{t('off.definito')}</span><b>{pct[fase]}%</b></div>
             <div className="rail__stat"><span>{t('re.critici')}</span><b>{bloccanti(o, stati).length}</b></div>
           </div>
