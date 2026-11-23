@@ -102,11 +102,22 @@ Target CI/CD: OpenShift 150 gg, Kubernetes 120, VM 180, AWS/GCP/Azure 130 (da ve
 
 ## 6-bis. Moduli DOB e configurazione light
 
-La piattaforma completa include dieci moduli standard: workflow management, documenti d'identità, document management evoluto, firma elettronica digitale, credit screening (CRIF / CleverChain), liste PEP e AML, SPID / wallet, SSO, design system custom, observability del cliente.
+Il catalogo segue le presentazioni commerciali (Digital Onboarding follow up, slide 4–7; Architettura di sistema, slide 6 e 8): **12 moduli**, con gli stessi nomi.
 
-In Assessment l'interruttore **Configurazione light** permette di deselezionare moduli. L'impianto della piattaforma (base applicativa) si quota in proporzione alla somma dei **pesi** dei moduli inclusi; i pesi sono nei Parametri di sistema e devono sommare a 100%. Un modulo spento **blocca** in Soluzione i connettori e le integrazioni collegati (firma → Namirial, Aruba; credit screening → CleverChain, Cerved; SSO → integrazione SSO; design system → grafica del front-end). Il document management evoluto offre l'opzione "Gestione documentazione custom": 5 gg di impianto più 3 gg per ogni classe documentale, attivabile per offerta.
+- **Nativi, sempre inclusi:** 01 Core Onboarding Digitale, 02 Designer dei Workflow, 03 Costruttore di Form, 09 Operatività di Back Office, 10 RBAC e Gestione Utenti.
+- **Attivabili con la configurazione light:** 04 OCR ed Elaborazione Documentale (comprende i documenti d'identità; opzione "Gestione documentazione custom": 5 gg + 3 gg per classe), 05 Firma Digitale, 06 Suite KYC, 07 Screening AML, 08 Rischio di Credito, 11 SSO e Autenticazione, 12 Integrazioni e Connettori.
+
+L'impianto si quota in proporzione alla somma dei **pesi** dei moduli inclusi (somma 100, nativi 50: con la configurazione minima si paga metà impianto). I pesi sono una proposta da validare.
+
+I **provider** sono connettori legati ai moduli: Firma (YouSign, Namirial, InfoCert), KYC (Onfido, Jumio, Veriff, Cerved), AML (Cleverchain, CRIF, ComplyAdvantage), Rischio di Credito (CRIF, Cerved, Cleverchain, VIES), Integrazioni e Connettori (archivio documentale InfoCert e Aruba, webhook). Un provider condiviso da più moduli resta disponibile finché almeno uno è incluso. SMTP Gateway e Internal API Gateway sono connettori specifici, non legati a moduli attivabili. Le giornate dei nuovi provider sono stimate per analogia.
+
+SPID / wallet, design system custom e observability del cliente sono **integrazioni di catalogo**, non moduli.
 
 I moduli inclusi compaiono nel Resoconto come promemoria e nello specchietto cliente.
+
+## 6-quater. Grafico dell'architettura
+
+In Soluzione e nello specchietto cliente c'è il grafico della slide 3 del follow up: servizi di terzi, piattaforma (quattro pilastri, customer journey, i 12 moduli, modalità di deployment), sistemi cliente. Ogni casella è **non inclusa**, **inclusa** o **da sviluppare** (ha customizzazioni o integrazioni, con le giornate nel tooltip). Ogni sistema da integrare ha un **tipo** (sistemi core, CRM, DMS / ECM, Analytics / BI, altri) che accende la casella corrispondente. Passando su una casella si evidenziano le righe collegate nelle tabelle di Soluzione, e viceversa. Lo specchietto mostra solo incluso / non incluso: niente giornate, niente nomi di fornitori. Lo stato delle caselle si calcola in `lib/engine/architettura.ts`.
 
 ## 6-ter. Cascata Assessment → Soluzione → Stima
 

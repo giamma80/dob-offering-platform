@@ -185,3 +185,46 @@ a.brand, a.brand:hover { color: #fff; }
 .totale__sc { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-azure-pale); margin-right: 10px; }
 .totale__gg { width: 110px; text-align: right; }
 .totale__eur { width: 170px; text-align: right; }
+
+/* grafico dell'architettura (follow up, slide 3) */
+.mappa { display: grid; grid-template-columns: minmax(150px, 1fr) 18px minmax(0, 2.1fr) 18px minmax(150px, 1fr); gap: 8px; align-items: stretch; }
+.mappa h4 { margin: 0 0 8px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-primary); font-weight: 700; }
+.mappa ul, .mappa ol { list-style: none; margin: 0; padding: 0; }
+.mappa__col { background: var(--surface-sunken); border-radius: var(--radius-md); padding: 10px; }
+.mappa__col ul { display: flex; flex-direction: column; gap: 6px; }
+.mappa__freccia { align-self: center; color: var(--line-strong); font-size: 14px; text-align: center; }
+.mappa__centro { border: 1.5px solid var(--accent-azure-mid); border-radius: var(--radius-md); padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+.mappa__c { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: var(--radius-sm); border: 1px solid var(--line-soft);
+  background: var(--surface-card); font-size: 12.5px; font-weight: 600; line-height: 16px; color: var(--ink-primary); cursor: default; transition: box-shadow .12s, border-color .12s; }
+.mappa__c > span { flex: 1; min-width: 0; }
+.mappa__c--spento { background: transparent; color: var(--ink-muted); border-style: dashed; font-weight: 500; }
+.mappa__c--incluso { border-color: var(--accent-azure-mid); background: var(--surface-accent-soft); }
+.mappa__c--incluso svg { color: var(--accent-azure-text); }
+.mappa__c--sviluppo { border-color: var(--signal-open); background: var(--signal-open-soft); color: var(--signal-open-ink); }
+.mappa__c.is-attiva, .mappa__c:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-azure); }
+.mappa__gg { font-size: 11px; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.mappa__pil { display: grid; grid-template-columns: 1fr auto 1fr; grid-template-rows: auto auto; gap: 8px; align-items: stretch; }
+.mappa__pil > .mappa__c:nth-child(1) { grid-column: 1; grid-row: 1; }
+.mappa__pil > .mappa__c:nth-child(2) { grid-column: 3; grid-row: 1; }
+.mappa__pil > .mappa__c:nth-child(4) { grid-column: 1; grid-row: 2; }
+.mappa__pil > .mappa__c:nth-child(5) { grid-column: 3; grid-row: 2; }
+.mappa__c--pil { min-height: 52px; }
+.mappa__journey { grid-column: 2; grid-row: 1 / span 2; width: 96px; height: 96px; align-self: center; border-radius: 50%; border: 6px solid var(--surface-accent-soft);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--ink-primary); text-align: center; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; }
+.mappa__moduli { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; }
+.mappa__m { text-align: center; font-size: 11px; font-weight: 700; padding: 5px 0; border-radius: var(--radius-xs); font-variant-numeric: tabular-nums; cursor: default; }
+.mappa__m--spento { color: var(--ink-muted); border: 1px dashed var(--line-soft); }
+.mappa__m--incluso { background: var(--surface-brand); color: var(--ink-on-brand); }
+.mappa__m--sviluppo { background: var(--signal-open); color: var(--signal-open-ink); }
+.mappa__dep { display: flex; gap: 8px; }
+.mappa__dep span { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px; border-radius: var(--radius-pill);
+  border: 1px dashed var(--line-soft); font-size: 12px; font-weight: 600; color: var(--ink-muted); }
+.mappa__dep span.is-on { border: 1px solid var(--accent-azure-mid); background: var(--surface-accent-soft); color: var(--ink-primary); }
+.mappa__leg { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; margin: 4px 0 0; font-size: 11.5px; color: var(--ink-secondary); }
+.mappa__l { width: 12px; height: 12px; border-radius: 3px; display: inline-block; margin-left: 10px; }
+.mappa__l:first-child { margin-left: 0; }
+.mappa__l--incluso { background: var(--surface-accent-soft); border: 1px solid var(--accent-azure-mid); }
+.mappa__l--sviluppo { background: var(--signal-open-soft); border: 1px solid var(--signal-open); }
+.mappa__l--spento { border: 1px dashed var(--line-strong); }
+tr.is-evid > td { background: var(--signal-open-soft) !important; }
+tr.is-nativo .alt-switch { cursor: not-allowed; }

@@ -84,19 +84,31 @@
   },
   "moduli": [
     {
-      "id": "workflow",
-      "nome": "Workflow management",
-      "peso": 18
+      "id": "core",
+      "nome": "Core Onboarding Digitale",
+      "peso": 14,
+      "nativo": true,
+      "area": "notifiche"
     },
     {
-      "id": "identita",
-      "nome": "Documenti d'identità",
-      "peso": 14
-    },
-    {
-      "id": "docmgmt",
-      "nome": "Document management evoluto",
+      "id": "designer",
+      "nome": "Designer dei Workflow",
       "peso": 12,
+      "nativo": true,
+      "area": "workflow"
+    },
+    {
+      "id": "form",
+      "nome": "Costruttore di Form",
+      "peso": 8,
+      "nativo": true,
+      "area": "workflow"
+    },
+    {
+      "id": "ocr",
+      "nome": "OCR ed Elaborazione Documentale",
+      "peso": 14,
+      "area": "doc",
       "opzioneClassi": {
         "id": "doc-custom",
         "nome": "Gestione documentazione custom",
@@ -107,52 +119,83 @@
     },
     {
       "id": "firma",
-      "nome": "Firma elettronica digitale",
-      "peso": 10,
+      "nome": "Firma Digitale",
+      "peso": 8,
+      "area": "firma",
       "connettori": [
+        "yousign",
         "namirial",
-        "aruba"
+        "infocert"
       ]
     },
     {
-      "id": "credit",
-      "nome": "Integrazione credit screening (CRIF / CleverChain)",
-      "peso": 10,
+      "id": "kyc",
+      "nome": "Suite KYC",
+      "peso": 8,
+      "area": "kyc",
       "connettori": [
-        "cleverchain",
+        "onfido",
+        "jumio",
+        "veriff",
         "cerved"
       ]
     },
     {
-      "id": "pep",
-      "nome": "Liste PEP e AML",
-      "peso": 10
+      "id": "aml",
+      "nome": "Screening AML",
+      "peso": 7,
+      "area": "aml",
+      "connettori": [
+        "cleverchain",
+        "crif",
+        "complyadvantage"
+      ]
     },
     {
-      "id": "spid",
-      "nome": "Integrazione SPID / wallet",
-      "peso": 9
+      "id": "credito",
+      "nome": "Rischio di Credito",
+      "peso": 6,
+      "area": "aml",
+      "connettori": [
+        "crif",
+        "cerved",
+        "cleverchain",
+        "vies"
+      ]
+    },
+    {
+      "id": "backoffice",
+      "nome": "Operatività di Back Office",
+      "peso": 10,
+      "nativo": true,
+      "area": "componibile"
+    },
+    {
+      "id": "rbac",
+      "nome": "RBAC e Gestione Utenti",
+      "peso": 6,
+      "nativo": true,
+      "area": "componibile"
     },
     {
       "id": "sso",
-      "nome": "Integrazione SSO",
-      "peso": 6,
+      "nome": "SSO e Autenticazione",
+      "peso": 4,
+      "area": "componibile",
       "integrazioni": [
         "sso"
       ]
     },
     {
-      "id": "design",
-      "nome": "Integrazione design system custom",
-      "peso": 6,
-      "integrazioni": [
-        "grafica"
+      "id": "integrazioni",
+      "nome": "Integrazioni e Connettori",
+      "peso": 3,
+      "area": "multifornitore",
+      "connettori": [
+        "arch-infocert",
+        "arch-aruba",
+        "webhook"
       ]
-    },
-    {
-      "id": "observ",
-      "nome": "Integrazione observability cliente",
-      "peso": 5
     }
   ],
   "integrazioneSistema": {
@@ -200,21 +243,58 @@
         "nome": "Internal API Gateway",
         "gg": 18,
         "figura": "dev",
-        "default": true
+        "default": true,
+        "area": "multifornitore"
       },
       {
-        "id": "cleverchain",
-        "nome": "CleverChain",
-        "gg": 8,
+        "id": "smtp",
+        "nome": "SMTP Gateway (email e SMS)",
+        "gg": 2,
         "figura": "dev",
-        "default": true
+        "default": true,
+        "area": "notifiche"
+      },
+      {
+        "id": "yousign",
+        "nome": "YouSign",
+        "gg": 4,
+        "figura": "dev",
+        "default": false
       },
       {
         "id": "namirial",
-        "nome": "Namirial Sign",
+        "nome": "Namirial",
         "gg": 4,
         "figura": "dev",
         "default": true
+      },
+      {
+        "id": "infocert",
+        "nome": "InfoCert",
+        "gg": 4,
+        "figura": "dev",
+        "default": false
+      },
+      {
+        "id": "onfido",
+        "nome": "Onfido",
+        "gg": 8,
+        "figura": "dev",
+        "default": false
+      },
+      {
+        "id": "jumio",
+        "nome": "Jumio",
+        "gg": 8,
+        "figura": "dev",
+        "default": false
+      },
+      {
+        "id": "veriff",
+        "nome": "Veriff",
+        "gg": 8,
+        "figura": "dev",
+        "default": false
       },
       {
         "id": "cerved",
@@ -224,9 +304,51 @@
         "default": false
       },
       {
-        "id": "aruba",
-        "nome": "Aruba Sign",
-        "gg": 4,
+        "id": "cleverchain",
+        "nome": "Cleverchain",
+        "gg": 8,
+        "figura": "dev",
+        "default": true
+      },
+      {
+        "id": "crif",
+        "nome": "CRIF",
+        "gg": 8,
+        "figura": "dev",
+        "default": false
+      },
+      {
+        "id": "complyadvantage",
+        "nome": "ComplyAdvantage",
+        "gg": 8,
+        "figura": "dev",
+        "default": false
+      },
+      {
+        "id": "vies",
+        "nome": "VIES (validazione Partita IVA)",
+        "gg": 2,
+        "figura": "dev",
+        "default": false
+      },
+      {
+        "id": "arch-infocert",
+        "nome": "Archivio documentale InfoCert",
+        "gg": 5,
+        "figura": "dev",
+        "default": false
+      },
+      {
+        "id": "arch-aruba",
+        "nome": "Archivio documentale Aruba",
+        "gg": 5,
+        "figura": "dev",
+        "default": false
+      },
+      {
+        "id": "webhook",
+        "nome": "Webhook verso sistemi terzi",
+        "gg": 3,
         "figura": "dev",
         "default": false
       }
@@ -237,29 +359,49 @@
         "nome": "Journey aggiuntivo",
         "gg": 24,
         "figura": "funz",
-        "default": true
+        "default": true,
+        "area": "workflow"
       },
       {
         "id": "grafica",
-        "nome": "Grafica del front-end",
+        "nome": "Design system custom",
         "gg": 12,
         "figura": "dev",
-        "default": true
+        "default": true,
+        "area": "design"
       },
       {
         "id": "sso",
-        "nome": "SSO federato",
+        "nome": "Federazione SSO (OpenID Connect / SAML 2.0)",
         "gg": 10,
         "figura": "dev",
         "default": false,
-        "vincolo": "sso"
+        "vincolo": "sso",
+        "area": "componibile"
       },
       {
         "id": "multi",
         "nome": "Multi-società",
         "gg": 20,
         "figura": "dev",
-        "default": false
+        "default": false,
+        "area": "workflow"
+      },
+      {
+        "id": "spid",
+        "nome": "Integrazione SPID / wallet",
+        "gg": 10,
+        "figura": "dev",
+        "default": false,
+        "area": "kyc"
+      },
+      {
+        "id": "observ",
+        "nome": "Integrazione observability cliente",
+        "gg": 6,
+        "figura": "dev",
+        "default": false,
+        "area": "bi"
       }
     ],
     "cicd": [

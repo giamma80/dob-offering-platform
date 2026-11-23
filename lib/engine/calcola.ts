@@ -92,9 +92,9 @@ export function consumo(scaglioni: Scaglione[], volume: number) {
 
 /** Moduli inclusi: tutti nella piattaforma completa, quelli scelti in configurazione light. */
 export function moduliAttivi(cfg: Config, o: Offerta): string[] {
-  const tutti = (cfg.moduli ?? []).map((m) => m.id);
-  if (!o.assessment.light) return tutti;
-  return tutti.filter((id) => (o.assessment.moduli ?? []).includes(id));
+  const mod = cfg.moduli ?? [];
+  if (!o.assessment.light) return mod.map((m) => m.id);
+  return mod.filter((m) => m.nativo || (o.assessment.moduli ?? []).includes(m.id)).map((m) => m.id);
 }
 
 /** Quota dell'impianto pagata: somma dei pesi dei moduli inclusi sul totale (1 = piattaforma completa). */
@@ -106,10 +106,13 @@ export function fattoreImpianto(cfg: Config, o: Offerta): number {
   return mod.filter((m) => att.includes(m.id)).reduce((a, m) => a + m.peso, 0) / tot;
 }
 
-/** Il modulo spento che blocca una voce di catalogo, se c'è. */
+/** Il modulo spento che blocca una voce di catalogo, se c'è. Una voce condivisa da più moduli
+   (es. Cleverchain: Screening AML e Rischio di Credito) resta disponibile finché almeno uno è incluso. */
 export function moduloBloccante(cfg: Config, o: Offerta, tipo: 'connettori' | 'integrazioni', id: string) {
   const att = moduliAttivi(cfg, o);
-  return (cfg.moduli ?? []).find((m) => !att.includes(m.id) && (m[tipo] ?? []).includes(id)) ?? null;
+  const legati = (cfg.moduli ?? []).filter((m) => (m[tipo] ?? []).includes(id));
+  if (!legati.length || legati.some((m) => att.includes(m.id))) return null;
+  return legati[0];
 }
 
 /** Base applicativa (impianto della piattaforma), ridotta in proporzione ai moduli inclusi. */
@@ -121,7 +124,7 @@ export function vociBase(cfg: Config, o: Offerta): RigaGg[] {
 /** Sistemi da integrare normalizzati: accetta anche il formato precedente (solo nome). */
 export function sistemi(o: Offerta): Sistema[] {
   return (o.assessment.sistemi ?? []).map((x, i) =>
-    typeof x === 'string' ? { id: `sis-${i}-${x.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`, nome: x, complessita: 'media' as const } : x);
+    typeof x === 'string' ? { id: `sis-${i}-${x.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`, nome: x, complessita: 'media' as const, tipo: 'altri' as const } : x);
 }
 
 /** Connettore di catalogo che copre davvero un sistema (selezionabile: non bloccato da moduli, sezione accesa). */

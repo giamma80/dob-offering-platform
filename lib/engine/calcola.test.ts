@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CONFIG_DEFAULT as cfg, nuovaOfferta, calcola, specchietto, bloccanti, avanzamento, tariffe } from './index';
+import { CONFIG_DEFAULT as cfg, nuovaOfferta, calcola, specchietto, bloccanti, avanzamento, tariffe, campiFase } from './index';
 
 const o = () => nuovaOfferta(cfg, 'Cliente di prova');
 
@@ -86,6 +86,12 @@ describe('specchietto', () => {
 });
 
 describe('stati e approvazione', () => {
+  it('prezzo: un\'offerta solo on-premise arriva al 100% senza il canone SaaS', () => {
+    const x = o(); x.approccio = 'on_premise';
+    const tutti = Object.fromEntries(campiFase(x, 'prezzo').map((k) => [k, 'confermato' as const]));
+    expect(campiFase(x, 'prezzo')).not.toContain('leve.canoneSaas');
+    expect(avanzamento(x, tutti, 'prezzo')).toBe(100);
+  });
   it('offerta nuova: tutto assunto, voci critiche bloccanti', () => {
     const x = o();
     expect(avanzamento(x, {}, 'assessment')).toBe(0);
@@ -154,37 +160,53 @@ describe('interruttori della Soluzione', () => {
 });
 
 
-import { fattoreImpianto, moduloBloccante, vociCustomizzazione } from './index';
+import { fattoreImpianto, moduliAttivi, moduloBloccante, vociCustomizzazione } from './index';
 
 describe('moduli DOB', () => {
   it('la base applicativa sta nel setup: senza customizzazioni la customizzazione vale zero', () => {
     const x = o(); x.soluzione.connettori = []; x.soluzione.integrazioni = [];
-    x.assessment.light = true; x.assessment.moduli = cfg.moduli.filter((m) => m.id !== 'docmgmt').map((m) => m.id);
+    x.assessment.light = true; x.assessment.moduli = cfg.moduli.filter((m) => m.id !== 'ocr').map((m) => m.id);
     expect(calcola(cfg, x).onPremise.customizzazione.prezzo).toBe(0);
   });
   it('piattaforma completa: impianto al 100%', () => {
     expect(fattoreImpianto(cfg, o())).toBe(1);
   });
   it('light: impianto in proporzione ai pesi dei moduli scelti', () => {
-    const x = o(); x.assessment.light = true; x.assessment.moduli = ['workflow', 'identita'];
-    expect(fattoreImpianto(cfg, x)).toBeCloseTo(0.32, 5);
+    const x = o(); x.assessment.light = true; x.assessment.moduli = ['ocr'];
+    expect(fattoreImpianto(cfg, x)).toBeCloseTo(0.64, 5);
     const pieno = calcola(cfg, o()).saas.setup.gg;
     expect(calcola(cfg, x).saas.setup.gg).toBeLessThan(pieno);
   });
   it('modulo spento blocca i connettori collegati', () => {
-    const x = o(); x.assessment.light = true; x.assessment.moduli = ['workflow'];
+    const x = o(); x.assessment.light = true; x.assessment.moduli = [];
     expect(moduloBloccante(cfg, x, 'connettori', 'namirial')?.id).toBe('firma');
     expect(vociCustomizzazione(cfg, x).map((v) => v.id)).not.toContain('namirial');
   });
   it('documentazione custom: solo se attivata nel modulo, impianto + giornate per classe', () => {
     const x = o();
     expect(vociCustomizzazione(cfg, x).map((v) => v.id)).not.toContain('doc-custom');
-    x.assessment.opzioniModuli = { docmgmt: { attiva: true, classi: 4 } };
+    x.assessment.opzioniModuli = { ocr: { attiva: true, classi: 4 } };
     const v = vociCustomizzazione(cfg, x).find((y) => y.id === 'doc-custom')!;
     expect(v.gg).toBe(5 + 3 * 4);
     expect(v.gruppo).toBe('moduli');
-    x.assessment.light = true; x.assessment.moduli = ['workflow'];
+    x.assessment.light = true; x.assessment.moduli = [];
     expect(vociCustomizzazione(cfg, x).map((y) => y.id)).not.toContain('doc-custom');
+  });
+  it('i moduli nativi restano inclusi anche con la configurazione light', () => {
+    const x = o(); x.assessment.light = true; x.assessment.moduli = [];
+    const nativi = cfg.moduli.filter((m) => m.nativo).map((m) => m.id);
+    expect(nativi).toEqual(['core', 'designer', 'form', 'backoffice', 'rbac']);
+    expect(moduliAttivi(cfg, x)).toEqual(nativi);
+    expect(fattoreImpianto(cfg, x)).toBeCloseTo(0.5, 5);
+  });
+  it('un provider condiviso resta disponibile finché almeno un suo modulo è incluso', () => {
+    const x = o(); x.assessment.light = true; x.assessment.moduli = ['credito'];
+    expect(moduloBloccante(cfg, x, 'connettori', 'cleverchain')).toBeNull();
+    x.assessment.moduli = [];
+    expect(moduloBloccante(cfg, x, 'connettori', 'cleverchain')?.id).toBe('aml');
+  });
+  it('12 moduli del catalogo', () => {
+    expect(cfg.moduli).toHaveLength(12);
   });
   it('i pesi di default sommano a 100', () => {
     expect(cfg.moduli.reduce((a, m) => a + m.peso, 0)).toBe(100);
@@ -223,7 +245,7 @@ describe('cascata sistemi → integrazioni → customizzazioni', () => {
   it('connettore bloccato da un modulo spento: torna l\'integrazione dedicata', () => {
     const x = conSistemi();
     (x.assessment.sistemi[0] as { copertoDa?: string }).copertoDa = 'namirial';
-    x.assessment.light = true; x.assessment.moduli = ['workflow'];
+    x.assessment.light = true; x.assessment.moduli = [];
     expect(vociCustomizzazione(cfg, x).some((y) => y.nome === 'Integrazione Core banking')).toBe(true);
   });
   it('formato precedente dei sistemi (solo nome): complessità media', () => {
@@ -236,5 +258,34 @@ describe('cascata sistemi → integrazioni → customizzazioni', () => {
   });
   it('impostazione delle integrazioni nella base: 16 gg', () => {
     expect(cfg.catalogo.base.find((b) => b.id === 'integr')!.gg).toBe(16);
+  });
+});
+
+
+import { architettura, areaVoce } from './index';
+
+describe('grafico dell\'architettura', () => {
+  it('modulo spento: casella spenta; incluso senza voci: inclusa; con provider scelto: da sviluppare', () => {
+    const x = o(); x.soluzione.connettori = []; x.soluzione.integrazioni = [];
+    x.assessment.light = true; x.assessment.moduli = ['ocr'];
+    const a = architettura(cfg, x);
+    expect(a.terzi.find((y) => y.id === 'firma')!.stato).toBe('spento');
+    expect(a.terzi.find((y) => y.id === 'doc')!.stato).toBe('incluso');
+    x.assessment.moduli = ['ocr', 'firma']; x.soluzione.connettori = ['namirial'];
+    const b = architettura(cfg, x).terzi.find((y) => y.id === 'firma')!;
+    expect(b.stato).toBe('sviluppo');
+    expect(b.voci.map((v) => v.id)).toEqual(['namirial']);
+  });
+  it('i sistemi accendono la casella del loro tipo', () => {
+    const x = o(); x.assessment.sistemi = [{ id: 's1', nome: 'Core banking', complessita: 'alta', tipo: 'core' }];
+    const a = architettura(cfg, x);
+    expect(a.cliente.find((y) => y.id === 'core')!.stato).toBe('sviluppo');
+    expect(a.cliente.find((y) => y.id === 'crm')!.stato).toBe('spento');
+    expect(areaVoce(cfg, x, 's1')).toBe('core');
+  });
+  it('specchietto: grafico senza voci, giornate né fornitori', () => {
+    const x = o(); x.soluzione.connettori = ['namirial', 'cleverchain'];
+    const json = JSON.stringify(specchietto(cfg, x, 'saas').architettura);
+    for (const vietato of [/"gg"/, /namirial/i, /cleverchain/i, /voci/]) expect(json).not.toMatch(vietato);
   });
 });

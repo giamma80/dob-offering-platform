@@ -32,19 +32,22 @@ export const CONFIG_DEFAULT: Config = {
     clientiAttivi: 4
   },
   ai: { perDocumento: 0.10, documentiPerPratica: 4 },
-  /* Pesi differenziati per complessità (proposta da validare); somma 100. */
+  /* I 12 moduli del catalogo (Digital Onboarding follow up, slide 4–7). I cinque nativi sono sempre inclusi.
+     Pesi per complessità (proposta da validare): somma 100, nativi 50. `area` lega il modulo al grafico. */
   moduli: [
-    { id: 'workflow',    nome: 'Workflow management',                         peso: 18 },
-    { id: 'identita',    nome: 'Documenti d\'identità',                         peso: 14 },
-    { id: 'docmgmt',     nome: 'Document management evoluto',                 peso: 12,
+    { id: 'core',      nome: 'Core Onboarding Digitale',          peso: 14, nativo: true, area: 'notifiche' },
+    { id: 'designer',  nome: 'Designer dei Workflow',              peso: 12, nativo: true, area: 'workflow' },
+    { id: 'form',      nome: 'Costruttore di Form',                peso: 8,  nativo: true, area: 'workflow' },
+    { id: 'ocr',       nome: 'OCR ed Elaborazione Documentale',    peso: 14, area: 'doc',
       opzioneClassi: { id: 'doc-custom', nome: 'Gestione documentazione custom', impianto: 5, perClasse: 3, figura: 'dev' } },
-    { id: 'firma',       nome: 'Firma elettronica digitale',                  peso: 10, connettori: ['namirial', 'aruba'] },
-    { id: 'credit',      nome: 'Integrazione credit screening (CRIF / CleverChain)', peso: 10, connettori: ['cleverchain', 'cerved'] },
-    { id: 'pep',         nome: 'Liste PEP e AML',                             peso: 10 },
-    { id: 'spid',        nome: 'Integrazione SPID / wallet',                  peso: 9 },
-    { id: 'sso',         nome: 'Integrazione SSO',                            peso: 6, integrazioni: ['sso'] },
-    { id: 'design',      nome: 'Integrazione design system custom',           peso: 6, integrazioni: ['grafica'] },
-    { id: 'observ',      nome: 'Integrazione observability cliente',          peso: 5 }
+    { id: 'firma',     nome: 'Firma Digitale',                     peso: 8,  area: 'firma', connettori: ['yousign', 'namirial', 'infocert'] },
+    { id: 'kyc',       nome: 'Suite KYC',                          peso: 8,  area: 'kyc', connettori: ['onfido', 'jumio', 'veriff', 'cerved'] },
+    { id: 'aml',       nome: 'Screening AML',                      peso: 7,  area: 'aml', connettori: ['cleverchain', 'crif', 'complyadvantage'] },
+    { id: 'credito',   nome: 'Rischio di Credito',                 peso: 6,  area: 'aml', connettori: ['crif', 'cerved', 'cleverchain', 'vies'] },
+    { id: 'backoffice', nome: 'Operatività di Back Office',        peso: 10, nativo: true, area: 'componibile' },
+    { id: 'rbac',      nome: 'RBAC e Gestione Utenti',             peso: 6,  nativo: true, area: 'componibile' },
+    { id: 'sso',       nome: 'SSO e Autenticazione',               peso: 4,  area: 'componibile', integrazioni: ['sso'] },
+    { id: 'integrazioni', nome: 'Integrazioni e Connettori',       peso: 3,  area: 'multifornitore', connettori: ['arch-infocert', 'arch-aruba', 'webhook'] }
   ],
   integrazioneSistema: { bassa: 5, media: 10, alta: 20, figura: 'dev' },
   catalogo: {
@@ -55,18 +58,32 @@ export const CONFIG_DEFAULT: Config = {
       { id: 'test-uat',  nome: 'Test e supporto UAT',         gg: 32, figura: 'dev' },
       { id: 'formaz',    nome: 'Formazione e avvio',          gg: 30, figura: 'funz' }
     ],
+    /* Provider per modulo, con i nomi del catalogo. Giornate per analogia (stima da validare). */
     connettori: [
-      { id: 'api-gw',      nome: 'Internal API Gateway', gg: 18, figura: 'dev', default: true },
-      { id: 'cleverchain', nome: 'CleverChain',          gg: 8,  figura: 'dev', default: true },
-      { id: 'namirial',    nome: 'Namirial Sign',        gg: 4,  figura: 'dev', default: true },
-      { id: 'cerved',      nome: 'Cerved',               gg: 6,  figura: 'dev', default: false },
-      { id: 'aruba',       nome: 'Aruba Sign',           gg: 4,  figura: 'dev', default: false }
+      { id: 'api-gw',          nome: 'Internal API Gateway',                 gg: 18, figura: 'dev', default: true, area: 'multifornitore' },
+      { id: 'smtp',            nome: 'SMTP Gateway (email e SMS)',           gg: 2,  figura: 'dev', default: true, area: 'notifiche' },
+      { id: 'yousign',         nome: 'YouSign',                              gg: 4,  figura: 'dev', default: false },
+      { id: 'namirial',        nome: 'Namirial',                             gg: 4,  figura: 'dev', default: true },
+      { id: 'infocert',        nome: 'InfoCert',                             gg: 4,  figura: 'dev', default: false },
+      { id: 'onfido',          nome: 'Onfido',                               gg: 8,  figura: 'dev', default: false },
+      { id: 'jumio',           nome: 'Jumio',                                gg: 8,  figura: 'dev', default: false },
+      { id: 'veriff',          nome: 'Veriff',                               gg: 8,  figura: 'dev', default: false },
+      { id: 'cerved',          nome: 'Cerved',                               gg: 6,  figura: 'dev', default: false },
+      { id: 'cleverchain',     nome: 'Cleverchain',                          gg: 8,  figura: 'dev', default: true },
+      { id: 'crif',            nome: 'CRIF',                                 gg: 8,  figura: 'dev', default: false },
+      { id: 'complyadvantage', nome: 'ComplyAdvantage',                      gg: 8,  figura: 'dev', default: false },
+      { id: 'vies',            nome: 'VIES (validazione Partita IVA)',       gg: 2,  figura: 'dev', default: false },
+      { id: 'arch-infocert',   nome: 'Archivio documentale InfoCert',        gg: 5,  figura: 'dev', default: false },
+      { id: 'arch-aruba',      nome: 'Archivio documentale Aruba',           gg: 5,  figura: 'dev', default: false },
+      { id: 'webhook',         nome: 'Webhook verso sistemi terzi',          gg: 3,  figura: 'dev', default: false }
     ],
     integrazioni: [
-      { id: 'journey-agg', nome: 'Journey aggiuntivo',    gg: 24, figura: 'funz', default: true },
-      { id: 'grafica',     nome: 'Grafica del front-end', gg: 12, figura: 'dev',  default: true },
-      { id: 'sso',         nome: 'SSO federato',          gg: 10, figura: 'dev',  default: false, vincolo: 'sso' },
-      { id: 'multi',       nome: 'Multi-società',         gg: 20, figura: 'dev',  default: false }
+      { id: 'journey-agg', nome: 'Journey aggiuntivo',                  gg: 24, figura: 'funz', default: true,  area: 'workflow' },
+      { id: 'grafica',     nome: 'Design system custom',                gg: 12, figura: 'dev',  default: true,  area: 'design' },
+      { id: 'sso',         nome: 'Federazione SSO (OpenID Connect / SAML 2.0)', gg: 10, figura: 'dev', default: false, vincolo: 'sso', area: 'componibile' },
+      { id: 'multi',       nome: 'Multi-società',                       gg: 20, figura: 'dev',  default: false, area: 'workflow' },
+      { id: 'spid',        nome: 'Integrazione SPID / wallet',          gg: 10, figura: 'dev',  default: false, area: 'kyc' },
+      { id: 'observ',      nome: 'Integrazione observability cliente',  gg: 6,  figura: 'dev',  default: false, area: 'bi' }
     ],
     cicd: [
       { id: 'openshift', nome: 'OpenShift',  gg: 150, figura: 'devops' },

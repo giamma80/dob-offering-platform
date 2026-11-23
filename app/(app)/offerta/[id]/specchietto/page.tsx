@@ -7,6 +7,7 @@ import { t as traduci } from '@/lib/i18n/server';
 import { euro } from '@/lib/ui/formato';
 import type { Chiave } from '@/lib/i18n/dizionari';
 import { MenuUtente } from '@/components/utente/MenuUtente';
+import { MappaArchitettura } from '@/components/offerta/MappaArchitettura';
 
 /* Specchietto cliente: generato dal dettaglio con la sola funzione specchietto(), che non
    espone giornate, costi, margini né fornitori terzi. Esiste solo per offerte approvate. */
@@ -75,6 +76,16 @@ export default async function Specchietto({ params, searchParams }: {
                 {t('sp.moduli')}
               </p>
               <ul className="sp-moduli">{s.moduli.map((m) => <li key={m}>{m}</li>)}</ul>
+              <p style={{ margin: '22px 0 10px', fontSize: 12, fontWeight: 700, letterSpacing: '.09em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>
+                {t('sp.architettura')}
+              </p>
+              <MappaArchitettura cliente dati={{
+                terzi: s.architettura.terzi.map((x) => ({ id: x.id, stato: x.incluso ? 'incluso' : 'spento' })),
+                piattaforma: s.architettura.piattaforma.map((x) => ({ id: x.id, stato: x.incluso ? 'incluso' : 'spento' })),
+                cliente: s.architettura.cliente.map((x) => ({ id: x.id, stato: x.incluso ? 'incluso' : 'spento' })),
+                moduli: s.architettura.moduli.map((m) => ({ id: m.id, nome: m.nome, stato: m.incluso ? 'incluso' : 'spento' })),
+                deployment: s.architettura.deployment
+              }} />
             </div></div>
           )}
         </main>

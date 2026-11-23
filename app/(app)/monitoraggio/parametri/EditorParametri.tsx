@@ -56,10 +56,21 @@ export function EditorParametri({ versione, iniziale }: { versione: number; iniz
     'ps-mod': String((c.moduli ?? []).length),
     'ps-cat': String(c.catalogo.connettori.length + c.catalogo.integrazioni.length + c.catalogo.cicd.length), 'ps-ai': ''
   };
-  const catalogo = [
-    ...c.catalogo.connettori.map((v, i) => ({ v, tipo: 'par.tipoConnettore' as Chiave, set: (g: number) => upd((x) => { x.catalogo.connettori[i].gg = g; }) })),
-    ...c.catalogo.integrazioni.map((v, i) => ({ v, tipo: 'par.tipoIntegrazione' as Chiave, set: (g: number) => upd((x) => { x.catalogo.integrazioni[i].gg = g; }) })),
-    ...c.catalogo.cicd.map((v, i) => ({ v, tipo: 'par.tipoCicd' as Chiave, set: (g: number) => upd((x) => { x.catalogo.cicd[i].gg = g; }) }))
+  const moduliDi = (k: 'connettori' | 'integrazioni', id: string) =>
+    (c.moduli ?? []).filter((m) => (m[k] ?? []).includes(id)).map((m) => m.nome).join(', ');
+  const catalogo: { v: { id: string; nome: string; gg: number }; tipo: Chiave; set: (g: number) => void; modulo?: string;
+    def?: { on: boolean; set: (b: boolean) => void } }[] = [
+    ...c.catalogo.base.map((v, i) => ({ v, tipo: 'par.tipoBase' as Chiave, set: (g: number) => upd((x) => { x.catalogo.base[i].gg = g; }) })),
+    ...c.catalogo.connettori.map((v, i) => ({ v, tipo: 'par.tipoConnettore' as Chiave, modulo: moduliDi('connettori', v.id),
+      set: (g: number) => upd((x) => { x.catalogo.connettori[i].gg = g; }),
+      def: { on: v.default, set: (b: boolean) => upd((x) => { x.catalogo.connettori[i].default = b; }) } })),
+    ...c.catalogo.integrazioni.map((v, i) => ({ v, tipo: 'par.tipoIntegrazione' as Chiave, modulo: moduliDi('integrazioni', v.id),
+      set: (g: number) => upd((x) => { x.catalogo.integrazioni[i].gg = g; }),
+      def: { on: v.default, set: (b: boolean) => upd((x) => { x.catalogo.integrazioni[i].default = b; }) } })),
+    ...c.catalogo.cicd.map((v, i) => ({ v, tipo: 'par.tipoCicd' as Chiave, set: (g: number) => upd((x) => { x.catalogo.cicd[i].gg = g; }) })),
+    { v: { id: 'amb', nome: t('par.ambientiSaas', { n: c.catalogo.ambientiSaas.numero }), gg: c.catalogo.ambientiSaas.ggPerAmbiente }, tipo: 'par.tipoMessa' as Chiave,
+      set: (g: number) => upd((x) => { x.catalogo.ambientiSaas.ggPerAmbiente = g; }) },
+    { v: c.catalogo.passaggioConsegne, tipo: 'par.tipoMessa' as Chiave, set: (g: number) => upd((x) => { x.catalogo.passaggioConsegne.gg = g; }) }
   ];
 
   return (
@@ -149,11 +160,13 @@ export function EditorParametri({ versione, iniziale }: { versione: number; iniz
 
         <Card {...cp('ps-mod')}>
           <table className="alt-table">
-            <thead><tr><th>{t('par.moduli')}</th><th className="is-num">{t('par.peso')}</th><th>{t('par.collegati')}</th></tr></thead>
+            <thead><tr><th>{t('par.moduli')}</th><th>{t('par.nativo')}</th><th className="is-num">{t('par.peso')}</th><th>{t('par.collegati')}</th></tr></thead>
             <tbody>
               {(c.moduli ?? []).map((m, i) => (
                 <tr key={m.id}>
-                  <td>{m.nome}</td>
+                  <td><span className="muted" style={{ fontVariantNumeric: 'tabular-nums', marginRight: 8 }}>{String(i + 1).padStart(2, '0')}</span>{m.nome}</td>
+                  <td><label className="alt-switch"><input type="checkbox" checked={!!m.nativo} aria-label={`${t('par.nativo')} ${m.nome}`}
+                    onChange={(e) => upd((x) => { x.moduli[i].nativo = e.target.checked; })} /><span className="alt-switch__box" aria-hidden="true" /></label></td>
                   <td className="is-num"><CampoNumero compatto etichetta={m.nome} valore={m.peso} min={0} max={100} suffisso="%"
                     onChange={(v) => upd((x) => { x.moduli[i].peso = v; })} /></td>
                   <td><span className="muted">{[
@@ -175,17 +188,17 @@ export function EditorParametri({ versione, iniziale }: { versione: number; iniz
               ))}
             </tbody>
             <tfoot><tr className="is-total"><td>{t('par.sommaPesi')}</td>
-              <td className="is-num" style={Math.abs(sommaPesi - 100) > 0.001 ? { color: 'var(--signal-open)' } : undefined}>{perc(sommaPesi / 100)}</td><td /></tr></tfoot>
+              <td /><td className="is-num" style={Math.abs(sommaPesi - 100) > 0.001 ? { color: 'var(--signal-open)' } : undefined}>{perc(sommaPesi / 100)}</td><td /></tr></tfoot>
           </table>
         </Card>
 
         <Card {...cp('ps-cat')}>
           <table className="alt-table">
-            <thead><tr><th>{t('st.voce')}</th><th>{t('par.tipo')}</th><th className="is-num">{t('par.ggDefault')}</th></tr></thead>
+            <thead><tr><th>{t('st.voce')}</th><th>{t('par.tipo')}</th><th>{t('par.modulo')}</th><th>{t('par.default')}</th><th className="is-num">{t('par.ggDefault')}</th></tr></thead>
             <tbody>
               {(['bassa', 'media', 'alta'] as const).map((k) => (
                 <tr key={`is-${k}`}>
-                  <td>{t('par.integrazioneSistema')} · {t(`as.compl.${k}`)}</td><td><span className="muted">{t('as.complessita')}</span></td>
+                  <td>{t('par.integrazioneSistema')} · {t(`as.compl.${k}`)}</td><td><span className="muted">{t('as.complessita')}</span></td><td /><td />
                   <td className="is-num"><CampoNumero compatto etichetta={`${t('par.integrazioneSistema')} ${t(`as.compl.${k}`)}`} suffisso="gg" min={0}
                     valore={c.integrazioneSistema?.[k] ?? { bassa: 5, media: 10, alta: 20 }[k]}
                     onChange={(v) => upd((x) => { x.integrazioneSistema = { ...(x.integrazioneSistema ?? { bassa: 5, media: 10, alta: 20, figura: 'dev' }), [k]: v }; })} /></td>
@@ -194,6 +207,9 @@ export function EditorParametri({ versione, iniziale }: { versione: number; iniz
               {catalogo.map((x) => (
                 <tr key={`${x.tipo}-${x.v.id}`}>
                   <td>{x.v.nome}</td><td><span className="muted">{t(x.tipo)}</span></td>
+                  <td><span className="muted">{x.modulo || '—'}</span></td>
+                  <td>{x.def && <label className="alt-switch"><input type="checkbox" checked={x.def.on} aria-label={`${t('par.default')} ${x.v.nome}`}
+                    onChange={(e) => x.def!.set(e.target.checked)} /><span className="alt-switch__box" aria-hidden="true" /></label>}</td>
                   <td className="is-num"><CampoNumero compatto etichetta={x.v.nome} valore={x.v.gg} min={0} suffisso="gg" onChange={x.set} /></td>
                 </tr>
               ))}

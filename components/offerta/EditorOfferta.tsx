@@ -5,8 +5,8 @@ import { scorriA } from '@/lib/ui/scorri';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import {
-  FASI, avanzamento, bloccanti, calcola, coperturaSistema, fattoreImpianto, moduliAttivi, moduloBloccante, sistemi, vociCustomizzazione,
-  type Complessita, type Config, type Fase, type FiguraId, type Offerta, type RigaGg, type Sistema, type StatoValore
+  FASI, architettura, areaVoce, avanzamento, bloccanti, calcola, coperturaSistema, fattoreImpianto, moduliAttivi, moduloBloccante, sistemi, vociCustomizzazione,
+  type AreaArchitettura, type Complessita, type Config, type TipoSistema, type Fase, type FiguraId, type Offerta, type RigaGg, type Sistema, type StatoValore
 } from '@/lib/engine';
 import { salvaOfferta } from '@/lib/azioni';
 import { useT } from '@/lib/i18n/client';
@@ -20,6 +20,7 @@ import { Footer } from './Footer';
 import { Timeline } from './Timeline';
 import { DettaglioCosti, RailDettaglio, RailSintesi, RailSostenibilita, Sintesi, Sostenibilita } from './Resoconto';
 import { MenuUtente } from '@/components/utente/MenuUtente';
+import { MappaArchitettura } from './MappaArchitettura';
 
 type Stati = Record<string, StatoValore>;
 type Sezione = { id: string; k: Chiave; ico: string };
@@ -35,6 +36,7 @@ const SEZIONI: Record<Fase, Sezione[]> = {
     { id: 'a-vin', k: 'as.vincoli', ico: 'vincoli' }
   ],
   soluzione: [
+    { id: 's-arch', k: 'so.architettura', ico: 'catalogo' },
     { id: 's-app', k: 'so.approccio', ico: 'approccio' },
     { id: 's-sis', k: 'so.coperturaTit', ico: 'sistemi' },
     { id: 's-con', k: 'so.connettori', ico: 'sistemi' },
@@ -196,6 +198,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
     return () => obs.disconnect();
   }, [fase]);
 
+  const [areaAtt, setAreaAtt] = useState<AreaArchitettura | null>(null);
   const upd = (f: (x: Offerta) => void, campo?: string) => {
     if (solaLettura) return;
     setO((p) => { const x = structuredClone(p); f(x); return x; });
@@ -231,6 +234,14 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
     const y = sistemi(x); f(y); x.assessment.sistemi = y;
   }, campo);
   const fImp = fattoreImpianto(cfg, o);
+  const arch = architettura(cfg, o);
+  const evid = (id: string, base?: string) => {
+    const a = areaVoce(cfg, o, id);
+    return {
+      className: [base, a && a === areaAtt ? 'is-evid' : ''].filter(Boolean).join(' ') || undefined,
+      onEnter: a ? () => setAreaAtt(a) : undefined, onLeave: a ? () => setAreaAtt(null) : undefined
+    };
+  };
   const scen = [
     ...(saas ? [{ nome: 'SaaS', s: r.saas }] : []),
     ...(onp ? [{ nome: 'On-premise', s: r.onPremise }] : [])
@@ -313,15 +324,15 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                     ...(m.integrazioni ?? []).map((id) => cfg.catalogo.integrazioni.find((c) => c.id === id)?.nome ?? id)
                   ];
                   return {
-                    key: m.id, className: on ? undefined : 'is-off',
+                    key: m.id, className: m.nativo ? 'is-nativo' : on ? undefined : 'is-off',
                     celle: [
                       { v: on ? 1 : 0, html: (
-                        <label className="alt-switch"><input type="checkbox" checked={on} aria-label={m.nome} disabled={solaLettura || !o.assessment.light}
+                        <label className="alt-switch" title={m.nativo ? t('as.nativo') : undefined}><input type="checkbox" checked={on} aria-label={m.nome} disabled={solaLettura || !o.assessment.light || m.nativo}
                           onChange={(e) => upd((x) => {
                             const cur = x.assessment.moduli ?? (cfg.moduli ?? []).map((y) => y.id);
                             x.assessment.moduli = e.target.checked ? [...cur, m.id] : cur.filter((y) => y !== m.id);
                           }, 'assessment.moduli')} /><span className="alt-switch__box" aria-hidden="true" /></label>) },
-                      { v: m.nome, html: <strong>{m.nome}</strong> },
+                      { v: m.nome, html: <span><strong>{m.nome}</strong>{m.nativo && <span className="alt-badge alt-badge--neutro origine">{t('as.nativo')}</span>}</span> },
                       { v: m.peso, html: perc(m.peso / 100) },
                       { v: collegati.join(), html: op ? (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
@@ -362,7 +373,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
             </Card>
             <Card {...cp("a-sis")}>
               <TabellaOrdinabile
-                colonne={[{ nome: t('as.sistema') }, { nome: t('as.complessita') }, { nome: t('as.integrazioneGg'), num: true }, { nome: '' }]}
+                colonne={[{ nome: t('as.sistema') }, { nome: t('as.tipo') }, { nome: t('as.complessita') }, { nome: t('as.integrazioneGg'), num: true }, { nome: '' }]}
                 righe={sis.map((x, i) => ({
                   key: x.id,
                   celle: [
@@ -373,6 +384,13 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                             onChange={(e) => updSis((y) => { y[i].nome = e.target.value; })} />
                         </span>
                         <StatoPulsanti stato={st(`assessment.sistemi.${x.id}`)} onStato={setSt(`assessment.sistemi.${x.id}`)} />
+                      </span>) },
+                    { v: x.tipo ?? 'altri', html: (
+                      <span className="alt-inputwrap" style={{ maxWidth: 170 }}>
+                        <select className="alt-input" value={x.tipo ?? 'altri'} aria-label={t('as.tipo')} disabled={solaLettura}
+                          onChange={(e) => updSis((y) => { y[i].tipo = e.target.value as TipoSistema; })}>
+                          {(['core', 'crm', 'dms', 'bi', 'altri'] as const).map((c) => <option key={c} value={c}>{t(`arch.${c}` as Chiave)}</option>)}
+                        </select>
                       </span>) },
                     { v: ['bassa', 'media', 'alta'].indexOf(x.complessita), html: (
                       <span className="alt-inputwrap" style={{ maxWidth: 160 }}>
@@ -388,7 +406,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                 }))}
               />
               {!solaLettura && <button type="button" className="btn-piu" style={{ marginTop: 10 }}
-                onClick={() => updSis((y) => { y.push({ id: nuovoId('sis'), nome: t('as.nuovoSistema'), complessita: 'media' }); })}>{t('as.aggiungiSistema')}</button>}
+                onClick={() => updSis((y) => { y.push({ id: nuovoId('sis'), nome: t('as.nuovoSistema'), complessita: 'media', tipo: 'altri' }); })}>{t('as.aggiungiSistema')}</button>}
             </Card>
             <Card {...cp("a-vin")} aside={<StatoPulsanti stato={st('vincoli')} onStato={setSt('vincoli')} />}>
               <TabellaOrdinabile
@@ -411,6 +429,9 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
 
           {/* ================================================= 2 SOLUZIONE */}
           {fase === 'soluzione' && (<>
+            <Card {...cp("s-arch")}>
+              <MappaArchitettura dati={arch} attiva={areaAtt} onAttiva={setAreaAtt} />
+            </Card>
             <Card {...cp("s-app")} aside={<StatoPulsanti stato={st('approccio')} onStato={setSt('approccio')} />}>
               <div className="scelta">
                 {(['saas', 'on_premise', 'entrambi'] as const).map((a) => (
@@ -431,7 +452,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                     const cop = coperturaSistema(cfg, o, x);
                     const con = cop ? cfg.catalogo.connettori.find((c) => c.id === cop) : null;
                     return {
-                      key: x.id,
+                      key: x.id, ...evid(x.id),
                       celle: [
                         { v: x.nome, html: <strong>{x.nome}</strong> },
                         { v: x.complessita, html: t(`as.compl.${x.complessita}` as Chiave) },
@@ -469,7 +490,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                           const on = (o.soluzione[k].includes(c.id) || !!copre) && !bloccato;
                           const modOn = (cfg.moduli ?? []).find((m) => modAtt.includes(m.id) && (m[k] ?? []).includes(c.id));
                           return {
-                            key: c.id, className: bloccato ? 'is-bloccato' : on ? undefined : 'is-off',
+                            key: c.id, ...evid(c.id, bloccato ? 'is-bloccato' : on ? undefined : 'is-off'),
                             celle: [
                               { v: on ? 1 : 0, html: (
                                 <label className="alt-switch" title={copre ? t('as.copertoDa', { v: copre }) : undefined}>
@@ -490,7 +511,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                           };
                         }),
                         ...o.soluzione[kc].map((c, i) => ({
-                          key: c.id,
+                          key: c.id, ...evid(c.id),
                           celle: [
                             { v: 1, html: <span className="muted" aria-hidden="true">✓</span> },
                             { v: c.nome, html: (
@@ -592,7 +613,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                 gg: o.stima.base.reduce((a, b) => a + b.gg, 0) * fImp,
                 importo: o.stima.base.reduce((a, b) => a + b.gg * fImp * r.tariffe[b.figura], 0) }]} />
             </Card>
-            <Card {...cp("st-cust")}>
+            <Card {...cp("st-cust")} aside={<StatoPulsanti stato={st('stima.custom')} onStato={setSt('stima.custom')} />}>
               <table className="alt-table">
                 <thead><tr><th>{t('st.voce')}</th><th className="is-num">{t('st.giornate')}</th><th>{t('st.figura')}</th><th className="is-num">{t('st.importo')}</th><th /></tr></thead>
                 {(['integrazioni', 'catalogo', 'moduli', 'stima'] as const).map((g) => {
@@ -660,7 +681,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                 return { scenario: scen.length > 1 ? x.nome : undefined, gg: tutte.reduce((a, y) => a + y.gg, 0), importo: tutte.reduce((a, y) => a + y.prezzo, 0) };
               })} />
             </Card>
-            <Card {...cp("st-op")}>
+            <Card {...cp("st-op")} aside={<StatoPulsanti stato={st('stima.messa')} onStato={setSt('stima.messa')} />}>
               <table className="alt-table">
                 <thead><tr><th>{t('st.voce')}</th>{saas && <th className="is-num">SaaS</th>}{onp && <th className="is-num">On-premise</th>}</tr></thead>
                 <tbody>

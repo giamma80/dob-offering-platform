@@ -14,7 +14,7 @@ const Icona = () => (
 /** Data table del design system: ogni colonna ordinabile, numeri allineati a destra con l'intestazione. */
 export function TabellaOrdinabile({ colonne, righe, totale }: {
   colonne: Colonna[];
-  righe: { key: string; celle: Cella[]; className?: string }[];
+  righe: { key: string; celle: Cella[]; className?: string; onEnter?: () => void; onLeave?: () => void }[];
   totale?: Cella[];
 }) {
   const [ord, setOrd] = useState<{ i: number; dir: 1 | -1 } | null>(null);
@@ -44,7 +44,7 @@ export function TabellaOrdinabile({ colonne, righe, totale }: {
       </thead>
       <tbody>
         {viste.map((r) => (
-          <tr key={r.key} className={r.className}>
+          <tr key={r.key} className={r.className} onMouseEnter={r.onEnter} onMouseLeave={r.onLeave}>
             {r.celle.map((c, i) => <td key={i} className={colonne[i]?.num ? 'is-num' : undefined}>{c.html ?? c.v}</td>)}
           </tr>
         ))}

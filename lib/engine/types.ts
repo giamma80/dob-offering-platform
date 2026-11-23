@@ -54,7 +54,19 @@ export interface ModuloDob {
   customizzazione?: VoceCatalogo;   // voce che il modulo aggiunge sempre alla customizzazione
   /** opzione a classi: se attivata nell'offerta, impianto + giornate per classe */
   opzioneClassi?: { id: string; nome: string; impianto: number; perClasse: number; figura: FiguraId };
+  /** nativo: sempre incluso, non si deseleziona con la configurazione light */
+  nativo?: boolean;
+  /** area del grafico dell'architettura che il modulo accende */
+  area?: AreaArchitettura;
 }
+
+/** Aree del grafico dell'architettura (Digital Onboarding follow up, slide 3). */
+export type AreaArchitettura =
+  | 'kyc' | 'aml' | 'firma' | 'doc' | 'notifiche'
+  | 'componibile' | 'workflow' | 'design' | 'multifornitore'
+  | 'core' | 'crm' | 'dms' | 'bi' | 'altri';
+
+export type TipoSistema = 'core' | 'crm' | 'dms' | 'bi' | 'altri';
 
 /** Configurazione di sistema: una riga versionata di public.configurazione.dati */
 export interface Config {
@@ -75,8 +87,8 @@ export interface Config {
   integrazioneSistema: { bassa: number; media: number; alta: number; figura: FiguraId };
   catalogo: {
     base: VoceCatalogo[];
-    connettori: (VoceCatalogo & { default: boolean })[];
-    integrazioni: (VoceCatalogo & { default: boolean; vincolo?: VincoloDef['id'] })[];
+    connettori: (VoceCatalogo & { default: boolean; area?: AreaArchitettura })[];
+    integrazioni: (VoceCatalogo & { default: boolean; vincolo?: VincoloDef['id']; area?: AreaArchitettura })[];
     cicd: TargetCicd[];
     ambientiSaas: { numero: number; ggPerAmbiente: number; figura: FiguraId };
     passaggioConsegne: VoceCatalogo;
@@ -113,6 +125,8 @@ export interface Sistema {
   id: string;
   nome: string;
   complessita: Complessita;
+  /** casella "Sistemi cliente" del grafico */
+  tipo?: TipoSistema;
   copertoDa?: string | null;        // id del connettore di catalogo che lo copre
 }
 

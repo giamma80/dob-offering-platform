@@ -1,5 +1,6 @@
 import type { Offerta, StatoValore } from './types';
 import { calcola, moduliAttivi } from './calcola';
+import { architetturaCliente } from './architettura';
 import type { Config } from './types';
 
 /* Stato dei valori (design v2 §4). Nessuna fase è bloccata: ogni valore esiste e dichiara
@@ -24,9 +25,10 @@ export function campiFase(o: Offerta, fase: Fase): string[] {
       return ['approccio', 'soluzione.connettori', 'soluzione.integrazioni',
         ...(o.approccio !== 'saas' ? ['soluzione.cicd', 'leve.aiOnPremise', 'leve.manutenzioneOnPremise'] : [])];
     case 'stima':
-      return [...o.stima.base.map((b) => `stima.base.${b.id}`), 'stima.quote'];
+      return [...o.stima.base.map((b) => `stima.base.${b.id}`), 'stima.custom', 'stima.quote', 'stima.messa'];
     case 'prezzo':
-      return ['prezzo.margineVenduto', 'prezzo.scaglioni', 'prezzo.metrica', 'leve.canoneSaas',
+      return ['prezzo.margineVenduto', 'prezzo.scaglioni', 'prezzo.metrica',
+        ...(o.approccio !== 'on_premise' ? ['leve.canoneSaas'] : []),
         ...(o.approccio !== 'saas' ? ['leve.softwareOnPremise'] : [])];
     case 'resoconto':
       return (['assessment', 'soluzione', 'stima', 'prezzo'] as Fase[]).flatMap((f) => campiFase(o, f));
@@ -81,6 +83,8 @@ export interface Specchietto {
   /** moduli DOB inclusi: è tutto ciò che il cliente ha scelto */
   moduli: string[];
   light: boolean;
+  /** grafico dell'architettura: solo caselle accese o spente */
+  architettura: ReturnType<typeof architetturaCliente>;
 }
 
 export function specchietto(cfg: Config, o: Offerta, sc: 'saas' | 'on_premise'): Specchietto {
@@ -100,6 +104,7 @@ export function specchietto(cfg: Config, o: Offerta, sc: 'saas' | 'on_premise'):
     totalePrimoAnno: righe.reduce((a, rr) => a + rr.importo, 0),
     extra: r.vincoliUnaTantum.map((u) => ({ voce: u.nome, importo: u.prezzo })),
     moduli: (cfg.moduli ?? []).filter((m) => moduliAttivi(cfg, o).includes(m.id)).map((m) => m.nome),
-    light: !!o.assessment.light
+    light: !!o.assessment.light,
+    architettura: architetturaCliente(cfg, o)
   };
 }

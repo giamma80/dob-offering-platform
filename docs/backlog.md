@@ -10,6 +10,7 @@ Stato al primo rilascio. In ordine di priorità; ogni voce indica la schermata d
 - Motore di calcolo v2 con test: tariffe dal margine sul venduto, N + 1, quote a cascata, consumo a scaglioni, tre modalità AI, manutenzione on-premise, vincoli, soglia del canone, specchietto, serie a 36 mesi, composizioni, sensibilità ai clienti, curva di recupero.
 - Fasi 1–4 come pagina unica di card (mockup), righe aggiungibili, interruttori della Soluzione, card Canoni e Minimo garantito.
 - Resoconto con grafici ad area e barre (toggle scenario, Area/Barre, €/%), Sostenibilità, Dettaglio costi A/B.
+- Catalogo a 12 moduli allineato alle presentazioni, provider per modulo, grafico dell'architettura in Soluzione e nello specchietto (configurazione v4).
 - Cascata Assessment → Soluzione → Stima: sistemi con complessità, copertura via connettore, classi documentali, customizzazione raggruppata per origine (configurazione v3).
 - Business plan con curva di recupero, timeline dei progetti e contributi; Parametri di sistema in card.
 
@@ -25,6 +26,9 @@ Stato al primo rilascio. In ordine di priorità; ogni voce indica la schermata d
 13. **Tema scuro**: i token ci sono già (`[data-theme="dark"]`), manca il selettore.
 
 ## Da verificare con il business
+
+- Pesi dei 12 moduli (nativi 50%) e giornate dei nuovi provider, stimate per analogia.
+- Parametri di sistema non ancora modificabili da interfaccia: quote a cascata, vincoli, leve di default, scaglioni di consumo, investimento.
 
 - Giornate CI/CD per AWS, GCP e Azure (130 gg, stima).
 - Importo di default dell'audit annuale (6.000 €/anno, segnaposto).

@@ -11,10 +11,10 @@ const s = (v) => (v === null ? 'null' : `'${String(v).replace(/'/g, "''")}'`);
 const fin = nuovaOfferta(cfg, 'Findomestic Banca');
 fin.approccio = 'entrambi';
 fin.assessment.sistemi = [
-  { id: 'sis-crm', nome: 'CRM Salesforce', complessita: 'media' },
-  { id: 'sis-core', nome: 'Core banking · ESB interno', complessita: 'alta' },
-  { id: 'sis-firma', nome: 'Firma elettronica Namirial', complessita: 'bassa', copertoDa: 'namirial' },
-  { id: 'sis-antifrode', nome: 'Antifrode, provider terzo', complessita: 'media' }
+  { id: 'sis-crm', nome: 'CRM Salesforce', complessita: 'media', tipo: 'crm' },
+  { id: 'sis-core', nome: 'Core banking · ESB interno', complessita: 'alta', tipo: 'core' },
+  { id: 'sis-firma', nome: 'Firma elettronica Namirial', complessita: 'bassa', tipo: 'altri', copertoDa: 'namirial' },
+  { id: 'sis-antifrode', nome: 'Antifrode, provider terzo', complessita: 'media', tipo: 'altri' }
 ];
 fin.soluzione.cicd = 'openshift';
 fin.prezzo.metrica = 'avviata';
@@ -42,8 +42,8 @@ const finStati = {
 const uni = nuovaOfferta(cfg, 'Unipol · journey vita');
 uni.approccio = 'on_premise';
 uni.assessment.sistemi = [
-  { id: 'sis-banca', nome: 'Banca collocatrice', complessita: 'media' },
-  { id: 'sis-polizze', nome: 'Sistema polizze Vita', complessita: 'media' }
+  { id: 'sis-banca', nome: 'Banca collocatrice', complessita: 'media', tipo: 'core' },
+  { id: 'sis-polizze', nome: 'Sistema polizze Vita', complessita: 'media', tipo: 'core' }
 ];
 uni.soluzione.connettori = ['cleverchain', 'namirial'];
 const uniStati = { approccio: 'confermato', 'soluzione.connettori': 'dichiarato', 'assessment.documentiPerPratica': 'dichiarato' };
