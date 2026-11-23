@@ -121,22 +121,22 @@ Specifica completa: `DOB/Cascata di valutazione - specifica.md` (progetto).
 - In Soluzione, la card **Copertura dei sistemi** permette di coprire un sistema con un connettore di catalogo: niente integrazione dedicata, il connettore si conta una volta. Se il connettore è bloccato da un modulo spento, torna l'integrazione dedicata.
 - La voce base "Integrazioni con i sistemi" (48 gg) diventa **"Impostazione delle integrazioni"** (16 gg): il resto è ora per sistema.
 - In Stima la customizzazione è raggruppata (integrazioni con i sistemi · catalogo · moduli DOB · aggiunte in stima) e ogni riga mostra l'origine. Le aggiunte manuali in Stima vivono in `stima.extra`.
-- Le tre voci per il cliente non cambiano: tutto resta dentro Customizzazione.
+- Per il cliente le customizzazioni stanno dentro la Messa in opera (§7).
 - Moduli, sistemi, connettori e integrazioni usano lo stesso componente tabella (come Vincoli).
 
 ## 7. Le tre voci per il cliente
 
-| Voce | Natura | Si compone di |
-|---|---|---|
-| **Setup e impianto** | una tantum | base applicativa (impianto della piattaforma, ridotto in configurazione light) + messa in opera nello scenario + voci parametriche e garanzia + quota servizi ReeVo (SaaS) |
-| **Customizzazione** | una tantum | solo connettori, integrazioni e voci custom scelti, più le voci aggiunte dai moduli, con le voci parametriche. Identica nei due scenari; zero se non ci sono customizzazioni |
-| **Canone annuo** | ricorrente | SaaS: canone + consumo. On-premise: software + manutenzione + AI rifatturata (+ consumo) |
+| Voce | Natura | Si compone di | Sottovoci nello specchietto |
+|---|---|---|---|
+| **Messa in opera** | una tantum | base applicativa (ridotta in configurazione light) + customizzazioni + voci parametriche | base applicativa; integrazioni con i suoi sistemi; connettori e integrazioni di catalogo; personalizzazioni dei moduli; altre personalizzazioni; gestione del progetto, test e garanzia |
+| **Adeguamento infrastruttura** | una tantum, voce libera | on-premise: adeguamento al target CI/CD; SaaS: ambienti + quota servizi una tantum ReeVo | il target per nome (es. "Adeguamento a OpenShift") o "Ambienti della piattaforma", senza nominare fornitori. Assente se zero |
+| **Canone annuo** | ricorrente | SaaS: canone + consumo. On-premise: software + manutenzione (AMS) + AI rifatturata (+ consumo) | software, consumo a pratiche, manutenzione (AMS), elaborazione AI, quando presenti |
 
 ## 8. Output
 
 **Dettaglio interno** — riservato ALTEN, non esce mai.
 
-**Specchietto cliente** — tre righe, totale del primo anno, righe dai vincoli. Nessuna giornata, nessun margine, nessun fornitore terzo. Si genera dal dettaglio (`specchietto()` in `lib/engine/stati.ts`), esiste solo per offerte approvate.
+**Specchietto cliente** — le tre voci con le loro sottovoci, totale del primo anno, righe dai vincoli. Le sottovoci mostrano solo importi: nessuna giornata, nessun costo o margine, nessun fornitore terzo (ReeVo, n8n, provider di firma, KYC, AML, credito), e la contingenza è inclusa in "gestione del progetto, test e garanzia" senza essere nominata. Una voce con una sola sottovoce non la ripete. Si genera dal dettaglio (`specchietto()` in `lib/engine/stati.ts`), esiste solo per offerte approvate.
 
 ## 9. Monitoraggio
 

@@ -4,7 +4,7 @@ import type { Config, FiguraId, Offerta, Quota, RigaGg, Scaglione, Sistema } fro
 
    - tariffa = costo ÷ (1 − margine sul venduto), arrotondata al centesimo (listino)
    - costi condivisi ricorrenti ÷ (N + 1), N = clienti già attivi
-   - tre voci per il cliente: Setup e impianto, Customizzazione, Licenza annuale */
+   - tre voci per il cliente: Messa in opera, Adeguamento infrastruttura, Canone annuo */
 
 export const r2 = (v: number) => Math.round(v * 100) / 100;
 
@@ -141,7 +141,7 @@ export function coperturaSistema(cfg: Config, o: Offerta, s: Sistema): string | 
   return s.copertoDa;
 }
 
-/** Voci di customizzazione, ognuna con gruppo e origine. La base applicativa non è qui: sta in Setup e impianto.
+/** Voci di customizzazione, ognuna con gruppo e origine. La base applicativa non è qui: sta nel setup.
    1. integrazioni: una per sistema da integrare non coperto da un connettore
    2. catalogo: connettori e integrazioni scelti (o che coprono un sistema), voci custom di Soluzione
    3. moduli: voci fisse e opzioni a classi dei moduli inclusi
