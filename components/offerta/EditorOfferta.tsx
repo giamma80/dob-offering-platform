@@ -248,7 +248,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
     if (!x) return undefined;
     const [k, ...resto] = x.split(':'); const v = resto.join(':');
     return k === 'sistema' ? t('st.daSistema', { v }) : k === 'copre' ? t('so.copreSistema', { v }) : k === 'modulo' ? t('so.daModulo', { v })
-      : k === 'vincolo' ? t('so.daVincolo', { v }) : k === 'soluzione' ? t('so.vocecustom') : t('st.daCatalogo');
+      : k === 'vincolo' ? t('so.daVincolo', { v }) : k === 'soluzione' ? undefined : t('st.daCatalogo');
   };
   const dovCustom = (idv: string) =>
     o.soluzione.connettoriCustom.some((c) => c.id === idv) ? 'connettoriCustom' as const
