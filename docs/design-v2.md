@@ -35,8 +35,8 @@ Le offerte approvate si aprono in lettura o si **duplicano**: i default della nu
 
 | | Fase | Cosa si fissa | Chi la compila |
 |---|---|---|---|
-| 1 | **Assessment** | cliente, volumi annui e crescita, documenti per pratica, sistemi da integrare, vincoli contrattuali | business manager |
-| 2 | **Soluzione** | approccio (SaaS, on-premise o entrambi), connettori, integrazioni, target CI/CD per l'on-premise, modalità AI | presales |
+| 1 | **Assessment** | cliente, moduli DOB (i nativi fissi in testa), volumi annui e crescita, documenti per pratica, vincoli contrattuali | business manager |
+| 2 | **Soluzione** | architettura, approccio (SaaS, on-premise o entrambi), sistemi da integrare con la loro copertura, connettori, integrazioni, target CI/CD per l'on-premise, modalità AI | presales |
 | 3 | **Stima** | giornate per voce, con i default di catalogo da confermare; voci parametriche | delivery |
 | 4 | **Prezzo** | tariffe, margine sul venduto, canoni, scaglioni, minimo garantito | business manager |
 | 5 | **Resoconto** | sintesi delle quattro fasi; da qui escono i due output | chi chiude l'offerta |
@@ -115,7 +115,7 @@ In Soluzione e nello specchietto cliente c'è il grafico della slide 3 del follo
 
 Specifica completa: `DOB/Cascata di valutazione - specifica.md` (progetto).
 
-- Ogni **sistema da integrare** ha una complessità (bassa 5, media 10, alta 20 gg dev, in Parametri) e genera da solo un'integrazione dedicata nella customizzazione.
+- I **sistemi da integrare** si censiscono in Soluzione (l'Assessment lo fa il business, che di solito non li conosce): nome, tipo, complessità e copertura in un'unica tabella. Ogni sistema ha una complessità (bassa 5, media 10, alta 20 gg dev, in Parametri) e genera da solo un'integrazione dedicata nella customizzazione.
 - In Soluzione, la card **Copertura dei sistemi** permette di coprire un sistema con un connettore di catalogo: niente integrazione dedicata, il connettore si conta una volta. Se il connettore è bloccato da un modulo spento, torna l'integrazione dedicata.
 - La voce base "Integrazioni con i sistemi" (48 gg) diventa **"Impostazione delle integrazioni"** (16 gg): il resto è ora per sistema.
 - In Stima la customizzazione è raggruppata (integrazioni con i sistemi · catalogo · moduli DOB · aggiunte in stima) e ogni riga mostra l'origine. Le aggiunte manuali in Stima vivono in `stima.extra`.

@@ -237,4 +237,10 @@ tr.is-nativo .alt-switch { cursor: not-allowed; }
 .nativi li { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, .08); color: var(--ink-on-brand); font-size: 12.5px; font-weight: 600; }
 .nativi__n { font-size: 11px; font-weight: 700; color: var(--accent-azure-pale); font-variant-numeric: tabular-nums; }
-.campo-largo { display: block; width: 100%; min-width: 320px; max-width: 520px; }
+.campo-largo { display: block; width: 100%; min-width: 260px; max-width: 520px; }
+
+/* moduli nativi: righe fisse, separate dalle attivabili */
+.alt-table tr.is-nativo > td { background: var(--surface-accent-soft); }
+.alt-table tr.is-nativo:hover > td { background: var(--surface-accent-soft); }
+.alt-table tr.is-nativo .alt-switch { opacity: .55; cursor: not-allowed; }
+.alt-table tr.is-separa > td { border-top: 2px solid var(--line-strong); }

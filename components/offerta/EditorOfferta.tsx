@@ -31,13 +31,12 @@ const SEZIONI: Record<Fase, Sezione[]> = {
     { id: 'a-cli', k: 'as.cliente', ico: 'cliente' },
     { id: 'a-mod', k: 'as.moduli', ico: 'catalogo' },
     { id: 'a-vol', k: 'as.volumi', ico: 'volumi' },
-    { id: 'a-sis', k: 'as.sistemi', ico: 'sistemi' },
     { id: 'a-vin', k: 'as.vincoli', ico: 'vincoli' }
   ],
   soluzione: [
     { id: 's-arch', k: 'so.architettura', ico: 'catalogo' },
     { id: 's-app', k: 'so.approccio', ico: 'approccio' },
-    { id: 's-sis', k: 'so.coperturaTit', ico: 'sistemi' },
+    { id: 's-sis', k: 'as.sistemi', ico: 'sistemi' },
     { id: 's-con', k: 'so.connettori', ico: 'sistemi' },
     { id: 's-int', k: 'so.integrazioni', ico: 'integraz' },
     { id: 's-ci', k: 'so.cicd', ico: 'cicd' },
@@ -307,16 +306,9 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
                   <span className="alt-switch__box" aria-hidden="true" /><span>{t('as.light')}</span>
                 </label>
               </span>}>
-              <ul className="nativi" title={t('as.nativiTip')}>
-                {(cfg.moduli ?? []).map((m, i) => m.nativo && (
-                  <li key={m.id} title={`${t('as.nativiTip')} · ${perc(m.peso / 100)}`}>
-                    <span className="nativi__n">{String(i + 1).padStart(2, '0')}</span>{m.nome}
-                  </li>
-                ))}
-              </ul>
               <TabellaOrdinabile
                 colonne={[{ nome: t('as.incluso') }, { nome: t('as.modulo') }, { nome: t('par.peso'), num: true }, { nome: t('as.effetto') }]}
-                righe={(cfg.moduli ?? []).filter((m) => !m.nativo).map((m) => {
+                righe={[...(cfg.moduli ?? [])].sort((x, y) => Number(!!y.nativo) - Number(!!x.nativo)).map((m) => {
                   const on = modAtt.includes(m.id);
                   const op = m.opzioneClassi, sc = o.assessment.opzioniModuli?.[m.id] ?? { attiva: false, classi: 1 };
                   const collegati = [
@@ -324,10 +316,10 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
                     ...(m.integrazioni ?? []).map((id) => cfg.catalogo.integrazioni.find((c) => c.id === id)?.nome ?? id)
                   ];
                   return {
-                    key: m.id, className: on ? undefined : 'is-off',
+                    key: m.id, gruppo: m.nativo ? 'nativi' : 'attivabili', className: m.nativo ? 'is-nativo' : on ? undefined : 'is-off',
                     celle: [
                       { v: on ? 1 : 0, html: (
-                        <label className="alt-switch"><input type="checkbox" checked={on} aria-label={m.nome} disabled={solaLettura || !o.assessment.light}
+                        <label className="alt-switch" title={m.nativo ? t('as.nativiTip') : undefined}><input type="checkbox" checked={on} aria-label={m.nome} disabled={solaLettura || !o.assessment.light || m.nativo}
                           onChange={(e) => upd((x) => {
                             const cur = x.assessment.moduli ?? (cfg.moduli ?? []).map((y) => y.id);
                             x.assessment.moduli = e.target.checked ? [...cur, m.id] : cur.filter((y) => y !== m.id);
@@ -368,40 +360,6 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
                   onChange={(v) => upd((x) => { x.assessment.documentiPerPratica = v; }, 'assessment.documentiPerPratica')} />
               </div>
             </Card>
-            <Card {...cp("a-sis")}>
-              <TabellaOrdinabile
-                colonne={[{ nome: t('as.sistema') }, { nome: t('as.tipo') }, { nome: t('as.complessita') }, { nome: t('as.integrazioneGg'), num: true }, { nome: '' }]}
-                righe={sis.map((x, i) => ({
-                  key: x.id,
-                  celle: [
-                    { v: x.nome, html: (
-                      <span className="alt-inputwrap campo-largo">
-                        <input className="alt-input" value={x.nome} aria-label={t('as.sistema')} title={x.nome} disabled={solaLettura}
-                          onChange={(e) => updSis((y) => { y[i].nome = e.target.value; })} />
-                      </span>) },
-                    { v: x.tipo ?? 'altri', html: (
-                      <span className="alt-inputwrap" style={{ width: 190 }}>
-                        <select className="alt-input" value={x.tipo ?? 'altri'} aria-label={t('as.tipo')} disabled={solaLettura}
-                          onChange={(e) => updSis((y) => { y[i].tipo = e.target.value as TipoSistema; })}>
-                          {TIPI_SISTEMA.map((c) => <option key={c} value={c}>{t(`tipo.${c}` as Chiave)}</option>)}
-                        </select>
-                      </span>) },
-                    { v: ['bassa', 'media', 'alta'].indexOf(x.complessita), html: (
-                      <span className="alt-inputwrap" style={{ maxWidth: 160 }}>
-                        <select className="alt-input" value={x.complessita} aria-label={t('as.complessita')} disabled={solaLettura}
-                          onChange={(e) => updSis((y) => { y[i].complessita = e.target.value as Complessita; })}>
-                          {(['bassa', 'media', 'alta'] as const).map((c) => <option key={c} value={c}>{t(`as.compl.${c}` as Chiave)}</option>)}
-                        </select>
-                      </span>) },
-                    { v: ggSistema(x), html: x.copertoDa ? <span className="muted">{t('as.copertoDa', { v: cfg.catalogo.connettori.find((c) => c.id === x.copertoDa)?.nome ?? '' })}</span> : `${numero(ggSistema(x))} gg` },
-                    { v: '', html: !solaLettura && <button type="button" className="chip__x" aria-label={t('comune.rimuovi')} title={t('comune.rimuovi')}
-                      onClick={() => updSis((y) => { y.splice(i, 1); })}>×</button> }
-                  ]
-                }))}
-              />
-              {!solaLettura && <button type="button" className="btn-piu" style={{ marginTop: 10 }}
-                onClick={() => updSis((y) => { y.push({ id: nuovoId('sis'), nome: t('as.nuovoSistema'), complessita: 'media', tipo: 'altri' }); })}>{t('as.aggiungiSistema')}</button>}
-            </Card>
             <Card {...cp("a-vin")}>
               <TabellaOrdinabile
                 colonne={[{ nome: t('as.attivo') }, { nome: t('as.vincolo') }, { nome: t('as.effetto') }]}
@@ -439,33 +397,54 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
               </div>
             </Card>
             <Card {...cp("s-sis")}>
-              {sis.length === 0 ? <p className="vuoto">{t('so.nessunSistema')}</p> : (
-                <TabellaOrdinabile
-                  colonne={[{ nome: t('as.sistema') }, { nome: t('as.complessita') }, { nome: t('so.copertura') }, { nome: t('st.giornate'), num: true }]}
-                  righe={sis.map((x, i) => {
-                    const cop = coperturaSistema(cfg, o, x);
-                    const con = cop ? cfg.catalogo.connettori.find((c) => c.id === cop) : null;
-                    return {
-                      key: x.id, ...evid(x.id),
-                      celle: [
-                        { v: x.nome, html: <strong>{x.nome}</strong> },
-                        { v: x.complessita, html: t(`as.compl.${x.complessita}` as Chiave) },
-                        { v: cop ?? '', html: (
-                          <span className="alt-inputwrap" style={{ maxWidth: 300 }}>
-                            <select className="alt-input" value={x.copertoDa ?? ''} aria-label={t('so.copertura')} disabled={solaLettura}
-                              onChange={(e) => updSis((y) => { y[i].copertoDa = e.target.value || null; }, 'soluzione.sistemi')}>
-                              <option value="">{t('so.integrazioneDedicata')}</option>
-                              {cfg.catalogo.connettori.filter((c) => !moduloBloccante(cfg, o, 'connettori', c.id)
-                                && (!['firma', 'kyc', 'aml', 'notifiche'].includes(areaTipo(x.tipo)) || areaVoce(cfg, o, c.id) === areaTipo(x.tipo))).map((c) =>
-                                <option key={c.id} value={c.id}>{t('so.connettoreX', { v: c.nome })}</option>)}
-                            </select>
-                          </span>) },
-                        { v: con ? (o.stima.gg[con.id] ?? con.gg) : ggSistema(x), html: `${numero(con ? (o.stima.gg[con.id] ?? con.gg) : ggSistema(x))} gg` }
-                      ]
-                    };
-                  })}
-                />
-              )}
+              <TabellaOrdinabile
+                colonne={[{ nome: t('as.sistema') }, { nome: t('as.tipo') }, { nome: t('as.complessita') }, { nome: t('so.copertura') },
+                  { nome: t('st.giornate'), num: true }, { nome: '' }]}
+                righe={sis.map((x, i) => {
+                  const cop = coperturaSistema(cfg, o, x);
+                  const con = cop ? cfg.catalogo.connettori.find((c) => c.id === cop) : null;
+                  const gg = con ? (o.stima.gg[con.id] ?? con.gg) : ggSistema(x);
+                  return {
+                    key: x.id, ...evid(x.id),
+                    celle: [
+                      { v: x.nome, html: (
+                        <span className="alt-inputwrap campo-largo">
+                          <input className="alt-input" value={x.nome} aria-label={t('as.sistema')} title={x.nome} disabled={solaLettura}
+                            onChange={(e) => updSis((y) => { y[i].nome = e.target.value; })} />
+                        </span>) },
+                      { v: x.tipo ?? 'altri', html: (
+                        <span className="alt-inputwrap" style={{ width: 180 }}>
+                          <select className="alt-input" value={x.tipo ?? 'altri'} aria-label={t('as.tipo')} disabled={solaLettura}
+                            onChange={(e) => updSis((y) => { y[i].tipo = e.target.value as TipoSistema; })}>
+                            {TIPI_SISTEMA.map((c) => <option key={c} value={c}>{t(`tipo.${c}` as Chiave)}</option>)}
+                          </select>
+                        </span>) },
+                      { v: ['bassa', 'media', 'alta'].indexOf(x.complessita), html: (
+                        <span className="alt-inputwrap" style={{ width: 110 }}>
+                          <select className="alt-input" value={x.complessita} aria-label={t('as.complessita')} disabled={solaLettura}
+                            onChange={(e) => updSis((y) => { y[i].complessita = e.target.value as Complessita; })}>
+                            {(['bassa', 'media', 'alta'] as const).map((c) => <option key={c} value={c}>{t(`as.compl.${c}` as Chiave)}</option>)}
+                          </select>
+                        </span>) },
+                      { v: cop ?? '', html: (
+                        <span className="alt-inputwrap" style={{ width: 230 }}>
+                          <select className="alt-input" value={x.copertoDa ?? ''} aria-label={t('so.copertura')} disabled={solaLettura}
+                            onChange={(e) => updSis((y) => { y[i].copertoDa = e.target.value || null; })}>
+                            <option value="">{t('so.integrazioneDedicata')}</option>
+                            {cfg.catalogo.connettori.filter((c) => !moduloBloccante(cfg, o, 'connettori', c.id)
+                              && (!['firma', 'kyc', 'aml', 'notifiche'].includes(areaTipo(x.tipo)) || areaVoce(cfg, o, c.id) === areaTipo(x.tipo))).map((c) =>
+                              <option key={c.id} value={c.id}>{t('so.connettoreX', { v: c.nome })}</option>)}
+                          </select>
+                        </span>) },
+                      { v: gg, html: `${numero(gg)} gg` },
+                      { v: '', html: !solaLettura && <button type="button" className="chip__x" aria-label={t('comune.rimuovi')} title={t('comune.rimuovi')}
+                        onClick={() => updSis((y) => { y.splice(i, 1); })}>×</button> }
+                    ]
+                  };
+                })}
+              />
+              {!solaLettura && <button type="button" className="btn-piu" style={{ marginTop: 10 }}
+                onClick={() => updSis((y) => { y.push({ id: nuovoId('sis'), nome: t('as.nuovoSistema'), complessita: 'media', tipo: 'altri' }); })}>{t('as.aggiungiSistema')}</button>}
             </Card>
             {(['connettori', 'integrazioni'] as const).map((k) => {
               const kc = k === 'connettori' ? 'connettoriCustom' as const : 'integrazioniCustom' as const;

@@ -14,16 +14,18 @@ const Icona = () => (
 /** Data table del design system: ogni colonna ordinabile, numeri allineati a destra con l'intestazione. */
 export function TabellaOrdinabile({ colonne, righe, totale }: {
   colonne: Colonna[];
-  righe: { key: string; celle: Cella[]; className?: string; onEnter?: () => void; onLeave?: () => void }[];
+  righe: { key: string; celle: Cella[]; className?: string; onEnter?: () => void; onLeave?: () => void; gruppo?: string }[];
   totale?: Cella[];
 }) {
   const [ord, setOrd] = useState<{ i: number; dir: 1 | -1 } | null>(null);
+  /* con i gruppi l'ordinamento resta dentro il gruppo, e i gruppi restano separati */
   const viste = useMemo(() => {
-    if (!ord) return righe;
-    return [...righe].sort((a, b) => {
+    const gruppi = [...new Set(righe.map((r) => r.gruppo ?? ''))];
+    const ordina = (rr: typeof righe) => !ord ? rr : [...rr].sort((a, b) => {
       const x = a.celle[ord.i]?.v, y = b.celle[ord.i]?.v;
       return (typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y), 'it')) * ord.dir;
     });
+    return gruppi.flatMap((g, gi) => ordina(righe.filter((r) => (r.gruppo ?? '') === g)).map((r, i) => ({ ...r, separa: gi > 0 && i === 0 })));
   }, [righe, ord]);
   return (
     <table className="alt-table alt-sortable">
@@ -44,7 +46,7 @@ export function TabellaOrdinabile({ colonne, righe, totale }: {
       </thead>
       <tbody>
         {viste.map((r) => (
-          <tr key={r.key} className={r.className} onMouseEnter={r.onEnter} onMouseLeave={r.onLeave}>
+          <tr key={r.key} className={[r.className, r.separa ? 'is-separa' : ''].filter(Boolean).join(' ') || undefined} onMouseEnter={r.onEnter} onMouseLeave={r.onLeave}>
             {r.celle.map((c, i) => <td key={i} className={colonne[i]?.num ? 'is-num' : undefined}>{c.html ?? c.v}</td>)}
           </tr>
         ))}
