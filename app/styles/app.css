@@ -250,3 +250,4 @@ tr.is-nativo .alt-switch { cursor: not-allowed; }
 .alt-table.tab-fissa td, .alt-table.tab-fissa th { overflow: hidden; text-overflow: ellipsis; }
 .alt-table.tab-fissa--b td:last-child, .alt-table.tab-fissa--b th:last-child { padding-right: 56px; }
 .alt-table.tab-fissa .alt-inputwrap { max-width: 100% !important; }
+.alt-table.tab-fissa:not(.tab-fissa--b) td:last-child, .alt-table.tab-fissa:not(.tab-fissa--b) th:last-child { overflow: visible; text-overflow: clip; padding: 0 4px; text-align: center; white-space: nowrap; }
