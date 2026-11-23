@@ -2,6 +2,7 @@
    ogni chiave aggiunta qui deve avere la sua traduzione in `en`, altrimenti il typecheck fallisce. */
 
 export const it = {
+  "st.quoteSetup": "Quote a cascata sul setup",
   "utente.menu": "Menu utente",
   "par.ggClasse": "gg/classe",
   "st.daSistema": "Sistema {v}",
@@ -356,6 +357,7 @@ export const it = {
 export type Chiave = keyof typeof it;
 
 export const en: Record<Chiave, string> = {
+  "st.quoteSetup": "Cascading quotas on setup",
   "utente.menu": "User menu",
   "par.ggClasse": "days/class",
   "st.daSistema": "System {v}",

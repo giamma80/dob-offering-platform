@@ -587,8 +587,10 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                     x.stima.base.push({ id: nuovoId('base'), nome: t('so.nuovaVoce'), gg: 5, figura: 'dev' });
                   })} />
                 </tbody>
-
               </table>
+              <BarraTotale etichetta={t('comune.totale')} valori={[{
+                gg: o.stima.base.reduce((a, b) => a + b.gg, 0) * fImp,
+                importo: o.stima.base.reduce((a, b) => a + b.gg * fImp * r.tariffe[b.figura], 0) }]} />
             </Card>
             <Card {...cp("st-cust")}>
               <table className="alt-table">
@@ -679,7 +681,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                   <tr><td>{t('st.base')}</td>
                     {saas && <td className="is-num">{numero(r.saas.setup.righe.filter((x) => o.stima.base.some((b) => b.id === x.id)).reduce((a, x) => a + x.gg, 0))} gg · {euro(r.saas.setup.righe.filter((x) => o.stima.base.some((b) => b.id === x.id)).reduce((a, x) => a + x.prezzo, 0))}</td>}
                     {onp && <td className="is-num">{numero(r.onPremise.setup.righe.filter((x) => o.stima.base.some((b) => b.id === x.id)).reduce((a, x) => a + x.gg, 0))} gg · {euro(r.onPremise.setup.righe.filter((x) => o.stima.base.some((b) => b.id === x.id)).reduce((a, x) => a + x.prezzo, 0))}</td>}</tr>
-                  <tr><td>{t('st.quote')}</td>
+                  <tr><td>{t('st.quoteSetup')}</td>
                     {saas && <td className="is-num">{numero(r.saas.setup.quote.reduce((a, q) => a + q.gg, 0))} gg · {euro(r.saas.setup.quote.reduce((a, q) => a + q.prezzo, 0))}</td>}
                     {onp && <td className="is-num">{numero(r.onPremise.setup.quote.reduce((a, q) => a + q.gg, 0))} gg · {euro(r.onPremise.setup.quote.reduce((a, q) => a + q.prezzo, 0))}</td>}</tr>
                   {saas && r.saas.setup.reevoServizi > 0 && (
