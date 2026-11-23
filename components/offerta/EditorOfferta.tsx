@@ -3,7 +3,7 @@
 import { scorriA } from '@/lib/ui/scorri';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import {
   TIPI_SISTEMA, architettura, areaTipo, areaVoce, calcola, coperturaSistema, fattoreImpianto, moduliAttivi, moduloBloccante, sistemi, vociCustomizzazione,
   type AreaArchitettura, type Complessita, type Config, type TipoSistema, type Fase, type FiguraId, type Offerta, type RigaGg, type Sistema
@@ -657,31 +657,35 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
             </Card>
             <Card {...cp("st-op")}>
               <table className="alt-table">
-                <thead><tr><th>{t('st.voce')}</th>{saas && <th className="is-num">SaaS</th>}{onp && <th className="is-num">On-premise</th>}</tr></thead>
+                <thead><tr><th>{t('st.voce')}</th>{scen.length > 1 && <th>{t('st.scenario')}</th>}
+                  <th className="is-num">{t('st.giornate')}</th><th className="is-num">{t('st.importo')}</th></tr></thead>
                 <tbody>
-                  {saas && r.saas.setup.righe.filter((x) => !o.stima.base.some((b) => b.id === x.id)).map((x) => (
-                    <tr key={`s-${x.id}`}><td>{x.nome}</td>
-                      <td className="is-num"><CampoNumero compatto etichetta={x.nome} valore={x.gg} min={0}
-                        onChange={(g) => upd((y) => { y.stima.gg[x.id] = g; }, 'stima.messa')} />
-                        <div className="muted" style={{ fontSize: 11 }}>{euro(x.prezzo)}</div></td>
-                      {onp && <td className="is-num">—</td>}</tr>
-                  ))}
-                  {onp && r.onPremise.setup.righe.filter((x) => !o.stima.base.some((b) => b.id === x.id)).map((x) => (
-                    <tr key={`o-${x.id}`}><td>{x.nome}</td>
-                      {saas && <td className="is-num">—</td>}
-                      <td className="is-num"><CampoNumero compatto etichetta={x.nome} valore={x.gg} min={0}
-                        onChange={(g) => upd((y) => { y.stima.gg[x.id] = g; }, 'stima.messa')} />
-                        <div className="muted" style={{ fontSize: 11 }}>{euro(x.prezzo)}</div></td></tr>
-                  ))}
-                  <tr><td>{t('st.base')}</td>
-                    {saas && <td className="is-num">{numero(r.saas.setup.righe.filter((x) => o.stima.base.some((b) => b.id === x.id)).reduce((a, x) => a + x.gg, 0))} gg · {euro(r.saas.setup.righe.filter((x) => o.stima.base.some((b) => b.id === x.id)).reduce((a, x) => a + x.prezzo, 0))}</td>}
-                    {onp && <td className="is-num">{numero(r.onPremise.setup.righe.filter((x) => o.stima.base.some((b) => b.id === x.id)).reduce((a, x) => a + x.gg, 0))} gg · {euro(r.onPremise.setup.righe.filter((x) => o.stima.base.some((b) => b.id === x.id)).reduce((a, x) => a + x.prezzo, 0))}</td>}</tr>
-                  <tr><td>{t('st.quoteSetup')}</td>
-                    {saas && <td className="is-num">{numero(r.saas.setup.quote.reduce((a, q) => a + q.gg, 0))} gg · {euro(r.saas.setup.quote.reduce((a, q) => a + q.prezzo, 0))}</td>}
-                    {onp && <td className="is-num">{numero(r.onPremise.setup.quote.reduce((a, q) => a + q.gg, 0))} gg · {euro(r.onPremise.setup.quote.reduce((a, q) => a + q.prezzo, 0))}</td>}</tr>
-                  {saas && r.saas.setup.reevoServizi > 0 && (
-                    <tr><td>{t('st.serviziReevo')}</td><td className="is-num">{euro(r.saas.setup.prezzo - r.saas.setup.righe.concat(r.saas.setup.quote).reduce((a, x) => a + x.prezzo, 0))}</td>{onp && <td className="is-num">—</td>}</tr>
-                  )}
+                  {scen.map((sc) => {
+                    const base = sc.s.setup.righe.filter((x) => o.stima.base.some((b) => b.id === x.id));
+                    const messa = sc.s.setup.righe.filter((x) => !o.stima.base.some((b) => b.id === x.id));
+                    const nomeSc = scen.length > 1 ? <td className="muted">{sc.nome}</td> : null;
+                    const reevo = sc.s.setup.prezzo - sc.s.setup.righe.concat(sc.s.setup.quote).reduce((a, x) => a + x.prezzo, 0);
+                    return (
+                      <Fragment key={sc.nome}>
+                        {messa.map((x) => (
+                          <tr key={`${sc.nome}-${x.id}`}><td>{x.nome}</td>{nomeSc}
+                            <td className="is-num"><CampoNumero compatto etichetta={x.nome} valore={x.gg} min={0}
+                              onChange={(g) => upd((y) => { y.stima.gg[x.id] = g; }, 'stima.messa')} /></td>
+                            <td className="is-num">{euro(x.prezzo)}</td></tr>
+                        ))}
+                        <tr className="is-quota"><td>{t('st.base')}</td>{nomeSc}
+                          <td className="is-num">{numero(base.reduce((a, x) => a + x.gg, 0))}</td>
+                          <td className="is-num">{euro(base.reduce((a, x) => a + x.prezzo, 0))}</td></tr>
+                        <tr className="is-quota"><td>{t('st.quoteSetup')}</td>{nomeSc}
+                          <td className="is-num">{numero(sc.s.setup.quote.reduce((a, q) => a + q.gg, 0))}</td>
+                          <td className="is-num">{euro(sc.s.setup.quote.reduce((a, q) => a + q.prezzo, 0))}</td></tr>
+                        {sc.s.setup.reevoServizi > 0 && (
+                          <tr className="is-quota"><td>{t('st.serviziReevo')}</td>{nomeSc}<td className="is-num">—</td>
+                            <td className="is-num">{euro(reevo)}</td></tr>
+                        )}
+                      </Fragment>
+                    );
+                  })}
                 </tbody>
               </table>
               <BarraTotale etichetta={t('st.totaleSetup')} valori={scen.map((x) => ({ scenario: scen.length > 1 ? x.nome : undefined, gg: x.s.setup.gg, importo: x.s.setup.prezzo }))} />

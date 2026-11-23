@@ -2,6 +2,7 @@
    ogni chiave aggiunta qui deve avere la sua traduzione in `en`, altrimenti il typecheck fallisce. */
 
 export const it = {
+  "st.scenario": "Scenario",
   "st.ggQuotate": "Giornate quotate",
   "st.ggPiattaformaTip": "Giornate per la piattaforma completa",
   "tipo.core": "Sistema core",
@@ -417,6 +418,7 @@ export const it = {
 export type Chiave = keyof typeof it;
 
 export const en: Record<Chiave, string> = {
+  "st.scenario": "Scenario",
   "st.ggQuotate": "Quoted days",
   "st.ggPiattaformaTip": "Days for the full platform",
   "tipo.core": "Core system",
