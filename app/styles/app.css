@@ -230,3 +230,11 @@ tr.is-evid > td { background: var(--signal-open-soft) !important; }
 tr.is-nativo .alt-switch { cursor: not-allowed; }
 .rail__avviso { margin: 8px 0 0; padding: 6px 8px; border-radius: var(--radius-sm); background: var(--signal-open-soft); color: var(--signal-open-ink); font-size: 12px; font-weight: 600; cursor: help; }
 .alt-table tr.is-neg td { color: var(--signal-negative); }
+
+/* moduli nativi: blocco fisso, non modificabile */
+.nativi { list-style: none; margin: 0 0 14px; padding: 10px; display: flex; flex-wrap: wrap; gap: 6px; border-radius: var(--radius-md);
+  background: var(--surface-brand); cursor: default; }
+.nativi li { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, .08); color: var(--ink-on-brand); font-size: 12.5px; font-weight: 600; }
+.nativi__n { font-size: 11px; font-weight: 700; color: var(--accent-azure-pale); font-variant-numeric: tabular-nums; }
+.campo-largo { display: block; width: 100%; min-width: 320px; max-width: 520px; }

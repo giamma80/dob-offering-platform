@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CONFIG_DEFAULT as cfg, nuovaOfferta, calcola, specchietto, bloccanti, avanzamento, tariffe, campiFase } from './index';
+import { CONFIG_DEFAULT as cfg, nuovaOfferta, calcola, specchietto, tariffe } from './index';
 
 const o = () => nuovaOfferta(cfg, 'Cliente di prova');
 
@@ -31,7 +31,7 @@ describe('SaaS', () => {
     expect(r.consumo.totale).toBe(5000 * 6 + 10000 * 4.5 + 5000 * 3.5);
     expect(r.saas.licenza.totale).toBe(140000 + 92500);
   });
-  it('riserva KPI = 5% della licenza', () => {
+  it('riserva KPI = 5% del canone annuo', () => {
     expect(r.saas.ricorrenti.find((v) => v.id === 'kpi')!.costo).toBeCloseTo(232500 * 0.05, 2);
   });
   it('servizi ReeVo una tantum nel setup, divisi per 5', () => {
@@ -57,7 +57,7 @@ describe('on-premise', () => {
     expect(r.onPremise.licenza.totale).toBe(40000);
     expect(r.onPremise.ricorrenti.filter((v) => v.id === 'ai' || v.id === 'manutenzione')).toHaveLength(0);
   });
-  it('software a zero, AI cliente, niente manutenzione: licenza zero', () => {
+  it('software a zero, AI cliente, niente manutenzione: canone annuo zero', () => {
     const x = o(); x.leve.aiOnPremise = 'cliente'; x.leve.manutenzioneOnPremise.attiva = false; x.leve.softwareOnPremise = 0;
     expect(calcola(cfg, x).onPremise.licenza.totale).toBe(0);
   });
@@ -79,28 +79,9 @@ describe('vincoli', () => {
 describe('specchietto', () => {
   it('tre righe, nessun dato interno', () => {
     const s = specchietto(cfg, o(), 'saas');
-    expect(s.righe.map((r) => r.voce)).toEqual(['Setup e impianto', 'Customizzazione', 'Licenza annuale']);
+    expect(s.righe.map((r) => r.voce)).toEqual(['Setup e impianto', 'Customizzazione', 'Canone annuo']);
     const json = JSON.stringify(s);
     for (const vietato of [/reevo/i, /"costo"/, /margine/i, /"gg"/, /n8n/i]) expect(json).not.toMatch(vietato);
-  });
-});
-
-describe('stati e approvazione', () => {
-  it('prezzo: un\'offerta solo on-premise arriva al 100% senza il canone SaaS', () => {
-    const x = o(); x.approccio = 'on_premise';
-    const tutti = Object.fromEntries(campiFase(x, 'prezzo').map((k) => [k, 'confermato' as const]));
-    expect(campiFase(x, 'prezzo')).not.toContain('leve.canoneSaas');
-    expect(avanzamento(x, tutti, 'prezzo')).toBe(100);
-  });
-  it('offerta nuova: tutto assunto, voci critiche bloccanti', () => {
-    const x = o();
-    expect(avanzamento(x, {}, 'assessment')).toBe(0);
-    expect(bloccanti(x, {})).toContain('prezzo.metrica');
-  });
-  it('dichiarando le voci critiche si sblocca l\'approvazione', () => {
-    const x = o(); x.approccio = 'saas';
-    const st = { 'assessment.volumeAnnuo': 'dichiarato', 'prezzo.metrica': 'confermato', 'prezzo.scaglioni': 'dichiarato' } as const;
-    expect(bloccanti(x, st)).toHaveLength(0);
   });
 });
 
@@ -109,7 +90,7 @@ import { serieMensile, composizioneRicavo, composizioneMargine, sensibilitaClien
 describe('serie e composizioni', () => {
   const x = o();
   const r = calcola(cfg, x);
-  it('serie a 36 mesi: parte dalla una tantum e chiude con licenza × 3 più le voci dai vincoli', () => {
+  it('serie a 36 mesi: parte dalla una tantum e chiude con canone annuo × 3 più le voci dai vincoli', () => {
     const s = serieMensile(r.saas, r.vincoliUnaTantum);
     expect(s).toHaveLength(37);
     expect(s[0].ricavo).toBeCloseTo(r.saas.setup.prezzo + r.saas.customizzazione.prezzo, 2);
@@ -311,11 +292,26 @@ describe('business plan: costi di piattaforma', () => {
   });
   it('il contributo del progetto è al lordo della quota condivisa', () => {
     const x = o(); x.approccio = 'saas';
-    const s = sintesiOfferta(cfg, x, {}).saas!;
+    const s = sintesiOfferta(cfg, x).saas!;
     expect(s.quotaPiattaformaAnnua).toBeCloseTo(quotaPiattaforma(cfg).annua, 6);
     const pr = { id: 'p', cliente: 'X', inizio: new Date(Date.UTC(2026, 0, 1)), margineAnnuo: s.margineAnnuo, marginePrimoAnno: s.marginePrimoAnno,
       licenzaAnnua: s.licenza, durataMesi: 36, inCorso: false, quotaPiattaformaAnnua: s.quotaPiattaformaAnnua, quotaPiattaformaUnaTantum: s.quotaPiattaformaUnaTantum };
     const netto = contributoAl({ ...pr, quotaPiattaformaAnnua: 0, quotaPiattaformaUnaTantum: 0 }, new Date(Date.UTC(2026, 11, 1)));
     expect(contributoAl(pr, new Date(Date.UTC(2026, 11, 1))) - netto).toBeCloseTo(s.quotaPiattaformaAnnua + s.quotaPiattaformaUnaTantum, 6);
+  });
+});
+
+
+import { areaTipo } from './index';
+
+describe('tipi dei sistemi', () => {
+  it('un sistema di firma elettronica accende la casella Firma, i pagamenti i sistemi core', () => {
+    expect(areaTipo('firma')).toBe('firma');
+    expect(areaTipo('pagamenti')).toBe('core');
+    expect(areaTipo('portale')).toBe('altri');
+    const x = o(); x.soluzione.connettori = [];
+    x.assessment.light = true; x.assessment.moduli = [];
+    x.assessment.sistemi = [{ id: 's1', nome: 'Firma del gruppo', complessita: 'media', tipo: 'firma' }];
+    expect(architettura(cfg, x).terzi.find((y) => y.id === 'firma')!.stato).toBe('sviluppo');
   });
 });

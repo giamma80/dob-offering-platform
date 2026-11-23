@@ -1,10 +1,9 @@
-import type { Offerta, StatoValore } from './types';
+import type { Offerta } from './types';
 import { calcola, moduliAttivi } from './calcola';
 import { architetturaCliente } from './architettura';
 import type { Config } from './types';
 
-/* Stato dei valori (design v2 §4). Nessuna fase è bloccata: ogni valore esiste e dichiara
-   quanto ci si può fidare di lui. Il blocco sta sull'approvazione. */
+/* Fasi dell'offerta. Nessun controllo di completezza: l'invio in approvazione è libero. */
 
 export type Fase = 'assessment' | 'soluzione' | 'stima' | 'prezzo' | 'resoconto';
 
@@ -16,50 +15,10 @@ export const FASI: { id: Fase; nome: string }[] = [
   { id: 'resoconto', nome: 'Resoconto' }
 ];
 
-/** Percorsi dei valori che contano per l'avanzamento di ogni fase. */
-export function campiFase(o: Offerta, fase: Fase): string[] {
-  switch (fase) {
-    case 'assessment':
-      return ['assessment.moduli', 'assessment.volumeAnnuo', 'assessment.crescita', 'assessment.documentiPerPratica', 'vincoli'];
-    case 'soluzione':
-      return ['approccio', 'soluzione.connettori', 'soluzione.integrazioni',
-        ...(o.approccio !== 'saas' ? ['soluzione.cicd', 'leve.aiOnPremise', 'leve.manutenzioneOnPremise'] : [])];
-    case 'stima':
-      return [...o.stima.base.map((b) => `stima.base.${b.id}`), 'stima.custom', 'stima.quote', 'stima.messa'];
-    case 'prezzo':
-      return ['prezzo.margineVenduto', 'prezzo.scaglioni', 'prezzo.metrica',
-        ...(o.approccio !== 'on_premise' ? ['leve.canoneSaas'] : []),
-        ...(o.approccio !== 'saas' ? ['leve.softwareOnPremise'] : [])];
-    case 'resoconto':
-      return (['assessment', 'soluzione', 'stima', 'prezzo'] as Fase[]).flatMap((f) => campiFase(o, f));
-  }
-}
-
-/** Voci critiche: assunte, impediscono l'approvazione. */
-export function campiCritici(o: Offerta): string[] {
-  return ['assessment.volumeAnnuo', 'prezzo.metrica', 'prezzo.scaglioni',
-    ...(o.approccio !== 'saas' ? ['leve.aiOnPremise', 'soluzione.cicd'] : [])];
-}
-
-export function stato(stati: Record<string, StatoValore>, campo: string): StatoValore {
-  return stati[campo] ?? 'assunto';
-}
-
-/** Quota di valori non più assunti, 0–100. */
-export function avanzamento(o: Offerta, stati: Record<string, StatoValore>, fase: Fase): number {
-  const c = campiFase(o, fase);
-  if (!c.length) return 100;
-  return Math.round((c.filter((k) => stato(stati, k) !== 'assunto').length / c.length) * 100);
-}
-
-export function bloccanti(o: Offerta, stati: Record<string, StatoValore>): string[] {
-  return campiCritici(o).filter((k) => stato(stati, k) === 'assunto');
-}
-
 const QUOTE_PIATTAFORMA = ['reevo', 'n8n', 'ams', 'supp'];
 
 /** Sintesi salvata in offerte.sintesi: alimenta elenco offerte e business plan. */
-export function sintesi(cfg: Config, o: Offerta, stati: Record<string, StatoValore>) {
+export function sintesi(cfg: Config, o: Offerta) {
   const r = calcola(cfg, o);
   const s = (x: typeof r.saas) => x.attivo ? {
     setup: x.setup.prezzo, customizzazione: x.customizzazione.prezzo, licenza: x.licenza.totale,
@@ -70,9 +29,7 @@ export function sintesi(cfg: Config, o: Offerta, stati: Record<string, StatoValo
   } : null;
   return {
     saas: s(r.saas),
-    onPremise: s(r.onPremise),
-    avanzamento: avanzamento(o, stati, 'resoconto'),
-    bloccanti: bloccanti(o, stati).length
+    onPremise: s(r.onPremise)
   };
 }
 
@@ -100,7 +57,7 @@ export function specchietto(cfg: Config, o: Offerta, sc: 'saas' | 'on_premise'):
   const righe = [
     { voce: 'Setup e impianto', importo: x.setup.prezzo, ricorrente: false },
     { voce: 'Customizzazione', importo: x.customizzazione.prezzo, ricorrente: false },
-    { voce: 'Licenza annuale', importo: x.licenza.totale, ricorrente: true, nota: note.join(' · ') || undefined }
+    { voce: 'Canone annuo', importo: x.licenza.totale, ricorrente: true, nota: note.join(' · ') || undefined }
   ];
   return {
     cliente: o.cliente,

@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { supabaseServer } from '@/lib/supabase/server';
 import { configAttiva, configOfferta, offerta } from '@/lib/dati';
-import { bloccanti, nuovaOfferta, sintesi, type Config, type Offerta, type StatoValore } from '@/lib/engine';
+import { nuovaOfferta, sintesi, type Config, type Offerta } from '@/lib/engine';
 
 export async function creaOfferta(form: FormData) {
   const cliente = String(form.get('cliente') || '').trim();
@@ -14,7 +14,7 @@ export async function creaOfferta(form: FormData) {
   const sb = await supabaseServer();
   const { data, error } = await sb.from('offerte').insert({
     cliente, approccio: o.approccio, dati: o, vincoli: o.vincoli, stati_valore: {},
-    sintesi: sintesi(cfg, o, {}), config_versione: versione
+    sintesi: sintesi(cfg, o), config_versione: versione
   }).select('id').single();
   if (error || !data) throw new Error(error?.message ?? 'Creazione non riuscita');
   redirect(`/offerta/${data.id}/assessment`);
@@ -29,29 +29,29 @@ export async function duplicaOfferta(id: string) {
   const sb = await supabaseServer();
   const { data, error } = await sb.from('offerte').insert({
     cliente: dati.cliente, approccio: dati.approccio, dati, vincoli: dati.vincoli,
-    stati_valore: src.stati_valore, sintesi: sintesi(cfg, dati, src.stati_valore),
+    stati_valore: {}, sintesi: sintesi(cfg, dati),
     config_versione: versione, origine_id: src.id
   }).select('id').single();
   if (error || !data) throw new Error(error?.message ?? 'Duplicazione non riuscita');
   redirect(`/offerta/${data.id}/assessment`);
 }
 
-export async function salvaOfferta(id: string, dati: Offerta, stati: Record<string, StatoValore>, snapshot = false) {
+export async function salvaOfferta(id: string, dati: Offerta, snapshot = false) {
   const sb = await supabaseServer();
   const corrente = await offerta(id);
   if (!corrente) return { errore: 'Offerta non trovata' };
   if (corrente.stato === 'approvata') return { errore: "Un'offerta approvata non si modifica: duplicala" };
   /* una bozza si ricalcola sempre con l'ultima versione dei parametri e la registra */
   const { versione, dati: cfg } = await configOfferta(corrente);
-  const s = sintesi(cfg, dati, stati);
+  const s = sintesi(cfg, dati);
   const { error } = await sb.from('offerte').update({
-    cliente: dati.cliente, approccio: dati.approccio, dati, vincoli: dati.vincoli, stati_valore: stati, sintesi: s,
+    cliente: dati.cliente, approccio: dati.approccio, dati, vincoli: dati.vincoli, sintesi: s,
     ...(corrente.stato === 'bozza' ? { config_versione: versione } : {})
   }).eq('id', id);
   if (error) return { errore: error.message };
   if (snapshot) {
     await sb.from('offerte_versioni').insert({
-      offerta_id: id, stato: corrente.stato, dati, stati_valore: stati, vincoli: dati.vincoli, sintesi: s
+      offerta_id: id, stato: corrente.stato, dati, stati_valore: {}, vincoli: dati.vincoli, sintesi: s
     });
   }
   revalidatePath('/monitoraggio/offerte');
@@ -61,8 +61,6 @@ export async function salvaOfferta(id: string, dati: Offerta, stati: Record<stri
 export async function inviaInApprovazione(id: string) {
   const o = await offerta(id);
   if (!o) return { errore: 'Offerta non trovata' };
-  const b = bloccanti(o.dati, o.stati_valore);
-  if (b.length) return { bloccanti: b.length };
   return cambiaStato(id, 'in_approvazione');
 }
 
@@ -84,7 +82,7 @@ async function cambiaStato(id: string, stato: 'in_approvazione' | 'approvata' | 
   if (stato === 'in_approvazione' && o.stato === 'bozza') {
     const { versione, dati: cfg } = await configAttiva();
     extra.config_versione = versione;
-    extra.sintesi = sintesi(cfg, o.dati, o.stati_valore);
+    extra.sintesi = sintesi(cfg, o.dati);
   }
   const { error } = await sb.from('offerte').update({ stato, ...extra }).eq('id', id);
   if (error) return { errore: error.message };

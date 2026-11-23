@@ -1,6 +1,6 @@
 import 'server-only';
 import { supabaseServer } from '@/lib/supabase/server';
-import { sintesi, type Config, type Offerta, type StatoValore } from '@/lib/engine';
+import { sintesi, type Config, type Offerta } from '@/lib/engine';
 
 export interface RigaOfferta {
   id: string;
@@ -9,7 +9,8 @@ export interface RigaOfferta {
   stato: 'bozza' | 'in_approvazione' | 'approvata' | 'archiviata';
   approccio: 'saas' | 'on_premise' | 'entrambi';
   dati: Offerta;
-  stati_valore: Record<string, StatoValore>;
+  /** non più usato: la colonna resta per lo storico */
+  stati_valore: Record<string, string>;
   vincoli: Record<string, boolean>;
   sintesi: ReturnType<typeof import('@/lib/engine').sintesi> | null;
   config_versione: number | null;
@@ -53,7 +54,7 @@ export async function elencoOfferte(): Promise<RigaOfferta[]> {
   if (!righe.some((r) => r.stato === 'bozza')) return righe;
   const { versione, dati: cfg } = await configAttiva();
   return righe.map((r) => r.stato === 'bozza'
-    ? { ...r, config_versione: versione, sintesi: sintesi(cfg, r.dati, r.stati_valore) as RigaOfferta['sintesi'] } : r);
+    ? { ...r, config_versione: versione, sintesi: sintesi(cfg, r.dati) as RigaOfferta['sintesi'] } : r);
 }
 
 export async function offerta(id: string): Promise<RigaOfferta | null> {

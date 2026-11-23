@@ -66,7 +66,9 @@ export type AreaArchitettura =
   | 'componibile' | 'workflow' | 'design' | 'multifornitore'
   | 'core' | 'crm' | 'dms' | 'bi' | 'altri';
 
-export type TipoSistema = 'core' | 'crm' | 'dms' | 'bi' | 'altri';
+export type TipoSistema =
+  | 'core' | 'crm' | 'dms' | 'bi' | 'portale' | 'pagamenti'
+  | 'firma' | 'kyc' | 'aml' | 'notifiche' | 'altri';
 
 /** Configurazione di sistema: una riga versionata di public.configurazione.dati */
 export interface Config {
@@ -108,7 +110,6 @@ export interface Config {
 
 export type ModalitaAi = 'incluso' | 'proxy' | 'cliente';
 export type Approccio = 'saas' | 'on_premise' | 'entrambi';
-export type StatoValore = 'assunto' | 'dichiarato' | 'confermato';
 
 export type GruppoCustom = 'integrazioni' | 'catalogo' | 'moduli' | 'stima';
 

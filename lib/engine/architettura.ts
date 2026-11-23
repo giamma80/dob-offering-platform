@@ -24,12 +24,25 @@ export interface Architettura {
 
 const TERZI: AreaArchitettura[] = ['kyc', 'aml', 'firma', 'doc', 'notifiche'];
 const PIATTAFORMA: AreaArchitettura[] = ['componibile', 'workflow', 'design', 'multifornitore'];
-const CLIENTE: TipoSistema[] = ['core', 'crm', 'dms', 'bi', 'altri'];
+const CLIENTE: AreaArchitettura[] = ['core', 'crm', 'dms', 'bi', 'altri'];
+
+/** Casella del grafico accesa da un sistema del cliente, secondo il suo tipo. */
+export const TIPI_SISTEMA: TipoSistema[] = ['core', 'crm', 'dms', 'bi', 'portale', 'pagamenti', 'firma', 'kyc', 'aml', 'notifiche', 'altri'];
+export function areaTipo(t: TipoSistema | undefined): AreaArchitettura {
+  switch (t) {
+    case 'core': case 'pagamenti': return 'core';
+    case 'crm': return 'crm';
+    case 'dms': return 'dms';
+    case 'bi': return 'bi';
+    case 'firma': case 'kyc': case 'aml': case 'notifiche': return t;
+    default: return 'altri';
+  }
+}
 
 /** Area del grafico a cui appartiene una voce di customizzazione, o null. */
 export function areaVoce(cfg: Config, o: Offerta, id: string): AreaArchitettura | null {
   const s = sistemi(o).find((x) => x.id === id);
-  if (s) return s.tipo ?? 'altri';
+  if (s) return areaTipo(s.tipo);
   const con = cfg.catalogo.connettori.find((c) => c.id === id);
   if (con) {
     if (con.area) return con.area;
@@ -68,14 +81,12 @@ export function architettura(cfg: Config, o: Offerta): Architettura {
   };
 
   const sis = sistemi(o);
-  const cliente = CLIENTE.map((t) => {
-    const di = sis.filter((s) => (s.tipo ?? 'altri') === t);
-    return area(t, di.length > 0);
-  });
+  const areeSistemi = new Set(sis.map((s) => areaTipo(s.tipo)));
+  const cliente = CLIENTE.map((t) => area(t, areeSistemi.has(t)));
 
   const voceIds = new Set(voci.map((v) => v.id));
   return {
-    terzi: TERZI.map((a) => area(a, senzaModuli || areeModuli.has(a))),
+    terzi: TERZI.map((a) => area(a, senzaModuli || areeModuli.has(a) || areeSistemi.has(a))),
     piattaforma: PIATTAFORMA.map((a) => area(a, true)),
     cliente,
     moduli: (cfg.moduli ?? []).map((m) => ({

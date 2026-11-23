@@ -7,7 +7,7 @@ Stato al primo rilascio. In ordine di priorità; ogni voce indica la schermata d
 - Login con link via email, solo @alten.it; selettore lingua IT/EN in alto a destra.
 - Monitoraggio: elenco offerte (ordinabile, duplicazione), business plan essenziale, parametri di sistema versionati.
 - Offerta: tab Dettaglio interno / Specchietto cliente, timeline a cinque fasi con avanzamento, sotto-sezioni di ogni fase, footer delle leve su due righe, salvataggio automatico, invio in approvazione e approvazione.
-- Motore di calcolo v2 con test: tariffe dal margine sul venduto, N + 1, quote a cascata, consumo a scaglioni, tre modalità AI, manutenzione on-premise, vincoli, soglia del canone, specchietto, serie a 36 mesi, composizioni, sensibilità ai clienti, curva di recupero.
+- Motore di calcolo v2 con test: tariffe dal margine sul venduto, N + 1, voci parametriche, consumo a scaglioni, tre modalità AI, manutenzione on-premise, vincoli, soglia del canone, specchietto, serie a 36 mesi, composizioni, sensibilità ai clienti, curva di recupero.
 - Fasi 1–4 come pagina unica di card (mockup), righe aggiungibili, interruttori della Soluzione, card Canoni e Minimo garantito.
 - Resoconto con grafici ad area e barre (toggle scenario, Area/Barre, €/%), Sostenibilità, Dettaglio costi A/B.
 - Catalogo a 12 moduli allineato alle presentazioni, provider per modulo, grafico dell'architettura in Soluzione e nello specchietto (configurazione v4).
@@ -28,7 +28,7 @@ Stato al primo rilascio. In ordine di priorità; ogni voce indica la schermata d
 ## Da verificare con il business
 
 - Pesi dei 12 moduli (nativi 50%) e giornate dei nuovi provider, stimate per analogia.
-- Parametri di sistema non ancora modificabili da interfaccia: quote a cascata, vincoli, leve di default, scaglioni di consumo, investimento.
+- Parametri di sistema non ancora modificabili da interfaccia: voci parametriche, vincoli, leve di default, scaglioni di consumo, investimento.
 
 - Giornate CI/CD per AWS, GCP e Azure (130 gg, stima).
 - Importo di default dell'audit annuale (6.000 €/anno, segnaposto).

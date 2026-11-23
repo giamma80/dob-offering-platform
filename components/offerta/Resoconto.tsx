@@ -7,13 +7,13 @@ import {
 import { useT } from '@/lib/i18n/client';
 import type { Chiave } from '@/lib/i18n/dizionari';
 import { euro, numero, perc } from '@/lib/ui/formato';
-import { AnelloGrande, AreaCumulata, BarraComposizione, CardVista, Legenda, type Scen } from '@/components/grafici';
+import { AreaCumulata, BarraComposizione, CardVista, Legenda, type Scen } from '@/components/grafici';
 import { Icona } from '@/components/Icona';
 import { TabellaOrdinabile } from '@/components/TabellaOrdinabile';
 
 const COL = { brand: 'var(--surface-brand)', azure: 'var(--accent-azure)', pale: 'var(--accent-azure-mid)', grigio: 'var(--line-strong)', verde: 'var(--signal-positive)' };
 
-type Props = { cfg: Config; o: Offerta; r: Risultato; definito: number; critici: string[] };
+type Props = { cfg: Config; o: Offerta; r: Risultato };
 
 function scenariAttivi(r: Risultato): Scen[] {
   const s: Scen[] = [];
@@ -24,7 +24,7 @@ function scenariAttivi(r: Risultato): Scen[] {
 }
 
 /* ---------------------------------------------------------------- Sintesi */
-export function Sintesi({ cfg, o, r, definito, critici, inviaApprovazione }: Props & { inviaApprovazione?: React.ReactNode }) {
+export function Sintesi({ cfg, o, r }: Props) {
   const t = useT();
   const att = moduliAttivi(cfg, o);
   const sc = (x: Scen): Scenario => (x === 'on_premise' ? r.onPremise : r.saas);
@@ -57,16 +57,6 @@ export function Sintesi({ cfg, o, r, definito, critici, inviaApprovazione }: Pro
   };
   return (
     <>
-      <div className="alt-card stato-appr">
-        <div className="stato-appr__r">
-          <AnelloGrande pct={definito} />
-          <div><div className="stato-appr__n">{definito}%</div><div className="stato-appr__l">{t('fase.definitoBreve')}</div></div>
-        </div>
-        <div className="stato-appr__c">
-          {critici.map((c) => <span key={c} className="alt-badge alt-badge--aperto">{t(`crit.${c}` as Chiave)}</span>)}
-        </div>
-        <div style={{ marginLeft: 'auto' }}>{inviaApprovazione}</div>
-      </div>
       <div className="alt-card" id="r-mod">
         <div className="alt-card__head">
           <h2 className="alt-card__title" style={{ display: 'flex', gap: 8, alignItems: 'center' }}><Icona nome="catalogo" />{t('re.moduli')}</h2>

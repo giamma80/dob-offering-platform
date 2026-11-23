@@ -262,7 +262,7 @@ export function calcola(cfg: Config, o: Offerta): Risultato {
   /* SaaS */
   const ricBase: VoceRicorrente[] = [
     { id: 'reevo', nome: 'Accantonamento ReeVo, quota', costo: cc.reevo.reduce((a, r) => a + r.mese, 0) * 12 / n },
-    { id: 'n8n',   nome: 'Licenza n8n e OCR, quota',    costo: cc.n8nOcrMese * 12 / n },
+    { id: 'n8n',   nome: 'Canone n8n e OCR, quota',    costo: cc.n8nOcrMese * 12 / n },
     { id: 'ams',   nome: 'AMS ed esercizio, quota',     costo: cc.amsSaasAnno / n },
     { id: 'supp',  nome: 'Supporto interno ALTEN, quota', costo: cc.supportoAnno / n }
   ];

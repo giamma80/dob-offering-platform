@@ -13,8 +13,8 @@ fin.approccio = 'entrambi';
 fin.assessment.sistemi = [
   { id: 'sis-crm', nome: 'CRM Salesforce', complessita: 'media', tipo: 'crm' },
   { id: 'sis-core', nome: 'Core banking · ESB interno', complessita: 'alta', tipo: 'core' },
-  { id: 'sis-firma', nome: 'Firma elettronica Namirial', complessita: 'bassa', tipo: 'altri', copertoDa: 'namirial' },
-  { id: 'sis-antifrode', nome: 'Antifrode, provider terzo', complessita: 'media', tipo: 'altri' }
+  { id: 'sis-firma', nome: 'Firma elettronica Namirial', complessita: 'bassa', tipo: 'firma', copertoDa: 'namirial' },
+  { id: 'sis-antifrode', nome: 'Antifrode, provider terzo', complessita: 'media', tipo: 'aml' }
 ];
 fin.soluzione.cicd = 'openshift';
 fin.prezzo.metrica = 'avviata';
@@ -60,19 +60,19 @@ function storico(cliente, una, licenza, margineAnnuo, approvata) {
   const stati = { 'assessment.volumeAnnuo': 'confermato', 'prezzo.metrica': 'confermato', 'prezzo.scaglioni': 'confermato' };
   const sint = {
     saas: { setup: null, customizzazione: null, unaTantum: una, licenza, primoAnno: una + licenza, margineAnnuo, marginePrimoAnno: margineAnnuo },
-    onPremise: null, avanzamento: 100, bloccanti: 0, storico: true
+    onPremise: null, storico: true
   };
   return { o, stati, sint, approvata };
 }
 
 const righe = [
-  { id: '00000000-0000-4000-8000-000000000001', o: fin, stati: finStati, stato: 'bozza', sint: sintesi(cfg, fin, finStati), approvata: null, avviata: null },
+  { id: '00000000-0000-4000-8000-000000000001', o: fin, stati: finStati, stato: 'bozza', sint: sintesi(cfg, fin), approvata: null, avviata: null },
   { id: '00000000-0000-4000-8000-000000000002', ...(() => { const x = storico('Numia', 106000, 120000, 38400, '2026-02-06'); return { o: x.o, stati: x.stati, sint: x.sint, approvata: x.approvata, avviata: '2026-09-01' }; })(), stato: 'approvata' },
   { id: '00000000-0000-4000-8000-000000000003', ...(() => { const x = storico('Alba Leasing', 30000, 10000, 4200, '2026-03-14'); return { o: x.o, stati: x.stati, sint: x.sint, approvata: x.approvata, avviata: '2026-09-01' }; })(), stato: 'approvata' },
-  { id: '00000000-0000-4000-8000-000000000004', o: uni, stati: uniStati, stato: 'bozza', sint: sintesi(cfg, uni, uniStati), approvata: null, avviata: null }
+  { id: '00000000-0000-4000-8000-000000000004', o: uni, stati: uniStati, stato: 'bozza', sint: sintesi(cfg, uni), approvata: null, avviata: null }
 ];
 
-const valori = righe.map((r) => `  (${s(r.id)}, ${s(r.o.cliente)}, '${r.stato}', '${r.o.approccio}', ${q(r.o)}, ${q(r.stati)}, ${q(r.o.vincoli)}, ${q(r.sint)},
+const valori = righe.map((r) => `  (${s(r.id)}, ${s(r.o.cliente)}, '${r.stato}', '${r.o.approccio}', ${q(r.o)}, ${q({})}, ${q(r.o.vincoli)}, ${q(r.sint)},
    (select max(versione) from public.configurazione), ${r.approvata ? `'${r.approvata}'::timestamptz` : 'null'},
    ${r.approvata ? `'${r.approvata}'::timestamptz` : 'now()'}, ${r.avviata ? `'${r.avviata}'::date` : 'null'})`).join(',\n');
 

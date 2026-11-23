@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { configOfferta, offerta } from '@/lib/dati';
-import { bloccanti, specchietto } from '@/lib/engine';
+import { specchietto } from '@/lib/engine';
 import { Testata } from '@/components/Testata';
 import { t as traduci } from '@/lib/i18n/server';
 import { euro } from '@/lib/ui/formato';
@@ -23,8 +23,7 @@ export default async function Specchietto({ params, searchParams }: {
   const approvata = o.stato === 'approvata';
   const s = approvata ? specchietto(cfg, o.dati, scenario) : null;
   const tot = Object.fromEntries(scenari.map((x) => [x, specchietto(cfg, o.dati, x).totalePrimoAnno]));
-  const critici = bloccanti(o.dati, o.stati_valore).length;
-  const VOCE: Record<string, Chiave> = { 'Setup e impianto': 're.setup', Customizzazione: 're.custom', 'Licenza annuale': 're.licenza' };
+  const VOCE: Record<string, Chiave> = { 'Setup e impianto': 're.setup', Customizzazione: 're.custom', 'Canone annuo': 're.licenza' };
 
   return (
     <div className="alt-root">
@@ -94,7 +93,6 @@ export default async function Specchietto({ params, searchParams }: {
         <aside className="rail" aria-label={t('sp.esportazione')}>
           <div className="rail__card rail__card--brand"><p className="rail__h">{t('sp.esportazione')}</p>
             <div className="rail__stat"><span>{t('off.stato')}</span><b>{t(approvata ? 'sp.disponibile' : 'sp.bloccatoBreve')}</b></div>
-            <div className="rail__stat"><span>{t('re.critici')}</span><b>{critici}</b></div>
           </div>
           <div className="rail__card"><p className="rail__h">{t('sp.righeVincoli')}</p>
             {cfg.vincoli.filter((v) => v.specchietto).map((v) => (

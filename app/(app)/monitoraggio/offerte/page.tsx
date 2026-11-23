@@ -5,7 +5,6 @@ import { euro } from '@/lib/ui/formato';
 import { TabellaOrdinabile } from '@/components/TabellaOrdinabile';
 import { t as traduci } from '@/lib/i18n/server';
 import type { Chiave } from '@/lib/i18n/dizionari';
-import { Anello } from '@/components/Anello';
 import { MenuUtente } from '@/components/utente/MenuUtente';
 
 export default async function Offerte({ searchParams }: { searchParams: Promise<{ errore?: string }> }) {
@@ -36,14 +35,13 @@ export default async function Offerte({ searchParams }: { searchParams: Promise<
               <TabellaOrdinabile
                 colonne={[
                   { nome: t('off.cliente') }, { nome: t('off.approccio') }, { nome: t('off.stato') },
-                  { nome: t('off.definito'), num: true }, { nome: t('off.unaTantum'), num: true },
+                  { nome: t('off.unaTantum'), num: true },
                   { nome: t('off.licenza'), num: true }, { nome: t('off.aggiornata'), num: true }, { nome: '' }
                 ]}
                 righe={offerte.map((o) => {
                   const sc = (['saas', 'onPremise'] as const).map((k) => o.sintesi?.[k]).filter(Boolean) as NonNullable<NonNullable<typeof o.sintesi>['saas']>[];
                   const una = sc.map((x) => ('unaTantum' in x ? (x as { unaTantum: number }).unaTantum : (x.setup ?? 0) + (x.customizzazione ?? 0)));
                   const lic = sc.map((x) => x.licenza);
-                  const def = o.sintesi?.avanzamento ?? 0;
                   const multi = (v: number[]) => v.length ? <>{v.map((x, i) => <div key={i}>{euro(x)}</div>)}</> : '—';
                   return {
                     key: o.id,
@@ -52,7 +50,6 @@ export default async function Offerte({ searchParams }: { searchParams: Promise<
                       { v: o.cliente, html: <Link href={`/offerta/${o.id}/assessment`}><strong>{o.cliente}</strong></Link> },
                       { v: t(`approccio.${o.approccio}` as Chiave) },
                       { v: t(`stato.${o.stato}` as Chiave), html: <span className={`alt-badge alt-badge--${o.stato === 'approvata' ? 'incluso' : 'aperto'}`}>{t(`stato.${o.stato}` as Chiave)}</span> },
-                      { v: def, html: <span className="mini"><Anello pct={def} />{def}%</span> },
                       { v: una[0] ?? -1, html: multi(una) },
                       { v: lic[0] ?? -1, html: multi(lic) },
                       { v: o.aggiornata_il, html: new Date(o.aggiornata_il).toLocaleDateString('it-IT') },

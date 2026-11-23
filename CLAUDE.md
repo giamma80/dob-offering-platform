@@ -17,7 +17,7 @@ Strumento interno ALTEN per quotare la piattaforma Digital Onboarding (DOB). Nex
 4. **Accesso: solo email @alten.it.** Il controllo sta in tre punti: `middleware.ts`, la server action di login, e le policy RLS (`public.is_alten()`). Non aggiungere tabelle senza RLS. Dopo ogni migrazione: advisor di sicurezza Supabase.
 5. **Margine sul venduto, non ricarico.** tariffa = costo ÷ (1 − margine). Con 30% si vende 100 e restano 30.
 6. **Costi condivisi ÷ (N + 1).** N = clienti già attivi, l'offerta in corso è il +1.
-7. **Nessun blocco tra fasi.** Ogni valore ha uno stato (assunto / dichiarato / confermato); il blocco sta sull'approvazione (`bloccanti()`).
+7. **Nessun controllo di completezza.** Le fasi non si bloccano e i valori non hanno stati: "Invia in approvazione" cambia solo lo stato dell'offerta (bozza → in approvazione → approvata).
 
 ## Stile e interfaccia
 

@@ -23,7 +23,7 @@ export default async function PaginaFase({ params }: { params: Promise<{ id: str
           </span>
         </>}
         azioni={<AzioniOfferta id={id} stato={o.stato} />} />
-      <EditorOfferta id={id} fase={fase as Fase} cfg={cfg} iniziale={o.dati} statiIniziali={o.stati_valore}
+      <EditorOfferta id={id} fase={fase as Fase} cfg={cfg} iniziale={o.dati}
         solaLettura={o.stato === 'approvata'} versione={{ numero: versione, ultima, congelata }} />
     </div>
   );

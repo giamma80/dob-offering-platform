@@ -11,10 +11,9 @@ export function AzioniOfferta({ id, stato }: { id: string; stato: string }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const { toast, mostra } = useToast();
-  const esegui = (f: () => Promise<{ errore?: string; ok?: boolean; bloccanti?: number }>) => start(async () => {
+  const esegui = (f: () => Promise<{ errore?: string; ok?: boolean }>) => start(async () => {
     const r = await f();
-    if (r.bloccanti) mostra({ tipo: 'avviso', testo: t('az.bloccanti', { n: r.bloccanti }) });
-    else if (r.errore) mostra({ tipo: 'errore', testo: r.errore });
+    if (r.errore) mostra({ tipo: 'errore', testo: r.errore });
     else router.refresh();
   });
   const stile = { background: 'var(--brand-ochre)', color: 'var(--surface-brand)', borderColor: 'var(--brand-ochre)' };

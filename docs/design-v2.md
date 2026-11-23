@@ -37,23 +37,15 @@ Le offerte approvate si aprono in lettura o si **duplicano**: i default della nu
 |---|---|---|---|
 | 1 | **Assessment** | cliente, volumi annui e crescita, documenti per pratica, sistemi da integrare, vincoli contrattuali | business manager |
 | 2 | **Soluzione** | approccio (SaaS, on-premise o entrambi), connettori, integrazioni, target CI/CD per l'on-premise, modalità AI | presales |
-| 3 | **Stima** | giornate per voce, con i default di catalogo da confermare; quote a cascata | delivery |
+| 3 | **Stima** | giornate per voce, con i default di catalogo da confermare; voci parametriche | delivery |
 | 4 | **Prezzo** | tariffe, margine sul venduto, canoni, scaglioni, minimo garantito | business manager |
 | 5 | **Resoconto** | sintesi delle quattro fasi; da qui escono i due output | chi chiude l'offerta |
 
 Timeline orizzontale fissa sotto i tab; ogni nodo mostra nome, anello di avanzamento e percentuale di valori non più assunti. Si clicca su qualunque nodo, avanti o indietro.
 
-## 4. Assunzioni al posto dei blocchi
+## 4. Nessun controllo di completezza
 
-Nessuna fase è bloccata. Ogni valore esiste sempre e dichiara il proprio stato:
-
-| Stato | Significato | Resa |
-|---|---|---|
-| **Assunto** | default di sistema o di catalogo | campo tratteggiato su fondo tenue |
-| **Dichiarato** | inserito o modificato da qualcuno | campo normale |
-| **Confermato** | validato con la controparte | bordo verde, spunta |
-
-L'avanzamento di una fase è la quota di valori non più assunti. **Il blocco si sposta sull'approvazione**: con valori critici ancora assunti l'offerta resta in bozza e non produce lo specchietto. Voci critiche: volume annuo, metrica di consumo, scaglioni, modalità AI on-premise, target CI/CD se l'approccio include l'on-premise. Ogni passaggio di stato è registrato.
+Le fasi non si bloccano e i valori non hanno stati: niente assunto / dichiarato / confermato, niente percentuale di definizione. **Invia in approvazione** cambia solo lo stato dell'offerta (bozza → in approvazione → approvata), senza verifiche. Ogni cambio di stato è registrato in `offerte_versioni`; all'invio in approvazione si congela la versione dei parametri. (Semplificazione del 23 novembre 2026: il modello a stati dei valori è stato tolto.)
 
 ## 5. Modello dei costi interni
 
@@ -69,14 +61,14 @@ L'avanzamento di una fase è la quota di valori non più assunti. **Il blocco si
 
 **Prezzo = costo ÷ (1 − margine sul venduto).** Margine di sistema 30% sul venduto, pari a un ricarico del 42,9%. Modificabile per figura e per offerta.
 
-**Quote a cascata** sul subtotale: testing 10%, project management 12%, contingenza 10%; garanzia post go-live 5% sulle giornate di messa in opera.
+**Voci parametriche** sul subtotale: testing 10%, project management 12%, contingenza 10%; garanzia post go-live 5% sulle giornate di messa in opera.
 
 ### 5.2 Infrastruttura e terze parti — ricorrente
 
 | Voce | Costo | Ripartizione |
 |---|---|---|
 | Accantonamento ReeVo (TEST + PROD/PREPROD + VPN) | 107.839,56 €/anno | ÷ (N + 1) |
-| Licenza n8n e OCR | 10.416 €/anno | ÷ (N + 1) |
+| Canone n8n e OCR | 10.416 €/anno | ÷ (N + 1) |
 | Presidio AMS | 20.000 €/anno | ÷ (N + 1) |
 | Supporto interno ALTEN | 3.000 €/anno | ÷ (N + 1) |
 | Servizi professionali ReeVo | 8.500 € una tantum | ÷ (N + 1), nel setup |
@@ -93,7 +85,7 @@ N = clienti **già** attivi, senza contare l'offerta in corso.
 |---|---|---|
 | Base comune e customizzazioni | identica | identica |
 | Setup | tre ambienti sul nostro cloud | adeguamento al target CI/CD del cliente + passaggio di consegne |
-| OpEx infrastruttura | a nostro carico, nella licenza | a carico del cliente, senza importo in offerta |
+| OpEx infrastruttura | a nostro carico, nel canone annuo | a carico del cliente, senza importo in offerta |
 | Provider AI | nel canone | tre modalità: chiavi del cliente · proxy · a nostro carico |
 | Manutenzione | centralizzata | opzionale, default 1 FTE di sviluppatore |
 | Ricavo ricorrente | canone + consumo a scaglioni | software + manutenzione + AI rifatturata; consumo solo se contrattualizzato |
@@ -134,9 +126,9 @@ Specifica completa: `DOB/Cascata di valutazione - specifica.md` (progetto).
 
 | Voce | Natura | Si compone di |
 |---|---|---|
-| **Setup e impianto** | una tantum | base applicativa (impianto della piattaforma, ridotto in configurazione light) + messa in opera nello scenario + quote a cascata e garanzia + quota servizi ReeVo (SaaS) |
-| **Customizzazione** | una tantum | solo connettori, integrazioni e voci custom scelti, più le voci aggiunte dai moduli, con le quote a cascata. Identica nei due scenari; zero se non ci sono customizzazioni |
-| **Licenza annuale** | ricorrente | SaaS: canone + consumo. On-premise: software + manutenzione + AI rifatturata (+ consumo) |
+| **Setup e impianto** | una tantum | base applicativa (impianto della piattaforma, ridotto in configurazione light) + messa in opera nello scenario + voci parametriche e garanzia + quota servizi ReeVo (SaaS) |
+| **Customizzazione** | una tantum | solo connettori, integrazioni e voci custom scelti, più le voci aggiunte dai moduli, con le voci parametriche. Identica nei due scenari; zero se non ci sono customizzazioni |
+| **Canone annuo** | ricorrente | SaaS: canone + consumo. On-premise: software + manutenzione + AI rifatturata (+ consumo) |
 
 ## 8. Output
 
@@ -171,7 +163,7 @@ Non è un CRM; non quantifica la spesa del cliente on-premise; non sostituisce i
 |---|---|---|
 | Dati in UE | AI solo con provider in region UE | — |
 | Adeguamento normativo | riserva 2.200 €/anno nei ricorrenti | "aggiornamenti normativi inclusi" |
-| Penali su KPI | riserva del 5% della licenza | — |
+| Penali su KPI | riserva del 5% del canone annuo | — |
 | Supporto on demand | 55 gg una tantum | riga "Supporto on demand" |
 | SSO federato | sblocca l'integrazione SSO, 10 gg | dentro la customizzazione |
 | Audit annuale di sicurezza | voce ricorrente | riga "Audit annuale" |
@@ -184,7 +176,7 @@ Senza on-premise nell'approccio, CI/CD, AI on-premise e manutenzione restano blo
 |---|---|
 | Canone SaaS | libero, con **soglia minima** = costi ricorrenti di base ÷ 0,70. Sotto: avviso, non blocco. Oggi 40.358,73 € |
 | Manutenzione on-premise | opzionale, default 220 gg di sviluppatore |
-| Licenza on-premise | software (default 40.000 €) + manutenzione + AI rifatturata |
+| Canone annuo on-premise | software (default 40.000 €) + manutenzione + AI rifatturata |
 | AI on-premise | inclusa (costo nostro, pavimento) · proxy (rifatturata col margine) · chiavi del cliente (costo zero) |
 | Garanzia | 5% sulle giornate di messa in opera |
 

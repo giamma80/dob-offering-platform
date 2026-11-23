@@ -5,14 +5,14 @@ import { scorriA } from '@/lib/ui/scorri';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import {
-  FASI, architettura, areaVoce, avanzamento, bloccanti, calcola, coperturaSistema, fattoreImpianto, moduliAttivi, moduloBloccante, sistemi, vociCustomizzazione,
-  type AreaArchitettura, type Complessita, type Config, type TipoSistema, type Fase, type FiguraId, type Offerta, type RigaGg, type Sistema, type StatoValore
+  TIPI_SISTEMA, architettura, areaTipo, areaVoce, calcola, coperturaSistema, fattoreImpianto, moduliAttivi, moduloBloccante, sistemi, vociCustomizzazione,
+  type AreaArchitettura, type Complessita, type Config, type TipoSistema, type Fase, type FiguraId, type Offerta, type RigaGg, type Sistema
 } from '@/lib/engine';
 import { salvaOfferta } from '@/lib/azioni';
 import { useT } from '@/lib/i18n/client';
 import type { Chiave } from '@/lib/i18n/dizionari';
 import { euro, numero, perc } from '@/lib/ui/formato';
-import { CampoNumero, StatoPulsanti } from '@/components/CampoNumero';
+import { CampoNumero } from '@/components/CampoNumero';
 import { TabellaOrdinabile } from '@/components/TabellaOrdinabile';
 import { Toast, useToast } from '@/components/Toast';
 import { Icona } from '@/components/Icona';
@@ -22,7 +22,6 @@ import { DettaglioCosti, RailDettaglio, RailSintesi, RailSostenibilita, Sintesi,
 import { MenuUtente } from '@/components/utente/MenuUtente';
 import { MappaArchitettura } from './MappaArchitettura';
 
-type Stati = Record<string, StatoValore>;
 type Sezione = { id: string; k: Chiave; ico: string };
 
 /* Sezioni di ogni fase, nell'ordine del mockup. Le fasi 1–4 le mostrano tutte in colonna e la
@@ -94,10 +93,10 @@ function Card({ id, titolo, ico, aside, bloccata, children }: {
   );
 }
 
-function RigaGiornate({ v, onGg, onNome, onFigura, onRimuovi, stato, onStato, figure, solaLettura, t, importo, nota, origine }: {
+function RigaGiornate({ v, onGg, onNome, onFigura, onRimuovi, figure, solaLettura, t, importo, nota, origine }: {
   importo?: number; nota?: string; origine?: string;
   v: RigaGg; onGg: (g: number) => void; onNome?: (n: string) => void; onFigura?: (f: FiguraId) => void; onRimuovi?: () => void;
-  stato?: StatoValore; onStato?: (s: StatoValore) => void; figure: Config['figure']; solaLettura: boolean; t: ReturnType<typeof useT>;
+  figure: Config['figure']; solaLettura: boolean; t: ReturnType<typeof useT>;
 }) {
   return (
     <tr>
@@ -109,9 +108,8 @@ function RigaGiornate({ v, onGg, onNome, onFigura, onRimuovi, stato, onStato, fi
           </span>
         ) : v.nome}
         {origine && <span className="alt-badge alt-badge--neutro origine">{origine}</span>}
-        {stato && onStato && <StatoPulsanti stato={stato} onStato={onStato} />}
       </td>
-      <td className="is-num"><CampoNumero compatto etichetta={v.nome} valore={v.gg} min={0} stato={stato} onChange={onGg} /></td>
+      <td className="is-num"><CampoNumero compatto etichetta={v.nome} valore={v.gg} min={0} onChange={onGg} /></td>
       <td>
         {onFigura ? (
           <span className="alt-inputwrap" style={{ maxWidth: 220 }}>
@@ -157,13 +155,12 @@ function RigaPiu({ testo, onClick, colonne = 4, solaLettura }: { testo: string; 
   );
 }
 
-export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLettura, versione }: {
-  id: string; fase: Fase; cfg: Config; iniziale: Offerta; statiIniziali: Stati; solaLettura: boolean;
+export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }: {
+  id: string; fase: Fase; cfg: Config; iniziale: Offerta; solaLettura: boolean;
   versione: { numero: number; ultima: number; congelata: boolean };
 }) {
   const t = useT();
   const [o, setO] = useState<Offerta>(iniziale);
-  const [stati, setStati] = useState<Stati>(statiIniziali);
   const [attiva, setAttiva] = useState(SEZIONI[fase][0].id);
   const [, start] = useTransition();
   const { toast, mostra } = useToast();
@@ -176,11 +173,11 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
     if (primo.current) { primo.current = false; return; }
     if (solaLettura) return;
     const h = setTimeout(() => start(async () => {
-      const x = await salvaOfferta(id, o, stati);
+      const x = await salvaOfferta(id, o);
       if (x.errore) mostra({ tipo: 'errore', testo: x.errore });
     }), 800);
     return () => clearTimeout(h);
-  }, [o, stati, id, solaLettura, mostra]);
+  }, [o, id, solaLettura, mostra]);
 
   /* avviso sotto soglia: non blocca */
   const sotto = r.saas.attivo && r.saas.sottoSoglia;
@@ -200,16 +197,12 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
   }, [fase]);
 
   const [areaAtt, setAreaAtt] = useState<AreaArchitettura | null>(null);
-  const upd = (f: (x: Offerta) => void, campo?: string) => {
+  const upd = (f: (x: Offerta) => void, _campo?: string) => {
     if (solaLettura) return;
     setO((p) => { const x = structuredClone(p); f(x); return x; });
-    if (campo && (stati[campo] ?? 'assunto') === 'assunto') setStati((s) => ({ ...s, [campo]: 'dichiarato' }));
   };
-  const st = (campo: string) => stati[campo] ?? 'assunto';
-  const setSt = (campo: string) => (v: StatoValore) => !solaLettura && setStati((s) => ({ ...s, [campo]: v }));
   const onp = o.approccio !== 'saas';
   const saas = o.approccio !== 'on_premise';
-  const pct = Object.fromEntries(FASI.map((f) => [f.id, avanzamento(o, stati, f.id)])) as Record<Fase, number>;
   const nuovoId = (p: string) => `${p}-${Math.random().toString(36).slice(2, 8)}`;
 
   const cp = (id: string) => { const x = SEZIONI[fase].find((y) => y.id === id)!; return { id, titolo: t(x.k), ico: x.ico }; };
@@ -249,7 +242,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
   ];
   const modAtt = moduliAttivi(cfg, o);
   const sezioni = SEZIONI[fase];
-  const propsRes = { cfg, o, r, definito: pct.resoconto, critici: bloccanti(o, stati) };
+  const propsRes = { cfg, o, r };
   const sub = fase === 'resoconto' ? attiva : null;
   const vociCust = vociCustomizzazione(cfg, o).filter((v) => !o.stima.base.some((b) => b.id === v.id));
   const origine = (x?: string) => {
@@ -268,7 +261,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
         <Link className="alt-tab" href={`/offerta/${id}/assessment`} aria-current="page">{t('tab.dettaglio')}</Link>
         <Link className="alt-tab" href={`/offerta/${id}/specchietto`}>{t('tab.specchietto')}</Link>
       </nav>
-      <Timeline id={id} corrente={fase} pct={pct} />
+      <Timeline id={id} corrente={fase} />
       <div className="shell">
         <aside className="subnav" aria-label={t(`fase.${fase}` as Chiave)}>
           <p className="subnav__title">{t(`fase.${fase}` as Chiave)}</p>
@@ -305,7 +298,6 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
             </Card>
             <Card {...cp("a-mod")} aside={
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
-                <StatoPulsanti stato={st('assessment.moduli')} onStato={setSt('assessment.moduli')} />
                 <label className="alt-switch">
                   <input type="checkbox" checked={!!o.assessment.light} disabled={solaLettura}
                     onChange={(e) => upd((x) => {
@@ -315,9 +307,16 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                   <span className="alt-switch__box" aria-hidden="true" /><span>{t('as.light')}</span>
                 </label>
               </span>}>
+              <ul className="nativi" title={t('as.nativiTip')}>
+                {(cfg.moduli ?? []).map((m, i) => m.nativo && (
+                  <li key={m.id} title={`${t('as.nativiTip')} · ${perc(m.peso / 100)}`}>
+                    <span className="nativi__n">{String(i + 1).padStart(2, '0')}</span>{m.nome}
+                  </li>
+                ))}
+              </ul>
               <TabellaOrdinabile
                 colonne={[{ nome: t('as.incluso') }, { nome: t('as.modulo') }, { nome: t('par.peso'), num: true }, { nome: t('as.effetto') }]}
-                righe={(cfg.moduli ?? []).map((m) => {
+                righe={(cfg.moduli ?? []).filter((m) => !m.nativo).map((m) => {
                   const on = modAtt.includes(m.id);
                   const op = m.opzioneClassi, sc = o.assessment.opzioniModuli?.[m.id] ?? { attiva: false, classi: 1 };
                   const collegati = [
@@ -325,15 +324,15 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                     ...(m.integrazioni ?? []).map((id) => cfg.catalogo.integrazioni.find((c) => c.id === id)?.nome ?? id)
                   ];
                   return {
-                    key: m.id, className: m.nativo ? 'is-nativo' : on ? undefined : 'is-off',
+                    key: m.id, className: on ? undefined : 'is-off',
                     celle: [
                       { v: on ? 1 : 0, html: (
-                        <label className="alt-switch" title={m.nativo ? t('as.nativo') : undefined}><input type="checkbox" checked={on} aria-label={m.nome} disabled={solaLettura || !o.assessment.light || m.nativo}
+                        <label className="alt-switch"><input type="checkbox" checked={on} aria-label={m.nome} disabled={solaLettura || !o.assessment.light}
                           onChange={(e) => upd((x) => {
                             const cur = x.assessment.moduli ?? (cfg.moduli ?? []).map((y) => y.id);
                             x.assessment.moduli = e.target.checked ? [...cur, m.id] : cur.filter((y) => y !== m.id);
                           }, 'assessment.moduli')} /><span className="alt-switch__box" aria-hidden="true" /></label>) },
-                      { v: m.nome, html: <span><strong>{m.nome}</strong>{m.nativo && <span className="alt-badge alt-badge--neutro origine">{t('as.nativo')}</span>}</span> },
+                      { v: m.nome, html: <strong>{m.nome}</strong> },
                       { v: m.peso, html: perc(m.peso / 100) },
                       { v: collegati.join(), html: op ? (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
@@ -362,13 +361,10 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
             <Card {...cp("a-vol")}>
               <div className="griglia-campi">
                 <CampoNumero etichetta={t('as.volume')} valore={o.assessment.volumeAnnuo} min={0}
-                  stato={st('assessment.volumeAnnuo')} onStato={setSt('assessment.volumeAnnuo')}
                   onChange={(v) => upd((x) => { x.assessment.volumeAnnuo = v; }, 'assessment.volumeAnnuo')} />
                 <CampoNumero etichetta={t('as.crescita')} valore={o.assessment.crescita * 100} suffisso="%" min={0}
-                  stato={st('assessment.crescita')} onStato={setSt('assessment.crescita')}
                   onChange={(v) => upd((x) => { x.assessment.crescita = v / 100; }, 'assessment.crescita')} />
                 <CampoNumero etichetta={t('as.documenti')} valore={o.assessment.documentiPerPratica} min={0}
-                  stato={st('assessment.documentiPerPratica')} onStato={setSt('assessment.documentiPerPratica')}
                   onChange={(v) => upd((x) => { x.assessment.documentiPerPratica = v; }, 'assessment.documentiPerPratica')} />
               </div>
             </Card>
@@ -379,18 +375,15 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                   key: x.id,
                   celle: [
                     { v: x.nome, html: (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                        <span className="alt-inputwrap" style={{ maxWidth: 280 }}>
-                          <input className="alt-input" value={x.nome} aria-label={t('as.sistema')} disabled={solaLettura}
-                            onChange={(e) => updSis((y) => { y[i].nome = e.target.value; })} />
-                        </span>
-                        <StatoPulsanti stato={st(`assessment.sistemi.${x.id}`)} onStato={setSt(`assessment.sistemi.${x.id}`)} />
+                      <span className="alt-inputwrap campo-largo">
+                        <input className="alt-input" value={x.nome} aria-label={t('as.sistema')} title={x.nome} disabled={solaLettura}
+                          onChange={(e) => updSis((y) => { y[i].nome = e.target.value; })} />
                       </span>) },
                     { v: x.tipo ?? 'altri', html: (
-                      <span className="alt-inputwrap" style={{ maxWidth: 170 }}>
+                      <span className="alt-inputwrap" style={{ width: 190 }}>
                         <select className="alt-input" value={x.tipo ?? 'altri'} aria-label={t('as.tipo')} disabled={solaLettura}
                           onChange={(e) => updSis((y) => { y[i].tipo = e.target.value as TipoSistema; })}>
-                          {(['core', 'crm', 'dms', 'bi', 'altri'] as const).map((c) => <option key={c} value={c}>{t(`arch.${c}` as Chiave)}</option>)}
+                          {TIPI_SISTEMA.map((c) => <option key={c} value={c}>{t(`tipo.${c}` as Chiave)}</option>)}
                         </select>
                       </span>) },
                     { v: ['bassa', 'media', 'alta'].indexOf(x.complessita), html: (
@@ -409,7 +402,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
               {!solaLettura && <button type="button" className="btn-piu" style={{ marginTop: 10 }}
                 onClick={() => updSis((y) => { y.push({ id: nuovoId('sis'), nome: t('as.nuovoSistema'), complessita: 'media', tipo: 'altri' }); })}>{t('as.aggiungiSistema')}</button>}
             </Card>
-            <Card {...cp("a-vin")} aside={<StatoPulsanti stato={st('vincoli')} onStato={setSt('vincoli')} />}>
+            <Card {...cp("a-vin")}>
               <TabellaOrdinabile
                 colonne={[{ nome: t('as.attivo') }, { nome: t('as.vincolo') }, { nome: t('as.effetto') }]}
                 righe={cfg.vincoli.map((v) => ({
@@ -433,7 +426,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
             <Card {...cp("s-arch")}>
               <MappaArchitettura dati={arch} attiva={areaAtt} onAttiva={setAreaAtt} />
             </Card>
-            <Card {...cp("s-app")} aside={<StatoPulsanti stato={st('approccio')} onStato={setSt('approccio')} />}>
+            <Card {...cp("s-app")}>
               <div className="scelta">
                 {(['saas', 'on_premise', 'entrambi'] as const).map((a) => (
                   <label key={a} className={`scelta__c${o.approccio === a ? ' on' : ''}`}>
@@ -462,7 +455,8 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                             <select className="alt-input" value={x.copertoDa ?? ''} aria-label={t('so.copertura')} disabled={solaLettura}
                               onChange={(e) => updSis((y) => { y[i].copertoDa = e.target.value || null; }, 'soluzione.sistemi')}>
                               <option value="">{t('so.integrazioneDedicata')}</option>
-                              {cfg.catalogo.connettori.filter((c) => !moduloBloccante(cfg, o, 'connettori', c.id)).map((c) =>
+                              {cfg.catalogo.connettori.filter((c) => !moduloBloccante(cfg, o, 'connettori', c.id)
+                                && (!['firma', 'kyc', 'aml', 'notifiche'].includes(areaTipo(x.tipo)) || areaVoce(cfg, o, c.id) === areaTipo(x.tipo))).map((c) =>
                                 <option key={c.id} value={c.id}>{t('so.connettoreX', { v: c.nome })}</option>)}
                             </select>
                           </span>) },
@@ -478,7 +472,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
               const coperti = new Map(sis.map((x) => [coperturaSistema(cfg, o, x), x.nome] as const).filter(([c]) => !!c));
               return (
                 <Card key={k} {...cp(k === 'connettori' ? 's-con' : 's-int')}
-                  aside={interr(k, <StatoPulsanti stato={st(`soluzione.${k}`)} onStato={setSt(`soluzione.${k}`)} />)}>
+                  aside={interr(k)}>
                   <div className={offSol.includes(k) ? 'is-off' : undefined} inert={offSol.includes(k) ? true : undefined}>
                     <TabellaOrdinabile
                       colonne={[{ nome: t('as.incluso') }, { nome: t('st.voce') }, { nome: t('st.giornate'), num: true }, { nome: t('so.collegamento') }, { nome: '' }]}
@@ -536,7 +530,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                 </Card>
               );
             })}
-            <Card {...cp("s-ci")} bloccata={!onp} aside={onp ? interr('cicd', <StatoPulsanti stato={st('soluzione.cicd')} onStato={setSt('soluzione.cicd')} />) : undefined}>
+            <Card {...cp("s-ci")} bloccata={!onp} aside={onp ? interr('cicd') : undefined}>
               <div className={`scelta${offSol.includes('cicd') ? ' is-off' : ''}`} inert={offSol.includes('cicd') ? true : undefined}>
                 {cfg.catalogo.cicd.map((c) => (
                   <label key={c.id} className={`scelta__c${o.soluzione.cicd === c.id ? ' on' : ''}`}>
@@ -553,7 +547,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                 <span className="opt__t">{t('so.consegne')}<span className="opt__sub">{cfg.catalogo.passaggioConsegne.gg} gg</span></span>
               </label>
             </Card>
-            <Card {...cp("s-ai")} bloccata={!onp} aside={onp ? <StatoPulsanti stato={st('leve.aiOnPremise')} onStato={setSt('leve.aiOnPremise')} /> : undefined}>
+            <Card {...cp("s-ai")} bloccata={!onp}>
               <div className="scelta">
                 {(['incluso', 'proxy', 'cliente'] as const).map((m) => (
                   <label key={m} className={`scelta__c${o.leve.aiOnPremise === m ? ' on' : ''}`}
@@ -573,7 +567,6 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                 <span className="alt-switch__box" aria-hidden="true" /></label>) : undefined}>
               <div className={`griglia-campi${o.leve.manutenzioneOnPremise.attiva ? '' : ' is-off'}`}>
                 <CampoNumero etichetta={t('st.giornate')} valore={o.leve.manutenzioneOnPremise.gg} min={0} suffisso="gg"
-                  stato={st('leve.manutenzioneOnPremise')} onStato={setSt('leve.manutenzioneOnPremise')}
                   onChange={(v) => upd((x) => { x.leve.manutenzioneOnPremise.gg = v; }, 'leve.manutenzioneOnPremise')} />
                 <label className="campo"><span>{t('st.figura')}</span>
                   <span className="alt-inputwrap"><select className="alt-input" value={o.leve.manutenzioneOnPremise.figura} disabled={solaLettura || !onp}
@@ -597,7 +590,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                   {o.stima.base.map((b, i) => {
                     const daCatalogo = cfg.catalogo.base.some((c) => c.id === b.id);
                     return (
-                      <RigaGiornate key={b.id} v={b} {...comuni} stato={st(`stima.base.${b.id}`)} onStato={setSt(`stima.base.${b.id}`)}
+                      <RigaGiornate key={b.id} v={b} {...comuni}
                         importo={b.gg * fImp * r.tariffe[b.figura]} nota={fImp < 1 ? t('st.ggEffettive', { g: numero(Math.round(b.gg * fImp * 10) / 10) }) : undefined}
                         onGg={(g) => upd((x) => { x.stima.base[i].gg = g; }, `stima.base.${b.id}`)}
                         onNome={daCatalogo ? undefined : (n) => upd((x) => { x.stima.base[i].nome = n; })}
@@ -614,7 +607,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                 gg: o.stima.base.reduce((a, b) => a + b.gg, 0) * fImp,
                 importo: o.stima.base.reduce((a, b) => a + b.gg * fImp * r.tariffe[b.figura], 0) }]} />
             </Card>
-            <Card {...cp("st-cust")} aside={<StatoPulsanti stato={st('stima.custom')} onStato={setSt('stima.custom')} />}>
+            <Card {...cp("st-cust")}>
               <table className="alt-table">
                 <thead><tr><th>{t('st.voce')}</th><th className="is-num">{t('st.giornate')}</th><th>{t('st.figura')}</th><th className="is-num">{t('st.importo')}</th><th /></tr></thead>
                 {(['integrazioni', 'catalogo', 'moduli', 'stima'] as const).map((g) => {
@@ -655,7 +648,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
               <BarraTotale etichetta={t('comune.totale')} valori={[{
                 gg: vociCust.reduce((a, v) => a + v.gg, 0), importo: vociCust.reduce((a, v) => a + v.gg * r.tariffe[v.figura], 0) }]} />
             </Card>
-            <Card {...cp("st-q")} aside={<StatoPulsanti stato={st('stima.quote')} onStato={setSt('stima.quote')} />}>
+            <Card {...cp("st-q")}>
               <table className="alt-table">
                 <thead><tr><th>{t('st.voce')}</th><th className="is-num">%</th>
                   {scen.length > 1
@@ -682,7 +675,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                 return { scenario: scen.length > 1 ? x.nome : undefined, gg: tutte.reduce((a, y) => a + y.gg, 0), importo: tutte.reduce((a, y) => a + y.prezzo, 0) };
               })} />
             </Card>
-            <Card {...cp("st-op")} aside={<StatoPulsanti stato={st('stima.messa')} onStato={setSt('stima.messa')} />}>
+            <Card {...cp("st-op")}>
               <table className="alt-table">
                 <thead><tr><th>{t('st.voce')}</th>{saas && <th className="is-num">SaaS</th>}{onp && <th className="is-num">On-premise</th>}</tr></thead>
                 <tbody>
@@ -717,7 +710,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
 
           {/* ================================================= 4 PREZZO */}
           {fase === 'prezzo' && (<>
-            <Card {...cp("p-fig")} aside={<StatoPulsanti stato={st('prezzo.margineVenduto')} onStato={setSt('prezzo.margineVenduto')} />}>
+            <Card {...cp("p-fig")}>
               <div className="griglia-campi" style={{ marginBottom: 16 }}>
                 <CampoNumero etichetta={t('pr.margine')} valore={o.prezzo.margineVenduto * 100} suffisso="%" min={0} max={99}
                   onChange={(v) => upd((x) => { x.prezzo.margineVenduto = v / 100; x.prezzo.tariffe = {}; }, 'prezzo.margineVenduto')} />
@@ -742,7 +735,6 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                 {saas && (
                   <div>
                     <div className="griglia-campi"><CampoNumero etichetta={t('leva.canoneSaas')} valore={o.leve.canoneSaas} min={0} suffisso="€"
-                      stato={st('leve.canoneSaas')} onStato={setSt('leve.canoneSaas')}
                       onChange={(v) => upd((x) => { x.leve.canoneSaas = v; }, 'leve.canoneSaas')} /></div>
                     <div className="soglia" role="img" aria-label={t('pr.soglia', { v: euro(r.saas.soglia) })}>
                       <span className="soglia__v" style={{ width: `${Math.min(100, (o.leve.canoneSaas / 300000) * 100)}%` }} />
@@ -762,7 +754,6 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                 {onp && (
                   <div>
                     <div className="griglia-campi"><CampoNumero etichetta={t('leva.softwareOnp')} valore={o.leve.softwareOnPremise} min={0} suffisso="€"
-                      stato={st('leve.softwareOnPremise')} onStato={setSt('leve.softwareOnPremise')}
                       onChange={(v) => upd((x) => { x.leve.softwareOnPremise = v; }, 'leve.softwareOnPremise')} /></div>
                     <Barra etichetta={t('pr.licenzaOnp')} parti={[
                       { v: r.onPremise.licenza.software, cls: 's1', titolo: t('pr.software') },
@@ -791,7 +782,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
               </div>
             </Card>
 
-            <Card {...cp("p-sca")} bloccata={!saas && !o.prezzo.consumoOnPremise} aside={<StatoPulsanti stato={st('prezzo.scaglioni')} onStato={setSt('prezzo.scaglioni')} />}>
+            <Card {...cp("p-sca")} bloccata={!saas && !o.prezzo.consumoOnPremise}>
               <table className="alt-table">
                 <thead><tr><th className="is-num">{t('pr.da')}</th><th className="is-num">{t('pr.a')}</th><th className="is-num">{t('pr.euroTx')}</th>
                   <th className="is-num">{t('pr.transazioni')}</th><th className="is-num">{t('pr.importo')}</th></tr></thead>
@@ -812,7 +803,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
               </table>
               <div className="griglia-campi" style={{ marginTop: 16 }}>
                 <label className="campo">
-                  <span>{t('pr.metrica')}<StatoPulsanti stato={st('prezzo.metrica')} onStato={setSt('prezzo.metrica')} /></span>
+                  <span>{t('pr.metrica')}</span>
                   <span className="alt-inputwrap">
                     <select className="alt-input" value={o.prezzo.metrica ?? ''} disabled={solaLettura}
                       onChange={(e) => upd((x) => { x.prezzo.metrica = (e.target.value || null) as Offerta['prezzo']['metrica']; }, 'prezzo.metrica')}>
@@ -881,9 +872,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
             {onp && <div className="rail__stat"><span>On-premise</span><b>{perc(r.onPremise.annuo.marginePct)}</b></div>}
           </div>
           <div className="rail__card">
-            <p className="rail__h">{t('re.approvazione')}</p>
-            <div className="rail__stat"><span>{t('off.definito')}</span><b>{pct[fase]}%</b></div>
-            <div className="rail__stat"><span>{t('re.critici')}</span><b>{bloccanti(o, stati).length}</b></div>
+            <p className="rail__h">{t('off.stato')}</p>
             <div className="rail__stat" title={t(versione.congelata ? 'off.versioneCongelata' : 'off.versioneUltima')}>
               <span>{t('off.parametri')}</span><b>v{versione.numero}</b></div>
             {versione.congelata && versione.ultima > versione.numero && (
