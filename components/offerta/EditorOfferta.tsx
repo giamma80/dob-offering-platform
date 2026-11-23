@@ -563,22 +563,21 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
             <Card {...cp("st-base")}>
               <table className="alt-table">
                 <thead><tr><th>{t('st.voce')}</th>
-                  <th className="is-num" title={fImp < 1 ? t('st.ggPiattaformaTip') : undefined}>{t('st.giornate')}</th>
-                  {fImp < 1 && <th className="is-num" title={t('st.baseLight', { p: perc(fImp) })}>{t('st.ggQuotate')}</th>}
-                  <th>{t('st.figura')}</th><th className="is-num">{t('st.importo')}</th><th /></tr></thead>
+                  <th className="is-num">{t('st.giornate')}</th>
+                  <th>{t('st.figura')}</th><th className="is-num" title={fImp < 1 ? t('st.baseLight', { p: perc(fImp) }) : undefined}>{t('st.importo')}</th><th /></tr></thead>
                 <tbody>
                   {o.stima.base.map((b, i) => {
                     const daCatalogo = cfg.catalogo.base.some((c) => c.id === b.id);
                     return (
                       <RigaGiornate key={b.id} v={b} {...comuni}
-                        importo={b.gg * fImp * r.tariffe[b.figura]} ggQuotate={fImp < 1 ? Math.round(b.gg * fImp * 10) / 10 : undefined}
+                        importo={b.gg * fImp * r.tariffe[b.figura]}
                         onGg={(g) => upd((x) => { x.stima.base[i].gg = g; }, `stima.base.${b.id}`)}
                         onNome={daCatalogo ? undefined : (n) => upd((x) => { x.stima.base[i].nome = n; })}
                         onFigura={daCatalogo ? undefined : (f) => upd((x) => { x.stima.base[i].figura = f; })}
                         onRimuovi={() => upd((x) => { x.stima.base.splice(i, 1); })} />
                     );
                   })}
-                  <RigaPiu colonne={fImp < 1 ? 6 : 5} solaLettura={solaLettura} testo={t('st.aggiungiVoce')} onClick={() => upd((x) => {
+                  <RigaPiu colonne={5} solaLettura={solaLettura} testo={t('st.aggiungiVoce')} onClick={() => upd((x) => {
                     x.stima.base.push({ id: nuovoId('base'), nome: t('so.nuovaVoce'), gg: 5, figura: 'dev' });
                   })} />
                 </tbody>
