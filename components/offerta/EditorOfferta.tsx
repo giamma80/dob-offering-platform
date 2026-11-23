@@ -19,6 +19,7 @@ import { Icona } from '@/components/Icona';
 import { Footer } from './Footer';
 import { Timeline } from './Timeline';
 import { DettaglioCosti, RailDettaglio, RailSintesi, RailSostenibilita, Sintesi, Sostenibilita } from './Resoconto';
+import { MenuUtente } from '@/components/utente/MenuUtente';
 
 type Stati = Record<string, StatoValore>;
 type Sezione = { id: string; k: Chiave; ico: string };
@@ -45,8 +46,8 @@ const SEZIONI: Record<Fase, Sezione[]> = {
   stima: [
     { id: 'st-base', k: 'st.base', ico: 'stima' },
     { id: 'st-cust', k: 'st.custom', ico: 'integraz' },
-    { id: 'st-op', k: 'st.messa', ico: 'cicd' },
-    { id: 'st-q', k: 'st.quote', ico: 'quote' }
+    { id: 'st-q', k: 'st.quote', ico: 'quote' },
+    { id: 'st-op', k: 'st.messa', ico: 'cicd' }
   ],
   prezzo: [
     { id: 'p-fig', k: 'pr.figure', ico: 'figure' },
@@ -126,6 +127,22 @@ function RigaGiornate({ v, onGg, onNome, onFigura, onRimuovi, stato, onStato, fi
         )}
       </td>
     </tr>
+  );
+}
+
+/** Barra dei totali: stessa forma in ogni card, colonne a larghezza fissa così le barre restano allineate tra loro. */
+function BarraTotale({ etichetta, valori }: { etichetta: string; valori: { scenario?: string; gg?: number; importo: number }[] }) {
+  return (
+    <div className="totale">
+      <span className="totale__l">{etichetta}</span>
+      {valori.map((v, i) => (
+        <span key={i} className="totale__v">
+          {v.scenario && <span className="totale__sc">{v.scenario}</span>}
+          <span className="totale__gg">{v.gg !== undefined ? `${numero(Math.round(v.gg * 10) / 10)} gg` : ''}</span>
+          <span className="totale__eur">{euro(v.importo)}</span>
+        </span>
+      ))}
+    </div>
   );
 }
 
@@ -214,6 +231,10 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
     const y = sistemi(x); f(y); x.assessment.sistemi = y;
   }, campo);
   const fImp = fattoreImpianto(cfg, o);
+  const scen = [
+    ...(saas ? [{ nome: 'SaaS', s: r.saas }] : []),
+    ...(onp ? [{ nome: 'On-premise', s: r.onPremise }] : [])
+  ];
   const modAtt = moduliAttivi(cfg, o);
   const sezioni = SEZIONI[fase];
   const propsRes = { cfg, o, r, definito: pct.resoconto, critici: bloccanti(o, stati) };
@@ -249,6 +270,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
               <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Icona nome={s.ico} />{t(s.k)}</span>
             </a>
           ))}
+          <MenuUtente />
         </aside>
 
         <main className="content" ref={centro}>
@@ -565,9 +587,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                     x.stima.base.push({ id: nuovoId('base'), nome: t('so.nuovaVoce'), gg: 5, figura: 'dev' });
                   })} />
                 </tbody>
-                <tfoot><tr className="is-total"><td>{t('comune.totale')}</td>
-                  <td className="is-num">{numero(Math.round(o.stima.base.reduce((a, b) => a + b.gg, 0) * fImp * 10) / 10)}</td><td />
-                  <td className="is-num">{euro(o.stima.base.reduce((a, b) => a + b.gg * fImp * r.tariffe[b.figura], 0))}</td><td /></tr></tfoot>
+
               </table>
             </Card>
             <Card {...cp("st-cust")}>
@@ -607,10 +627,36 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                     </tbody>
                   );
                 })}
-                <tfoot><tr className="is-total"><td>{t('comune.totale')}</td>
-                  <td className="is-num">{numero(vociCust.reduce((a, v) => a + v.gg, 0))}</td><td />
-                  <td className="is-num">{euro(vociCust.reduce((a, v) => a + v.gg * r.tariffe[v.figura], 0))}</td><td /></tr></tfoot>
               </table>
+              <BarraTotale etichetta={t('comune.totale')} valori={[{
+                gg: vociCust.reduce((a, v) => a + v.gg, 0), importo: vociCust.reduce((a, v) => a + v.gg * r.tariffe[v.figura], 0) }]} />
+            </Card>
+            <Card {...cp("st-q")} aside={<StatoPulsanti stato={st('stima.quote')} onStato={setSt('stima.quote')} />}>
+              <table className="alt-table">
+                <thead><tr><th>{t('st.voce')}</th><th className="is-num">%</th>
+                  {scen.length > 1
+                    ? scen.map((x) => <th key={x.nome} className="is-num">{x.nome}</th>)
+                    : <><th className="is-num">{t('st.giornate')}</th><th className="is-num">{t('st.importo')}</th></>}</tr></thead>
+                <tbody>
+                  {cfg.quote.map((q) => {
+                    const val = (s: typeof r.saas) => [s.customizzazione, s.setup].map((b) => b.quote.find((y) => y.id === q.id))
+                      .reduce((a, y) => ({ gg: a.gg + (y?.gg ?? 0), prezzo: a.prezzo + (y?.prezzo ?? 0) }), { gg: 0, prezzo: 0 });
+                    return (
+                      <tr key={q.id}><td>{q.nome}</td>
+                        <td className="is-num"><CampoNumero compatto etichetta={q.nome} valore={(o.stima.quote[q.id] ?? q.pct) * 100} suffisso="%" min={0} max={100}
+                          onChange={(v) => upd((x) => { x.stima.quote[q.id] = v / 100; }, 'stima.quote')} /></td>
+                        {scen.length > 1
+                          ? scen.map((x) => { const v = val(x.s); return <td key={x.nome} className="is-num">{numero(v.gg)} gg · {euro(v.prezzo)}</td>; })
+                          : (() => { const v = val(scen[0].s); return <><td className="is-num">{numero(v.gg)}</td><td className="is-num">{euro(v.prezzo)}</td></>; })()}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              <BarraTotale etichetta={t('comune.totale')} valori={scen.map((x) => {
+                const tutte = [...x.s.customizzazione.quote, ...x.s.setup.quote];
+                return { scenario: scen.length > 1 ? x.nome : undefined, gg: tutte.reduce((a, y) => a + y.gg, 0), importo: tutte.reduce((a, y) => a + y.prezzo, 0) };
+              })} />
             </Card>
             <Card {...cp("st-op")}>
               <table className="alt-table">
@@ -640,31 +686,8 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                     <tr><td>{t('st.serviziReevo')}</td><td className="is-num">{euro(r.saas.setup.prezzo - r.saas.setup.righe.concat(r.saas.setup.quote).reduce((a, x) => a + x.prezzo, 0))}</td>{onp && <td className="is-num">—</td>}</tr>
                   )}
                 </tbody>
-                <tfoot>
-                  <tr className="is-total"><td>{t('st.totaleSetup')}</td>
-                    {saas && <td className="is-num">{numero(r.saas.setup.gg)} gg · {euro(r.saas.setup.prezzo)}</td>}
-                    {onp && <td className="is-num">{numero(r.onPremise.setup.gg)} gg · {euro(r.onPremise.setup.prezzo)}</td>}</tr>
-                </tfoot>
               </table>
-            </Card>
-            <Card {...cp("st-q")} aside={<StatoPulsanti stato={st('stima.quote')} onStato={setSt('stima.quote')} />}>
-              <table className="alt-table">
-                <thead><tr><th>{t('st.voce')}</th><th className="is-num">%</th>
-                  <th className="is-num">{t('re.custom')}</th>{saas && <th className="is-num">{t('re.setup')} SaaS</th>}{onp && <th className="is-num">{t('re.setup')} on-premise</th>}</tr></thead>
-                <tbody>
-                  {cfg.quote.map((q) => {
-                    const cella = (b: typeof r.saas.customizzazione) => { const x = b.quote.find((y) => y.id === q.id); return x ? `${numero(x.gg)} gg · ${euro(x.prezzo)}` : '—'; };
-                    return (
-                      <tr key={q.id}><td>{q.nome}</td>
-                        <td className="is-num"><CampoNumero compatto etichetta={q.nome} valore={(o.stima.quote[q.id] ?? q.pct) * 100} suffisso="%" min={0} max={100}
-                          onChange={(v) => upd((x) => { x.stima.quote[q.id] = v / 100; }, 'stima.quote')} /></td>
-                        <td className="is-num">{cella(r.saas.customizzazione)}</td>
-                        {saas && <td className="is-num">{cella(r.saas.setup)}</td>}
-                        {onp && <td className="is-num">{cella(r.onPremise.setup)}</td>}</tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              <BarraTotale etichetta={t('st.totaleSetup')} valori={scen.map((x) => ({ scenario: scen.length > 1 ? x.nome : undefined, gg: x.s.setup.gg, importo: x.s.setup.prezzo }))} />
             </Card>
           </>)}
 

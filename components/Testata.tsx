@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { esci } from '@/app/login/actions';
 import { t as traduci } from '@/lib/i18n/server';
 import { SelettoreLingua } from './SelettoreLingua';
 
@@ -26,9 +25,6 @@ export async function Testata({ area, contesto, azioni, hrefOfferta }: {
         <div style={{ display: 'flex', alignItems: 'center' }}>{contesto}</div>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, alignItems: 'center' }}>
           {azioni}
-          <form action={esci}>
-            <button className="alt-btn alt-btn--ghost" type="submit" style={{ color: '#fff', borderColor: 'rgba(255,255,255,.4)' }}>{t('comune.esci')}</button>
-          </form>
           <SelettoreLingua />
         </div>
       </div>

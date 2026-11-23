@@ -9,6 +9,7 @@ import { euro } from '@/lib/ui/formato';
 import { CurvaRecupero } from '@/components/grafici';
 import { Icona } from '@/components/Icona';
 import { TabellaOrdinabile } from '@/components/TabellaOrdinabile';
+import { MenuUtente } from '@/components/utente/MenuUtente';
 
 export type ProgettoBP = Omit<Progetto, 'inizio'> & { inizio: string };
 
@@ -52,6 +53,7 @@ export function VistaBusinessPlan({ investimento, progetti }: { investimento: { 
             <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}><Icona nome={s.ico} />{t(s.k)}</span><small>{s.badge}</small>
           </a>
         ))}
+        <MenuUtente />
       </aside>
       <main className="content">
         <h1 className="ttl">{t('mon.bp')}</h1>

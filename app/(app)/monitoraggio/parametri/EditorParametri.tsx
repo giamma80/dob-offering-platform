@@ -11,6 +11,7 @@ import { Icona } from '@/components/Icona';
 import { Toast, useToast } from '@/components/Toast';
 import { useT } from '@/lib/i18n/client';
 import type { Chiave } from '@/lib/i18n/dizionari';
+import { MenuUtente } from '@/components/utente/MenuUtente';
 
 /* Parametri di sistema come nel mockup (Sistema.dc.html): card impilate, la sottonavigazione scorre. */
 const SEZIONI: { id: string; k: Chiave; ico: string }[] = [
@@ -71,6 +72,7 @@ export function EditorParametri({ versione, iniziale }: { versione: number; iniz
             <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}><Icona nome={s.ico} />{t(s.k)}</span><small>{badge[s.id]}</small>
           </a>
         ))}
+        <MenuUtente />
       </aside>
       <main className="content">
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16 }}>

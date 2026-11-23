@@ -6,6 +6,7 @@ import { TabellaOrdinabile } from '@/components/TabellaOrdinabile';
 import { t as traduci } from '@/lib/i18n/server';
 import type { Chiave } from '@/lib/i18n/dizionari';
 import { Anello } from '@/components/Anello';
+import { MenuUtente } from '@/components/utente/MenuUtente';
 
 export default async function Offerte({ searchParams }: { searchParams: Promise<{ errore?: string }> }) {
   const { errore } = await searchParams;
@@ -16,6 +17,7 @@ export default async function Offerte({ searchParams }: { searchParams: Promise<
       <aside className="subnav" aria-label="Sottosezioni">
         <p className="subnav__title">{t('mon.offerte')}</p>
         <a className="subnav__a" aria-current="page" href="#"><span>{t('off.tutte')}</span><small>{offerte.length}</small></a>
+        <MenuUtente />
       </aside>
       <main className="content">
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16 }}>

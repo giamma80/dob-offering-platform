@@ -6,6 +6,7 @@ import { Testata } from '@/components/Testata';
 import { t as traduci } from '@/lib/i18n/server';
 import { euro } from '@/lib/ui/formato';
 import type { Chiave } from '@/lib/i18n/dizionari';
+import { MenuUtente } from '@/components/utente/MenuUtente';
 
 /* Specchietto cliente: generato dal dettaglio con la sola funzione specchietto(), che non
    espone giornate, costi, margini né fornitori terzi. Esiste solo per offerte approvate. */
@@ -40,6 +41,7 @@ export default async function Specchietto({ params, searchParams }: {
               <span>{t(`approccio.${x}` as Chiave)}</span>{approvata && <small>{euro(tot[x])}</small>}
             </Link>
           ))}
+          <MenuUtente />
         </aside>
         <main className="content">
           {!s ? <p className="vuoto">{t('sp.bloccato')}</p> : (

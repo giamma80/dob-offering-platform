@@ -2,6 +2,7 @@
    ogni chiave aggiunta qui deve avere la sua traduzione in `en`, altrimenti il typecheck fallisce. */
 
 export const it = {
+  "utente.menu": "Menu utente",
   "par.ggClasse": "gg/classe",
   "st.daSistema": "Sistema {v}",
   "st.daCatalogo": "Catalogo",
@@ -355,6 +356,7 @@ export const it = {
 export type Chiave = keyof typeof it;
 
 export const en: Record<Chiave, string> = {
+  "utente.menu": "User menu",
   "par.ggClasse": "days/class",
   "st.daSistema": "System {v}",
   "st.daCatalogo": "Catalogue",
