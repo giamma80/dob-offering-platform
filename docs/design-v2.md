@@ -18,7 +18,7 @@ Il problema che risolve non è il calcolo — un Excel lo fa — ma tre cose che
 
 ## 2. Due macro-aree, separate di default
 
-| | **Offerta** | **Monitoraggio** |
+| | **Offerta** | **Backoffice** |
 |---|---|---|
 | Ambito | una sola offerta alla volta | tutte le offerte, la piattaforma |
 | Contenuto | ciclo di vita in 5 fasi, costi, sostenibilità, output | elenco offerte, business plan, parametri di sistema |
@@ -27,7 +27,7 @@ Il problema che risolve non è il calcolo — un Excel lo fa — ma tre cose che
 
 Le leve commerciali (canone SaaS, software on-premise, modalità AI on-premise) appartengono a **una** offerta e vivono in un **footer fisso** dell'area Offerta, su due righe, insieme ai due totali del primo anno. Si passa da un'area all'altra con un interruttore in testata.
 
-Sotto la testata il Monitoraggio ha tre tab (Offerte, Business plan, Parametri di sistema) e l'Offerta ne ha due: **Dettaglio interno** e **Specchietto cliente**. La timeline delle cinque fasi sta dentro il Dettaglio interno. Lo Specchietto non ha timeline e resta bloccato finché l'offerta non è approvata. La tabella dei costi per voce è la terza sotto-sezione del Resoconto (Sintesi, Sostenibilità, Dettaglio costi).
+Sotto la testata il Backoffice ha tre tab (Offerte, Business plan, Parametri di sistema) e l'Offerta ne ha due: **Dettaglio interno** e **Specchietto cliente**. La timeline delle cinque fasi sta dentro il Dettaglio interno. Lo Specchietto non ha timeline e resta bloccato finché l'offerta non è approvata. La tabella dei costi per voce è la terza sotto-sezione del Resoconto (Sintesi, Sostenibilità, Dettaglio costi).
 
 Le offerte approvate si aprono in lettura o si **duplicano**: i default della nuova offerta arrivano da quella approvata invece che dal sistema.
 
@@ -138,9 +138,9 @@ Specifica completa: `DOB/Cascata di valutazione - specifica.md` (progetto).
 
 **Specchietto cliente** — le tre voci con le loro sottovoci, totale del primo anno, righe dai vincoli. Le sottovoci mostrano solo importi: nessuna giornata, nessun costo o margine, nessun fornitore terzo (ReeVo, n8n, provider di firma, KYC, AML, credito), e la contingenza è inclusa in "gestione del progetto, test e garanzia" senza essere nominata. Una voce con una sola sottovoce non la ripete. Si genera dal dettaglio (`specchietto()` in `lib/engine/stati.ts`), esiste solo per offerte approvate.
 
-## 9. Monitoraggio
+## 9. Backoffice
 
-- **Offerte** — elenco con stato, approccio, primo anno per scenario, quota di valori definiti; apertura, duplicazione.
+- **Offerte** — elenco con stato, approccio, primo anno per scenario, quota di valori definiti; apertura, duplicazione. Ogni offerta si può eliminare, in qualunque stato, con conferma in due clic; lo storico se ne va con lei.
 - **Business plan** — investimento da recuperare (174.209 € sviluppo + 20.000 € AM primo anno), contributo per progetto, pareggio.
 - **Parametri di sistema** — costi delle figure, margine di default, costi condivisi, clienti attivi, catalogo, AI. Ogni salvataggio crea una nuova versione.
 

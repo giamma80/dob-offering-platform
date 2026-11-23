@@ -21,6 +21,16 @@ export async function creaOfferta(form: FormData) {
 }
 
 /** Duplica: i default della nuova offerta arrivano da quella di origine, non dal sistema. */
+/** Elimina un'offerta in qualunque stato, con il suo storico. Irreversibile: la conferma sta nell'interfaccia. */
+export async function eliminaOfferta(id: string) {
+  const sb = await supabaseServer();
+  const { data, error } = await sb.from('offerte').delete().eq('id', id).select('id');
+  if (error) return { errore: error.message };
+  if (!data?.length) return { errore: 'Offerta non trovata' };
+  revalidatePath('/monitoraggio', 'layout');
+  return { ok: true };
+}
+
 export async function duplicaOfferta(id: string) {
   const src = await offerta(id);
   if (!src) throw new Error('Offerta non trovata');

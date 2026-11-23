@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { elencoOfferte } from '@/lib/dati';
 import { creaOfferta, duplicaOfferta } from '@/lib/azioni';
+import { EliminaOfferta } from '@/components/EliminaOfferta';
 import { euro } from '@/lib/ui/formato';
 import { TabellaOrdinabile } from '@/components/TabellaOrdinabile';
 import { t as traduci } from '@/lib/i18n/server';
@@ -54,9 +55,12 @@ export default async function Offerte({ searchParams }: { searchParams: Promise<
                       { v: lic[0] ?? -1, html: multi(lic) },
                       { v: o.aggiornata_il, html: new Date(o.aggiornata_il).toLocaleDateString('it-IT') },
                       { v: '', html: (
-                        <form action={duplicaOfferta.bind(null, o.id)}>
-                          <button className="alt-btn alt-btn--ghost" type="submit">{t('comune.duplica')}</button>
-                        </form>
+                        <span style={{ display: 'inline-flex', gap: 6, justifyContent: 'flex-end' }}>
+                          <form action={duplicaOfferta.bind(null, o.id)}>
+                            <button className="alt-btn alt-btn--ghost" type="submit">{t('comune.duplica')}</button>
+                          </form>
+                          <EliminaOfferta id={o.id} cliente={o.cliente} />
+                        </span>
                       ) }
                     ]
                   };

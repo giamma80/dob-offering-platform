@@ -256,3 +256,5 @@ tr.is-nativo .alt-switch { cursor: not-allowed; }
 /* specchietto cliente: sottovoci */
 .alt-table tr.sp-sotto > td { padding: 7px 14px 7px 30px; font-size: 13px; color: var(--ink-secondary); border-top: 0; }
 .alt-table tr.sp-sotto > td.is-num { padding-left: 14px; font-weight: 500; }
+.alt-btn--danger { background: var(--signal-negative); color: #fff; border-color: var(--signal-negative); }
+.alt-btn--danger:hover { background: var(--signal-negative); color: #fff; }

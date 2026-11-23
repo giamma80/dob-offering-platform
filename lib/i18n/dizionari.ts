@@ -2,6 +2,9 @@
    ogni chiave aggiunta qui deve avere la sua traduzione in `en`, altrimenti il typecheck fallisce. */
 
 export const it = {
+  "off.elimina": "Elimina",
+  "off.eliminaSi": "Conferma",
+  "off.eliminaConferma": "Clic di nuovo per eliminare definitivamente {v} e il suo storico",
   "sp.sv.base": "Base applicativa",
   "sp.sv.integrazioni": "Integrazioni con i vostri sistemi",
   "sp.sv.catalogo": "Connettori e integrazioni di catalogo",
@@ -266,7 +269,7 @@ export const it = {
   'leva.licenzaOnp': 'Canone annuo {v}',
   'app.nome': 'DOB Offering Platform',
   'area.offerta': 'Offerta',
-  'area.monitoraggio': 'Monitoraggio',
+  'area.monitoraggio': 'Backoffice',
   'comune.esci': 'Esci',
   'comune.salva': 'Salva',
   'comune.duplica': 'Duplica',
@@ -440,6 +443,9 @@ export const it = {
 export type Chiave = keyof typeof it;
 
 export const en: Record<Chiave, string> = {
+  "off.elimina": "Delete",
+  "off.eliminaSi": "Confirm",
+  "off.eliminaConferma": "Click again to permanently delete {v} and its history",
   "sp.sv.base": "Application baseline",
   "sp.sv.integrazioni": "Integrations with your systems",
   "sp.sv.catalogo": "Catalogue connectors and integrations",
@@ -704,7 +710,7 @@ export const en: Record<Chiave, string> = {
   'leva.licenzaOnp': 'Annual fee {v}',
   'app.nome': 'DOB Offering Platform',
   'area.offerta': 'Offer',
-  'area.monitoraggio': 'Monitoring',
+  'area.monitoraggio': 'Back office',
   'comune.esci': 'Sign out',
   'comune.salva': 'Save',
   'comune.duplica': 'Duplicate',
