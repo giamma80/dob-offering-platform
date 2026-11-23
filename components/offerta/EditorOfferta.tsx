@@ -561,7 +561,8 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
           {/* ================================================= 3 STIMA */}
           {fase === 'stima' && (<>
             <Card {...cp("st-base")}>
-              <table className="alt-table">
+              <table className="alt-table tab-fissa">
+                <colgroup><col /><col style={{ width: 130 }} /><col style={{ width: 250 }} /><col style={{ width: 160 }} /><col style={{ width: 44 }} /></colgroup>
                 <thead><tr><th>{t('st.voce')}</th>
                   <th className="is-num">{t('st.giornate')}</th>
                   <th>{t('st.figura')}</th><th className="is-num" title={fImp < 1 ? t('st.baseLight', { p: perc(fImp) }) : undefined}>{t('st.importo')}</th><th /></tr></thead>
@@ -587,7 +588,8 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
                 importo: o.stima.base.reduce((a, b) => a + b.gg * fImp * r.tariffe[b.figura], 0) }]} />
             </Card>
             <Card {...cp("st-cust")}>
-              <table className="alt-table">
+              <table className="alt-table tab-fissa">
+                <colgroup><col /><col style={{ width: 130 }} /><col style={{ width: 250 }} /><col style={{ width: 160 }} /><col style={{ width: 44 }} /></colgroup>
                 <thead><tr><th>{t('st.voce')}</th><th className="is-num">{t('st.giornate')}</th><th>{t('st.figura')}</th><th className="is-num">{t('st.importo')}</th><th /></tr></thead>
                 {(['integrazioni', 'catalogo', 'moduli', 'stima'] as const).map((g) => {
                   const righe = vociCust.filter((v) => (v.gruppo ?? 'catalogo') === g);
@@ -628,7 +630,8 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
                 gg: vociCust.reduce((a, v) => a + v.gg, 0), importo: vociCust.reduce((a, v) => a + v.gg * r.tariffe[v.figura], 0) }]} />
             </Card>
             <Card {...cp("st-q")}>
-              <table className="alt-table">
+              <table className={`alt-table${scen.length > 1 ? '' : ' tab-fissa tab-fissa--b'}`}>
+                {scen.length === 1 && <colgroup><col /><col style={{ width: 130 }} /><col style={{ width: 130 }} /><col style={{ width: 204 }} /></colgroup>}
                 <thead><tr><th>{t('st.voce')}</th><th className="is-num">%</th>
                   {scen.length > 1
                     ? scen.map((x) => <th key={x.nome} className="is-num">{x.nome}</th>)
@@ -655,14 +658,15 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
               })} />
             </Card>
             <Card {...cp("st-op")}>
-              <table className="alt-table">
-                <thead><tr><th>{t('st.voce')}</th>{scen.length > 1 && <th>{t('st.scenario')}</th>}
+              <table className="alt-table tab-fissa tab-fissa--b">
+                <colgroup><col /><col style={{ width: 130 }} /><col style={{ width: 130 }} /><col style={{ width: 204 }} /></colgroup>
+                <thead><tr><th>{t('st.voce')}</th>{scen.length > 1 ? <th>{t('st.scenario')}</th> : <th />}
                   <th className="is-num">{t('st.giornate')}</th><th className="is-num">{t('st.importo')}</th></tr></thead>
                 <tbody>
                   {scen.map((sc) => {
                     const base = sc.s.setup.righe.filter((x) => o.stima.base.some((b) => b.id === x.id));
                     const messa = sc.s.setup.righe.filter((x) => !o.stima.base.some((b) => b.id === x.id));
-                    const nomeSc = scen.length > 1 ? <td className="muted">{sc.nome}</td> : null;
+                    const nomeSc = scen.length > 1 ? <td className="muted">{sc.nome}</td> : <td />;
                     const reevo = sc.s.setup.prezzo - sc.s.setup.righe.concat(sc.s.setup.quote).reduce((a, x) => a + x.prezzo, 0);
                     return (
                       <Fragment key={sc.nome}>
