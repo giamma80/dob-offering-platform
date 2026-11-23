@@ -584,7 +584,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                         const dove = dovCustom(v.id);
                         const extra = g === 'stima';
                         return (
-                          <RigaGiornate key={v.id} v={v} {...comuni} importo={v.gg * r.tariffe[v.figura]} origine={extra ? undefined : origine(v.origine)}
+                          <RigaGiornate key={v.id} v={v} {...comuni} importo={v.gg * r.tariffe[v.figura]} origine={extra || g === 'integrazioni' ? undefined : origine(v.origine)}
                             onGg={(n) => upd((x) => {
                               const c = extra ? x.stima.extra?.find((y) => y.id === v.id) : dove ? x.soluzione[dove].find((y) => y.id === v.id) : null;
                               if (c) c.gg = n; else x.stima.gg[v.id] = n;
