@@ -116,7 +116,8 @@ export const CONFIG_DEFAULT: Config = {
     { da: 15001, a: 30000, prezzo: 3.5 },
     { da: 30001, a: null,  prezzo: 2.5 }
   ],
-  investimento: { sviluppo: 174209, amPrimoAnno: 20000 }
+  investimento: { sviluppo: 174209, amPrimoAnno: 20000 },
+  piattaforma: { attivaDal: '2026-07' }
 };
 
 /** Nuova offerta: ogni valore esiste subito, preso dalla configurazione, ed è "assunto". */

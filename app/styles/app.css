@@ -229,3 +229,4 @@ a.brand, a.brand:hover { color: #fff; }
 tr.is-evid > td { background: var(--signal-open-soft) !important; }
 tr.is-nativo .alt-switch { cursor: not-allowed; }
 .rail__avviso { margin: 8px 0 0; padding: 6px 8px; border-radius: var(--radius-sm); background: var(--signal-open-soft); color: var(--signal-open-ink); font-size: 12px; font-weight: 600; cursor: help; }
+.alt-table tr.is-neg td { color: var(--signal-negative); }

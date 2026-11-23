@@ -3,7 +3,7 @@
 import { scorriA } from '@/lib/ui/scorri';
 
 import { useMemo, useState } from 'react';
-import { contributoAl, curvaRecupero, pareggio, type Progetto } from '@/lib/engine';
+import { contributoAl, costoPiattaformaAl, curvaRecupero, pareggio, type Progetto } from '@/lib/engine';
 import { useT } from '@/lib/i18n/client';
 import { euro } from '@/lib/ui/formato';
 import { CurvaRecupero } from '@/components/grafici';
@@ -16,17 +16,21 @@ export type ProgettoBP = Omit<Progetto, 'inizio'> & { inizio: string };
 const MESI = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-export function VistaBusinessPlan({ investimento, progetti }: { investimento: { sviluppo: number; amPrimoAnno: number }; progetti: ProgettoBP[] }) {
+export function VistaBusinessPlan({ investimento, progetti, piattaforma }: {
+  investimento: { sviluppo: number; amPrimoAnno: number }; progetti: ProgettoBP[];
+  piattaforma: { dal: string; mese: number; unaTantum: number };
+}) {
   const t = useT();
   const [conInCorso, setConInCorso] = useState(true);
   const [sez, setSez] = useState('bp-curva');
   const tutti = useMemo(() => progetti.map((p) => ({ ...p, inizio: new Date(p.inizio) })), [progetti]);
   const inv = investimento.sviluppo + investimento.amPrimoAnno;
+  const pf = useMemo(() => ({ ...piattaforma, dal: new Date(piattaforma.dal) }), [piattaforma]);
   const da = useMemo(() => {
-    const min = tutti.reduce((a, p) => (p.inizio < a ? p.inizio : a), new Date());
+    const min = tutti.reduce((a, p) => (p.inizio < a ? p.inizio : a), pf.dal < new Date() ? pf.dal : new Date());
     return new Date(Date.UTC(min.getUTCFullYear(), 0, 1));
-  }, [tutti]);
-  const curva = (con: boolean) => curvaRecupero(inv, tutti.filter((p) => con || !p.inCorso), da, 12);
+  }, [tutti, pf]);
+  const curva = (con: boolean) => curvaRecupero(inv, tutti.filter((p) => con || !p.inCorso), da, 12, pf);
   const punti = curva(conInCorso);
   const parCon = pareggio(curva(true)), parSenza = pareggio(curva(false));
   const fineOrizzonte = new Date(Date.UTC(da.getUTCFullYear() + 3, 0, 1));
@@ -37,6 +41,10 @@ export function VistaBusinessPlan({ investimento, progetti }: { investimento: { 
     const mesi = Math.max(0, Math.min(p.durataMesi, (fineOrizzonte.getUTCFullYear() * 12 + fineOrizzonte.getUTCMonth()) - (p.inizio.getUTCFullYear() * 12 + p.inizio.getUTCMonth())));
     return { ...p, mesi, contributo: contributoAl(p, new Date(fineOrizzonte.getTime() - 1)) };
   });
+  const finePeriodo = new Date(fineOrizzonte.getTime() - 1);
+  const costoPf = costoPiattaformaAl(pf, finePeriodo);
+  const mesiPf = Math.max(0, (finePeriodo.getUTCFullYear() * 12 + finePeriodo.getUTCMonth()) - (pf.dal.getUTCFullYear() * 12 + pf.dal.getUTCMonth()) + 1);
+  const oggi = new Date();
   const SEZ = [
     { id: 'bp-curva', k: 'bp.abbattimento' as const, ico: 'bp', badge: (conInCorso ? parCon : parSenza) ?? '—' },
     { id: 'bp-tl', k: 'bp.timeline' as const, ico: 'offerte', badge: String(tutti.length) },
@@ -104,13 +112,22 @@ export function VistaBusinessPlan({ investimento, progetti }: { investimento: { 
           <div className="alt-card__body">
             <TabellaOrdinabile
               colonne={[{ nome: t('bp.progetto') }, { nome: t('bp.margineAnnuo'), num: true }, { nome: t('bp.mesi'), num: true }, { nome: t('bp.contributoCol'), num: true }]}
-              righe={contributi.map((p) => ({
-                key: p.id, className: p.inCorso ? 'is-sub' : undefined,
-                celle: [{ v: p.cliente, html: p.inCorso ? `${p.cliente} · ${t('bp.inCorsoBreve')}` : p.cliente },
-                  { v: p.margineAnnuo, html: euro(p.margineAnnuo) }, { v: p.mesi }, { v: p.contributo, html: euro(p.contributo) }]
-              }))}
+              righe={[
+                ...contributi.map((p) => {
+                  const lordo = p.margineAnnuo + (p.quotaPiattaformaAnnua ?? 0);
+                  return {
+                    key: p.id, className: p.inCorso ? 'is-sub' : undefined,
+                    celle: [{ v: p.cliente, html: p.inCorso ? `${p.cliente} · ${t('bp.inCorsoBreve')}` : p.cliente },
+                      { v: lordo, html: <span title={t('bp.lordoTip', { q: euro(p.quotaPiattaformaAnnua ?? 0) })}>{euro(lordo)}</span> },
+                      { v: p.mesi }, { v: p.contributo, html: euro(p.contributo) }]
+                  };
+                }),
+                { key: 'piattaforma', className: 'is-neg',
+                  celle: [{ v: t('bp.costiPiattaforma'), html: <span title={t('bp.costiPiattaformaTip', { d: nomeMese(pf.dal) })}>{t('bp.costiPiattaforma')}</span> },
+                    { v: -pf.mese * 12, html: euro(-pf.mese * 12) }, { v: mesiPf }, { v: -costoPf, html: euro(-costoPf) }] }
+              ]}
               totale={[{ v: t('bp.cumulatoA', { a: fineOrizzonte.getUTCFullYear() - 1 }) }, { v: '' }, { v: '' },
-                { v: 0, html: euro(contributi.filter((p) => conInCorso || !p.inCorso).reduce((a, p) => a + p.contributo, 0)) }]}
+                { v: 0, html: euro(contributi.filter((p) => conInCorso || !p.inCorso).reduce((a, p) => a + p.contributo, 0) - costoPf) }]}
             />
           </div>
         </div>
@@ -120,6 +137,11 @@ export function VistaBusinessPlan({ investimento, progetti }: { investimento: { 
           <div className="rail__stat"><span>{t('bp.sviluppo')}</span><b>{euro(investimento.sviluppo)}</b></div>
           <div className="rail__stat"><span>{t('bp.amPrimo')}</span><b>{euro(investimento.amPrimoAnno)}</b></div>
           <div className="rail__stat"><span>{t('bp.daRecuperare')}</span><b>{euro(inv)}</b></div>
+        </div>
+        <div className="rail__card"><p className="rail__h">{t('bp.costiPiattaforma')}</p>
+          <div className="rail__stat"><span>{t('bp.attivaDal')}</span><b>{nomeMese(pf.dal)}</b></div>
+          <div className="rail__stat"><span>{t('bp.alMese')}</span><b>{euro(pf.mese)}</b></div>
+          <div className="rail__stat"><span>{t('bp.finoAOggi')}</span><b>{euro(costoPiattaformaAl(pf, oggi))}</b></div>
         </div>
         <div className="rail__card"><p className="rail__h">{t('bp.pareggio')}</p>
           <div className="rail__stat"><span>{t('bp.conInCorso')}</span><b>{parCon ?? t('bp.nonRaggiunto')}</b></div>

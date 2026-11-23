@@ -293,3 +293,29 @@ describe('grafico dell\'architettura', () => {
     for (const vietato of [/"gg"/, /namirial/i, /cleverchain/i, /voci/]) expect(json).not.toMatch(vietato);
   });
 });
+
+
+import { contributoAl, costiPiattaforma, costoPiattaformaAl, quotaPiattaforma, sintesi as sintesiOfferta } from './index';
+
+describe('business plan: costi di piattaforma', () => {
+  it('escono per intero dal mese di attivazione', () => {
+    const c = costiPiattaforma(cfg);
+    expect(c.dal.toISOString().slice(0, 7)).toBe('2026-07');
+    expect(costoPiattaformaAl(c, new Date(Date.UTC(2026, 5, 1)))).toBe(0);
+    expect(costoPiattaformaAl(c, new Date(Date.UTC(2026, 7, 1)))).toBeCloseTo(c.unaTantum + 2 * c.mese, 6);
+  });
+  it('la curva sottrae i costi di piattaforma anche senza progetti', () => {
+    const c = costiPiattaforma(cfg);
+    const p = curvaRecupero(0, [], new Date(Date.UTC(2026, 0, 1)), 4, c);
+    expect(p[2].cumulato).toBeCloseTo(-(c.unaTantum + 3 * c.mese), 6);   // fine Q3: luglio–settembre
+  });
+  it('il contributo del progetto è al lordo della quota condivisa', () => {
+    const x = o(); x.approccio = 'saas';
+    const s = sintesiOfferta(cfg, x, {}).saas!;
+    expect(s.quotaPiattaformaAnnua).toBeCloseTo(quotaPiattaforma(cfg).annua, 6);
+    const pr = { id: 'p', cliente: 'X', inizio: new Date(Date.UTC(2026, 0, 1)), margineAnnuo: s.margineAnnuo, marginePrimoAnno: s.marginePrimoAnno,
+      licenzaAnnua: s.licenza, durataMesi: 36, inCorso: false, quotaPiattaformaAnnua: s.quotaPiattaformaAnnua, quotaPiattaformaUnaTantum: s.quotaPiattaformaUnaTantum };
+    const netto = contributoAl({ ...pr, quotaPiattaformaAnnua: 0, quotaPiattaformaUnaTantum: 0 }, new Date(Date.UTC(2026, 11, 1)));
+    expect(contributoAl(pr, new Date(Date.UTC(2026, 11, 1))) - netto).toBeCloseTo(s.quotaPiattaformaAnnua + s.quotaPiattaformaUnaTantum, 6);
+  });
+});

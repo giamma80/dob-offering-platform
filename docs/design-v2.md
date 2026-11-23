@@ -150,6 +150,11 @@ Specifica completa: `DOB/Cascata di valutazione - specifica.md` (progetto).
 - **Business plan** — investimento da recuperare (174.209 € sviluppo + 20.000 € AM primo anno), contributo per progetto, pareggio.
 - **Parametri di sistema** — costi delle figure, margine di default, costi condivisi, clienti attivi, catalogo, AI. Ogni salvataggio crea una nuova versione.
 
+
+### Business plan: costi di piattaforma
+
+I costi di piattaforma (ReeVo, n8n e OCR, AMS, supporto interno) escono **per intero ogni mese** dal mese di attivazione della piattaforma (Parametri di sistema, "Piattaforma attiva da", luglio 2026), più i servizi una tantum ReeVo all'attivazione, qualunque sia il numero di clienti. I progetti contribuiscono dal loro **avvio reale** (`offerte.avviata_il`; se manca, la data di approvazione) con il margine **al lordo della quota condivisa**: la divisione per N + 1 resta solo nel prezzo delle offerte. Per le offerte storiche, che non registrano la quota, la si ricava dalla versione dei parametri con cui sono calcolate. I trimestri si indicano Q1–Q4.
+
 ## 11. Validazione
 
 Componente `Validation` del design system: **errore** blocca il salvataggio e resta; **avviso** non blocca, toast 6 s; **conferma** toast 3 s. Campo evidenziato con messaggio sotto (`aria-invalid`, `aria-describedby`).

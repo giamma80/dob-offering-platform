@@ -551,5 +551,8 @@
   "investimento": {
     "sviluppo": 174209,
     "amPrimoAnno": 20000
+  },
+  "piattaforma": {
+    "attivaDal": "2026-07"
   }
 }

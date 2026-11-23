@@ -2,6 +2,14 @@
    ogni chiave aggiunta qui deve avere la sua traduzione in `en`, altrimenti il typecheck fallisce. */
 
 export const it = {
+  "bp.costiPiattaforma": "Costi di piattaforma",
+  "bp.costiPiattaformaTip": "ReeVo, n8n, AMS e supporto interni, per intero da {d}, qualunque sia il numero di clienti",
+  "bp.lordoTip": "Margine al lordo della quota condivisa ({q} all’anno): i costi di piattaforma sono nella loro riga",
+  "bp.attivaDal": "Attiva da",
+  "bp.alMese": "Al mese",
+  "bp.finoAOggi": "Fino a oggi",
+  "par.attivaDal": "Piattaforma attiva da",
+  "par.piattaformaTit": "Business plan",
   "off.parametri": "Parametri",
   "off.versioneCongelata": "Versione dei parametri congelata all’invio in approvazione",
   "off.versioneUltima": "Le bozze usano sempre l’ultima versione dei parametri",
@@ -395,6 +403,14 @@ export const it = {
 export type Chiave = keyof typeof it;
 
 export const en: Record<Chiave, string> = {
+  "bp.costiPiattaforma": "Platform costs",
+  "bp.costiPiattaformaTip": "ReeVo, n8n, AMS and internal support, in full from {d}, whatever the number of clients",
+  "bp.lordoTip": "Margin before the shared share ({q} per year): platform costs have their own row",
+  "bp.attivaDal": "Active from",
+  "bp.alMese": "Per month",
+  "bp.finoAOggi": "To date",
+  "par.attivaDal": "Platform active from",
+  "par.piattaformaTit": "Business plan",
   "off.parametri": "Parameters",
   "off.versioneCongelata": "Parameter version frozen when sent for approval",
   "off.versioneUltima": "Drafts always use the latest parameter version",

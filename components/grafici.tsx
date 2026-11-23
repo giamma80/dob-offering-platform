@@ -155,25 +155,43 @@ export function CardVista({ id, titolo, icona, scenari, render }: {
 }
 
 /** Curva del margine cumulato contro l'investimento, con zona positiva/negativa e linea di pareggio. */
+/** Passo "rotondo" per le tacche dell'asse: 1, 2, 2,5 o 5 × 10^n. */
+function passoTacche(intervallo: number, tacche = 5) {
+  const grezzo = intervallo / tacche || 1;
+  const p = Math.pow(10, Math.floor(Math.log10(grezzo)));
+  return ([1, 2, 2.5, 5, 10].find((m) => m * p >= grezzo) ?? 10) * p;
+}
+
 export function CurvaRecupero({ punti, pareggio, etichetta }: { punti: PuntoTrimestre[]; pareggio: string | null; etichetta: string }) {
   const t = useT();
-  const xs0 = 64, xs1 = 624, y0 = 24, y1 = 196;
+  const xs0 = 70, xs1 = 624, y0 = 24, y1 = 196;
   const vals = punti.map((p) => p.cumulato);
-  const lo = Math.min(0, ...vals) * 1.1, hi = Math.max(0, ...vals) * 1.1 || 1;
+  const passo = passoTacche(Math.max(0, ...vals) - Math.min(0, ...vals));
+  const lo = Math.floor(Math.min(0, ...vals) / passo) * passo;
+  const hi = Math.max(passo, Math.ceil(Math.max(0, ...vals) / passo) * passo);
+  const tacche: number[] = [];
+  for (let v = lo; v <= hi + passo / 2; v += passo) tacche.push(Math.round(v));
   const px = (i: number) => xs0 + (i * (xs1 - xs0)) / Math.max(1, punti.length - 1);
   const py = (v: number) => y1 - ((v - lo) / (hi - lo)) * (y1 - y0);
   const zero = py(0);
   const pts = punti.map((p, i) => `${px(i).toFixed(0)},${py(p.cumulato).toFixed(0)}`).join(' ');
   const ip = pareggio ? punti.findIndex((p) => p.etichetta === pareggio) : -1;
   return (
-    <svg viewBox="0 0 660 232" width="100%" style={{ display: 'block', height: 'auto', maxHeight: 320 }} role="img" aria-label={etichetta}>
+    <svg viewBox="0 0 660 232" width="100%" style={{ display: 'block', height: 'auto', maxHeight: 340 }} role="img" aria-label={etichetta}>
       <g fontFamily="Metropolis, Arial">
         <rect x={xs0} y={y0} width={xs1 - xs0} height={Math.max(0, zero - y0)} fill="var(--signal-positive-soft)" />
         <rect x={xs0} y={zero} width={xs1 - xs0} height={Math.max(0, y1 - zero)} fill="var(--signal-negative-soft)" />
+        {tacche.map((v) => (
+          <g key={v}>
+            {v !== 0 && <line x1={xs0} y1={py(v)} x2={xs1} y2={py(v)} stroke="var(--line-soft)" strokeWidth={0.75} strokeDasharray="2 3" />}
+            <line x1={xs0 - 4} y1={py(v)} x2={xs0} y2={py(v)} stroke="var(--line-strong)" strokeWidth={1} />
+            <text x={xs0 - 7} y={py(v) + 3} textAnchor="end" fontSize="9.5" fill="var(--ink-muted)" style={{ fontVariantNumeric: 'tabular-nums' }}>
+              {v > 0 ? '+' : ''}{passo % 1000 === 0 || Math.abs(v) < 1000 ? k(v) : `${(v / 1000).toLocaleString('it-IT', { maximumFractionDigits: 1 })} k`}
+            </text>
+          </g>
+        ))}
+        <line x1={xs0} y1={y0} x2={xs0} y2={y1} stroke="var(--line-strong)" strokeWidth={1} />
         <line x1={xs0} y1={zero} x2={xs1} y2={zero} stroke="var(--line-strong)" strokeWidth={1.5} />
-        <text x={58} y={zero + 3} textAnchor="end" fontSize="9.5" fill="var(--ink-muted)">0</text>
-        <text x={58} y={28} textAnchor="end" fontSize="9.5" fill="var(--ink-muted)">+{k(hi)}</text>
-        <text x={58} y={199} textAnchor="end" fontSize="9.5" fill="var(--ink-muted)">{k(lo)}</text>
         <polygon points={`${xs0},${zero.toFixed(0)} ${pts} ${xs1},${zero.toFixed(0)}`} fill="var(--accent-azure)" opacity={0.12} />
         <polyline points={pts} fill="none" stroke="var(--accent-azure)" strokeWidth={2.5} />
         {punti.map((p, i) => (
@@ -187,8 +205,11 @@ export function CurvaRecupero({ punti, pareggio, etichetta }: { punti: PuntoTrim
             <text x={px(ip) + 6} y={38} fontSize="10.5" fontWeight={700} fill="var(--signal-positive)">{t('bp.pareggioIl', { q: pareggio! })}</text>
           </>
         )}
-        {punti.map((p, i) => i % 2 === 0 && (
-          <text key={p.etichetta} x={px(i)} y={212} textAnchor="middle" fontSize="9.5" fill="var(--ink-muted)">{p.etichetta}</text>
+        {punti.map((p, i) => (
+          <g key={p.etichetta}>
+            <line x1={px(i)} y1={y1} x2={px(i)} y2={y1 + 4} stroke="var(--line-strong)" strokeWidth={1} />
+            {i % 2 === 0 && <text x={px(i)} y={212} textAnchor="middle" fontSize="9.5" fill="var(--ink-muted)">{p.etichetta}</text>}
+          </g>
         ))}
       </g>
     </svg>

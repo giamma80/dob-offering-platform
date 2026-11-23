@@ -56,12 +56,17 @@ export function bloccanti(o: Offerta, stati: Record<string, StatoValore>): strin
   return campiCritici(o).filter((k) => stato(stati, k) === 'assunto');
 }
 
+const QUOTE_PIATTAFORMA = ['reevo', 'n8n', 'ams', 'supp'];
+
 /** Sintesi salvata in offerte.sintesi: alimenta elenco offerte e business plan. */
 export function sintesi(cfg: Config, o: Offerta, stati: Record<string, StatoValore>) {
   const r = calcola(cfg, o);
   const s = (x: typeof r.saas) => x.attivo ? {
     setup: x.setup.prezzo, customizzazione: x.customizzazione.prezzo, licenza: x.licenza.totale,
-    primoAnno: x.primoAnno.prezzo, margineAnnuo: x.annuo.margine, marginePrimoAnno: x.primoAnno.margine
+    primoAnno: x.primoAnno.prezzo, margineAnnuo: x.annuo.margine, marginePrimoAnno: x.primoAnno.margine,
+    /* quota dei costi di piattaforma già nel margine: il business plan la riaggiunge */
+    quotaPiattaformaAnnua: x.ricorrenti.filter((v) => QUOTE_PIATTAFORMA.includes(v.id)).reduce((a, v) => a + v.costo, 0),
+    quotaPiattaformaUnaTantum: x.setup.reevoServizi
   } : null;
   return {
     saas: s(r.saas),

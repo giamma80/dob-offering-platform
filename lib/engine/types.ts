@@ -102,6 +102,8 @@ export interface Config {
   };
   scaglioni: Scaglione[];
   investimento: { sviluppo: number; amPrimoAnno: number };
+  /** business plan: mese di attivazione della piattaforma (AAAA-MM), da cui escono i costi condivisi */
+  piattaforma?: { attivaDal: string };
 }
 
 export type ModalitaAi = 'incluso' | 'proxy' | 'cliente';
