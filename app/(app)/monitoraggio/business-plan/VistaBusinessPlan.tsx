@@ -1,5 +1,7 @@
 'use client';
 
+import { scorriA } from '@/lib/ui/scorri';
+
 import { useMemo, useState } from 'react';
 import { contributoAl, curvaRecupero, pareggio, type Progetto } from '@/lib/engine';
 import { useT } from '@/lib/i18n/client';
@@ -46,7 +48,7 @@ export function VistaBusinessPlan({ investimento, progetti }: { investimento: { 
         <p className="subnav__title">{t('mon.bp')}</p>
         {SEZ.map((s) => (
           <a key={s.id} className="subnav__a" href={`#${s.id}`} aria-current={sez === s.id ? 'true' : undefined}
-            onClick={(e) => { e.preventDefault(); setSez(s.id); document.getElementById(s.id)?.scrollIntoView({ behavior: 'smooth' }); }}>
+            onClick={(e) => { e.preventDefault(); setSez(s.id); scorriA(s.id); }}>
             <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}><Icona nome={s.ico} />{t(s.k)}</span><small>{s.badge}</small>
           </a>
         ))}

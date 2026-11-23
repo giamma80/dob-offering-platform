@@ -125,3 +125,9 @@ tr.is-sub td { font-weight: 700; background: var(--surface-accent-soft); }
   padding: 0 9px; font-size: 11px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box; }
 .tlp__b.in-corso { background: var(--accent-azure); border: 2px dashed var(--brand-ochre); }
 .tlp__assi { flex: 1; display: flex; justify-content: space-between; font-size: 10px; color: var(--ink-muted); font-weight: 600; }
+/* i campi di testo dentro le card opzione (voci aggiunte) restano visibili e scrivibili:
+   la regola del mockup nasconde ogni input dentro .opt perché pensata per le checkbox */
+.opt input.alt-input { position: static; opacity: 1; width: 100%; height: auto; }
+.opt .alt-inputwrap { width: 100%; }
+/* niente scroll della pagina: scorre solo la colonna centrale */
+html, body { overflow: hidden; }

@@ -1,5 +1,7 @@
 'use client';
 
+import { scorriA } from '@/lib/ui/scorri';
+
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import {
@@ -223,7 +225,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
               onClick={(e) => {
                 e.preventDefault();
                 setAttiva(s.id);
-                if (fase !== 'resoconto') document.getElementById(s.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                if (fase !== 'resoconto') scorriA(s.id);
               }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Icona nome={s.ico} />{t(s.k)}</span>
             </a>
@@ -266,7 +268,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                 {o.assessment.sistemi.map((n, i) => {
                   const k = `assessment.sistemi.${n}`;
                   return (
-                    <span key={`${n}-${i}`} className="chip">
+                    <span key={i} className="chip">
                       <span className="alt-inputwrap" style={{ display: 'inline-flex' }}>
                         <input className="alt-input" value={n} aria-label={t('as.sistemi')} disabled={solaLettura}
                           style={{ width: `${Math.max(10, n.length + 2)}ch` }}

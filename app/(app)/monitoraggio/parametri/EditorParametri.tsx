@@ -1,5 +1,7 @@
 'use client';
 
+import { scorriA } from '@/lib/ui/scorri';
+
 import { useState, useTransition } from 'react';
 import { salvaConfig } from '@/lib/azioni';
 import type { Config } from '@/lib/engine';
@@ -61,7 +63,7 @@ export function EditorParametri({ versione, iniziale }: { versione: number; iniz
         <p className="subnav__title">{t('mon.parametri')}</p>
         {SEZIONI.map((s) => (
           <a key={s.id} className="subnav__a" href={`#${s.id}`} aria-current={sez === s.id ? 'true' : undefined}
-            onClick={(e) => { e.preventDefault(); setSez(s.id); document.getElementById(s.id)?.scrollIntoView({ behavior: 'smooth' }); }}>
+            onClick={(e) => { e.preventDefault(); setSez(s.id); scorriA(s.id); }}>
             <span style={{ display: 'flex', gap: 8, alignItems: 'center' }}><Icona nome={s.ico} />{t(s.k)}</span><small>{badge[s.id]}</small>
           </a>
         ))}
