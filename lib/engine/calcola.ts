@@ -96,15 +96,17 @@ export function consumo(scaglioni: Scaglione[], volume: number) {
 export function vociCustomizzazione(cfg: Config, o: Offerta): RigaGg[] {
   const gg = (id: string, def: number) => o.stima.gg[id] ?? def;
   const sso = !!o.vincoli.sso;
-  const con = cfg.catalogo.connettori.filter((c) => o.soluzione.connettori.includes(c.id));
-  const int = cfg.catalogo.integrazioni.filter(
+  const off = o.soluzione.sezioniOff ?? [];
+  const conOn = !off.includes('connettori'), intOn = !off.includes('integrazioni');
+  const con = conOn ? cfg.catalogo.connettori.filter((c) => o.soluzione.connettori.includes(c.id)) : [];
+  const int = intOn ? cfg.catalogo.integrazioni.filter(
     (c) => o.soluzione.integrazioni.includes(c.id) && (c.vincolo !== 'sso' || sso)
-  );
+  ) : [];
   return [
     ...o.stima.base,
     ...[...con, ...int].map((c) => ({ id: c.id, nome: c.nome, gg: gg(c.id, c.gg), figura: c.figura })),
-    ...o.soluzione.connettoriCustom,
-    ...o.soluzione.integrazioniCustom
+    ...(conOn ? o.soluzione.connettoriCustom : []),
+    ...(intOn ? o.soluzione.integrazioniCustom : [])
   ];
 }
 
@@ -136,8 +138,9 @@ export function calcola(cfg: Config, o: Offerta): Risultato {
   /* Setup on-premise: adeguamento al target CI/CD del cliente + passaggio di consegne */
   const target = cfg.catalogo.cicd.find((c) => c.id === o.soluzione.cicd) ?? cfg.catalogo.cicd[0];
   const pc = cfg.catalogo.passaggioConsegne;
+  const cicdOn = !(o.soluzione.sezioniOff ?? []).includes('cicd');
   const vociOnp: RigaGg[] = [
-    { id: target.id, nome: `Adeguamento ${target.nome}`, gg: o.stima.gg[target.id] ?? target.gg, figura: target.figura },
+    ...(cicdOn ? [{ id: target.id, nome: `Adeguamento ${target.nome}`, gg: o.stima.gg[target.id] ?? target.gg, figura: target.figura }] : []),
     ...(o.soluzione.passaggioConsegne ? [{ ...pc, gg: o.stima.gg[pc.id] ?? pc.gg }] : [])
   ];
   const setupOnp = { ...blocco(cfg, t, vociOnp, quoteSetup, o.stima.quote), reevoServizi: 0 };
@@ -236,4 +239,59 @@ export function cumulato(s: Scenario, anni: number, crescita = 0) {
     out.push({ anno: a, ricavo, costo, margine: ricavo - costo });
   }
   return out;
+}
+
+/* ------------------------------------------------------------------ serie e composizioni
+   Lettura nel tempo (grafico ad area) e lettura per composizione (barra spezzata) dello stesso dato. */
+
+export interface PuntoMese { mese: number; unaTantum: number; licenza: number; extra: number; ricavo: number; costo: number; margine: number }
+
+/** Ricavo e costo cumulati mese per mese sui mesi del contratto (default 36).
+   Una tantum al mese 0, licenza e costi ricorrenti lineari, voci una tantum dai vincoli a fine contratto. */
+export function serieMensile(s: Scenario, extra: Riga[], mesi = 36): PuntoMese[] {
+  const una = s.setup.prezzo + s.customizzazione.prezzo;
+  const costoUna = s.setup.costo + s.customizzazione.costo;
+  const extraP = extra.reduce((a, r) => a + r.prezzo, 0);
+  const extraC = extra.reduce((a, r) => a + r.costo, 0);
+  return Array.from({ length: mesi + 1 }, (_, m) => {
+    const licenza = (s.licenza.totale * m) / 12;
+    const ex = m === mesi ? extraP : 0;
+    const ricavo = una + licenza + ex;
+    const costo = costoUna + (s.costoRicorrente * m) / 12 + (m === mesi ? extraC : 0);
+    return { mese: m, unaTantum: una, licenza, extra: ex, ricavo, costo, margine: ricavo - costo };
+  });
+}
+
+export interface Fetta { id: string; valore: number }
+
+/** Composizione del ricavo sull'orizzonte: customizzazione, setup, licenza × anni, voci dai vincoli. */
+export function composizioneRicavo(s: Scenario, extra: Riga[], anni = 3): Fetta[] {
+  return [
+    { id: 'custom', valore: s.customizzazione.prezzo },
+    { id: 'setup', valore: s.setup.prezzo },
+    { id: 'licenza', valore: s.licenza.totale * anni },
+    { id: 'extra', valore: extra.reduce((a, r) => a + r.prezzo, 0) }
+  ];
+}
+
+/** Composizione del ricavo fra costi e margine sull'orizzonte. */
+export function composizioneMargine(s: Scenario, extra: Riga[], anni = 3): Fetta[] {
+  const giornate = s.setup.costo + s.customizzazione.costo + extra.reduce((a, r) => a + r.costo, 0);
+  const ricorrenti = s.costoRicorrente * anni;
+  const ricavo = composizioneRicavo(s, extra, anni).reduce((a, f) => a + f.valore, 0);
+  return [
+    { id: 'giornate', valore: giornate },
+    { id: 'ricorrenti', valore: ricorrenti },
+    { id: 'margine', valore: ricavo - giornate - ricorrenti }
+  ];
+}
+
+/** Margine annuo SaaS al variare dei clienti sul multi-tenant (divisore N + 1). */
+export function sensibilitaClienti(cfg: Config, o: Offerta, divisori: number[]) {
+  return divisori.map((d) => {
+    const c = { ...cfg, costiCondivisi: { ...cfg.costiCondivisi, clientiAttivi: Math.max(0, d - 1) } };
+    const r = calcola(c, o);
+    const quota = r.saas.ricorrenti.filter((v) => ['reevo', 'n8n', 'ams', 'supp'].includes(v.id)).reduce((a, v) => a + v.costo, 0);
+    return { divisore: d, quotaRicorrente: quota, margineAnnuo: r.saas.annuo.margine };
+  });
 }

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { configVersione, offerta } from '@/lib/dati';
-import { specchietto } from '@/lib/engine';
+import { bloccanti, specchietto } from '@/lib/engine';
 import { Testata } from '@/components/Testata';
 import { t as traduci } from '@/lib/i18n/server';
 import { euro } from '@/lib/ui/formato';
@@ -20,6 +20,8 @@ export default async function Specchietto({ params, searchParams }: {
   const scenario = scenari.includes(sc as never) ? (sc as 'saas' | 'on_premise') : scenari[0];
   const approvata = o.stato === 'approvata';
   const s = approvata ? specchietto(cfg, o.dati, scenario) : null;
+  const tot = Object.fromEntries(scenari.map((x) => [x, specchietto(cfg, o.dati, x).totalePrimoAnno]));
+  const critici = bloccanti(o.dati, o.stati_valore).length;
   const VOCE: Record<string, Chiave> = { 'Setup e impianto': 're.setup', Customizzazione: 're.custom', 'Licenza annuale': 're.licenza' };
 
   return (
@@ -35,7 +37,7 @@ export default async function Specchietto({ params, searchParams }: {
           <p className="subnav__title">{t('tab.specchietto')}</p>
           {scenari.map((x) => (
             <Link key={x} className="subnav__a" href={`?sc=${x}`} aria-current={x === scenario ? 'page' : undefined}>
-              <span>{t(`approccio.${x}` as Chiave)}</span>
+              <span>{t(`approccio.${x}` as Chiave)}</span>{approvata && <small>{euro(tot[x])}</small>}
             </Link>
           ))}
         </aside>
@@ -43,7 +45,10 @@ export default async function Specchietto({ params, searchParams }: {
           {!s ? <p className="vuoto">{t('sp.bloccato')}</p> : (
             <div className="alt-card"><div className="alt-card__body" style={{ padding: '28px 30px' }}>
               <p style={{ margin: '0 0 22px', fontSize: 12, fontWeight: 700, letterSpacing: '.09em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>
-                {s.cliente} · Digital Onboarding · {t(`approccio.${s.scenario}` as Chiave)}
+                {s.cliente} · Digital Onboarding
+              </p>
+              <p style={{ margin: '-16px 0 22px', fontSize: 13, color: 'var(--ink-secondary)' }}>
+                {t(`approccio.${s.scenario}` as Chiave)} · {o.dati.assessment.volumeAnnuo.toLocaleString('it-IT')} {t('sp.pratiche')}
               </p>
               <table className="alt-table" style={{ fontSize: 15 }}>
                 <tbody>
@@ -67,7 +72,17 @@ export default async function Specchietto({ params, searchParams }: {
             </div></div>
           )}
         </main>
-        <aside className="rail" aria-label="Statistiche" />
+        <aside className="rail" aria-label={t('sp.esportazione')}>
+          <div className="rail__card rail__card--brand"><p className="rail__h">{t('sp.esportazione')}</p>
+            <div className="rail__stat"><span>{t('off.stato')}</span><b>{t(approvata ? 'sp.disponibile' : 'sp.bloccatoBreve')}</b></div>
+            <div className="rail__stat"><span>{t('re.critici')}</span><b>{critici}</b></div>
+          </div>
+          <div className="rail__card"><p className="rail__h">{t('sp.righeVincoli')}</p>
+            {cfg.vincoli.filter((v) => v.specchietto).map((v) => (
+              <div key={v.id} className="rail__stat"><span>{v.nome}</span><b>{t(o.dati.vincoli[v.id] ? 'sp.si' : 'sp.no')}</b></div>
+            ))}
+          </div>
+        </aside>
       </div>
     </div>
   );

@@ -101,6 +101,8 @@ export interface Offerta {
     integrazioniCustom: RigaGg[];
     cicd: string;                         // id del target CI/CD on-premise
     passaggioConsegne: boolean;
+    /** sottosezioni della Soluzione spente con l'interruttore: non entrano nel calcolo */
+    sezioniOff?: ('connettori' | 'integrazioni' | 'cicd')[];
   };
   stima: {
     base: RigaGg[];                       // giornate della base applicativa (copiate dal catalogo)

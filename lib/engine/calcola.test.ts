@@ -97,3 +97,56 @@ describe('stati e approvazione', () => {
     expect(bloccanti(x, st)).toHaveLength(0);
   });
 });
+
+import { serieMensile, composizioneRicavo, composizioneMargine, sensibilitaClienti } from './index';
+
+describe('serie e composizioni', () => {
+  const x = o();
+  const r = calcola(cfg, x);
+  it('serie a 36 mesi: parte dalla una tantum e chiude con licenza × 3 più le voci dai vincoli', () => {
+    const s = serieMensile(r.saas, r.vincoliUnaTantum);
+    expect(s).toHaveLength(37);
+    expect(s[0].ricavo).toBeCloseTo(r.saas.setup.prezzo + r.saas.customizzazione.prezzo, 2);
+    expect(s[36].ricavo).toBeCloseTo(composizioneRicavo(r.saas, r.vincoliUnaTantum).reduce((a, f) => a + f.valore, 0), 2);
+  });
+  it('costi + margine = ricavo', () => {
+    const tot = composizioneRicavo(r.onPremise, r.vincoliUnaTantum).reduce((a, f) => a + f.valore, 0);
+    expect(composizioneMargine(r.onPremise, r.vincoliUnaTantum).reduce((a, f) => a + f.valore, 0)).toBeCloseTo(tot, 2);
+  });
+  it('più clienti sul multi-tenant, quota ricorrente più bassa', () => {
+    const s = sensibilitaClienti(cfg, x, [1, 5, 8]);
+    expect(s[0].quotaRicorrente).toBeGreaterThan(s[1].quotaRicorrente);
+    expect(s[1].quotaRicorrente).toBeCloseTo(28251.11, 1);
+    expect(s[2].margineAnnuo).toBeGreaterThan(s[1].margineAnnuo);
+  });
+});
+
+import { curvaRecupero, pareggio, type Progetto } from './index';
+
+describe('business plan', () => {
+  const p = (inizio: string, annuo: number): Progetto => ({
+    id: inizio, cliente: inizio, inizio: new Date(inizio), margineAnnuo: annuo, marginePrimoAnno: annuo,
+    licenzaAnnua: 0, durataMesi: 36, inCorso: false
+  });
+  it('parte da meno investimento e raggiunge il pareggio quando i margini lo coprono', () => {
+    const c = curvaRecupero(120000, [p('2026-01-01', 120000)], new Date('2026-01-01'), 8);
+    expect(c[0].cumulato).toBeCloseTo(-90000, 0);
+    expect(pareggio(c)).toBe('2026 T4');
+  });
+  it('senza progetti il pareggio non arriva', () => {
+    expect(pareggio(curvaRecupero(1000, [], new Date('2026-01-01'), 4))).toBeNull();
+  });
+});
+
+describe('interruttori della Soluzione', () => {
+  it('connettori spenti: le loro giornate escono dalla customizzazione', () => {
+    const x = o();
+    const con = calcola(cfg, x).saas.customizzazione.gg;
+    x.soluzione.sezioniOff = ['connettori'];
+    expect(calcola(cfg, x).saas.customizzazione.gg).toBeLessThan(con);
+  });
+  it('CI/CD spento: resta solo il passaggio di consegne nel setup on-premise', () => {
+    const x = o(); x.soluzione.sezioniOff = ['cicd'];
+    expect(calcola(cfg, x).onPremise.setup.righe.map((r) => r.id)).toEqual(['consegne']);
+  });
+});

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import {
-  FASI, avanzamento, bloccanti, calcola, cumulato, vociCustomizzazione,
+  FASI, avanzamento, bloccanti, calcola, vociCustomizzazione,
   type Config, type Fase, type FiguraId, type Offerta, type RigaGg, type StatoValore
 } from '@/lib/engine';
 import { salvaOfferta } from '@/lib/azioni';
@@ -16,6 +16,7 @@ import { Toast, useToast } from '@/components/Toast';
 import { Icona } from '@/components/Icona';
 import { Footer } from './Footer';
 import { Timeline } from './Timeline';
+import { DettaglioCosti, RailDettaglio, RailSintesi, RailSostenibilita, Sintesi, Sostenibilita } from './Resoconto';
 
 type Stati = Record<string, StatoValore>;
 type Sezione = { id: string; k: Chiave; ico: string };
@@ -185,7 +186,22 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
 
   const cp = (id: string) => { const x = SEZIONI[fase].find((y) => y.id === id)!; return { id, titolo: t(x.k), ico: x.ico }; };
   const comuni = { figure: cfg.figure, solaLettura, t };
+  const offSol = o.soluzione.sezioniOff ?? [];
+  const interr = (k: 'connettori' | 'integrazioni' | 'cicd', extra?: React.ReactNode) => (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+      {extra}
+      <label className="alt-switch" title={t('so.abilita')}>
+        <input type="checkbox" checked={!offSol.includes(k)} disabled={solaLettura} aria-label={t('so.abilita')}
+          onChange={(e) => upd((x) => {
+            const cur = x.soluzione.sezioniOff ?? [];
+            x.soluzione.sezioniOff = e.target.checked ? cur.filter((y) => y !== k) : [...cur, k];
+          })} />
+        <span className="alt-switch__box" aria-hidden="true" />
+      </label>
+    </span>
+  );
   const sezioni = SEZIONI[fase];
+  const propsRes = { cfg, o, r, definito: pct.resoconto, critici: bloccanti(o, stati) };
   const sub = fase === 'resoconto' ? attiva : null;
   const vociCust = vociCustomizzazione(cfg, o).filter((v) => !o.stima.base.some((b) => b.id === v.id));
   const dovCustom = (idv: string) =>
@@ -302,8 +318,8 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
               const kc = k === 'connettori' ? 'connettoriCustom' as const : 'integrazioniCustom' as const;
               return (
                 <Card key={k} {...cp(k === 'connettori' ? 's-con' : 's-int')}
-                  aside={<StatoPulsanti stato={st(`soluzione.${k}`)} onStato={setSt(`soluzione.${k}`)} />}>
-                  <div className="griglia">
+                  aside={interr(k, <StatoPulsanti stato={st(`soluzione.${k}`)} onStato={setSt(`soluzione.${k}`)} />)}>
+                  <div className={`griglia${offSol.includes(k) ? ' is-off' : ''}`} inert={offSol.includes(k) ? true : undefined}>
                     {cfg.catalogo[k].map((c) => {
                       const vinc = 'vincolo' in c && c.vincolo ? c.vincolo : null;
                       const bloccato = !!vinc && !o.vincoli[vinc];
@@ -340,8 +356,8 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                 </Card>
               );
             })}
-            <Card {...cp("s-ci")} bloccata={!onp} aside={onp ? <StatoPulsanti stato={st('soluzione.cicd')} onStato={setSt('soluzione.cicd')} /> : undefined}>
-              <div className="scelta">
+            <Card {...cp("s-ci")} bloccata={!onp} aside={onp ? interr('cicd', <StatoPulsanti stato={st('soluzione.cicd')} onStato={setSt('soluzione.cicd')} />) : undefined}>
+              <div className={`scelta${offSol.includes('cicd') ? ' is-off' : ''}`} inert={offSol.includes('cicd') ? true : undefined}>
                 {cfg.catalogo.cicd.map((c) => (
                   <label key={c.id} className={`scelta__c${o.soluzione.cicd === c.id ? ' on' : ''}`}>
                     <input type="radio" name="cicd" checked={o.soluzione.cicd === c.id} disabled={!onp || solaLettura}
@@ -627,80 +643,13 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
           </>)}
 
           {/* ================================================= 5 RESOCONTO */}
-          {fase === 'resoconto' && sub === 'r-sin' && (<>
-            <div className="alt-card"><div className="alt-card__head"><h2 className="alt-card__title">{t('re.approvazione')}</h2></div>
-              <div className="alt-card__body griglia-campi">
-                <div className="campo"><span>{t('off.definito')}</span><b className="valore">{pct.resoconto}%</b></div>
-                <div className="campo"><span>{t('re.critici')}</span><b className="valore">{bloccanti(o, stati).length}</b></div>
-              </div></div>
-            <div className="alt-card"><div className="alt-card__head"><h2 className="alt-card__title">{t('re.primoAnno')}</h2></div>
-              <div className="alt-card__body">
-                <table className="alt-table">
-                  <thead><tr><th>{t('st.voce')}</th>{saas && <th className="is-num">SaaS</th>}{onp && <th className="is-num">On-premise</th>}</tr></thead>
-                  <tbody>
-                    {([['re.setup', (x: typeof r.saas) => x.setup.prezzo], ['re.custom', (x: typeof r.saas) => x.customizzazione.prezzo],
-                      ['re.licenza', (x: typeof r.saas) => x.licenza.totale]] as const).map(([k, f]) => (
-                      <tr key={k}><td>{t(k)}</td>
-                        {saas && <td className="is-num">{euro(f(r.saas))}</td>}
-                        {onp && <td className="is-num">{euro(f(r.onPremise))}</td>}</tr>
-                    ))}
-                  </tbody>
-                  <tfoot><tr className="is-total"><td>{t('re.primoAnno')}</td>
-                    {saas && <td className="is-num">{euro(r.saas.primoAnno.prezzo)}</td>}
-                    {onp && <td className="is-num">{euro(r.onPremise.primoAnno.prezzo)}</td>}</tr></tfoot>
-                </table>
-              </div></div>
-          </>)}
-          {fase === 'resoconto' && sub === 'r-sos' && (
-            <div className="alt-card"><div className="alt-card__body">
-              {([['saas', r.saas], ['on_premise', r.onPremise]] as const).filter(([, x]) => x.attivo).map(([k, x]) => {
-                const c = cumulato(x, 3, o.assessment.crescita);
-                const max = Math.max(...c.map((y) => y.ricavo), 1);
-                return (
-                  <div key={k} style={{ marginBottom: 24 }}>
-                    <h3 className="alt-card__title" style={{ marginBottom: 8 }}>{t(`approccio.${k}` as Chiave)}</h3>
-                    <svg viewBox="0 0 300 120" width="100%" height="140" role="img" aria-label={t('re.margineCum')}>
-                      {c.map((y, i) => (
-                        <g key={y.anno} transform={`translate(${30 + i * 90},0)`}>
-                          <rect x="0" y={110 - (y.ricavo / max) * 100} width="28" height={(y.ricavo / max) * 100} fill="var(--accent-azure)" />
-                          <rect x="32" y={110 - (y.costo / max) * 100} width="28" height={(y.costo / max) * 100} fill="var(--line-strong)" />
-                        </g>
-                      ))}
-                    </svg>
-                    <table className="alt-table">
-                      <thead><tr><th>{t('re.anno')}</th><th className="is-num">{t('re.ricavo')}</th><th className="is-num">{t('re.costoCum')}</th><th className="is-num">{t('re.margineCum')}</th></tr></thead>
-                      <tbody>{c.map((y) => (
-                        <tr key={y.anno}><td>{y.anno}</td><td className="is-num">{euro(y.ricavo)}</td><td className="is-num">{euro(y.costo)}</td><td className="is-num">{euro(y.margine)}</td></tr>
-                      ))}</tbody>
-                    </table>
-                  </div>
-                );
-              })}
-            </div></div>
-          )}
-          {fase === 'resoconto' && sub === 'r-det' && (
-            <div className="alt-card"><div className="alt-card__body">
-              {([['saas', r.saas], ['on_premise', r.onPremise]] as const).filter(([, x]) => x.attivo).map(([k, x]) => (
-                <div key={k} style={{ marginBottom: 24 }}>
-                  <h3 className="alt-card__title" style={{ marginBottom: 8 }}>{t(`approccio.${k}` as Chiave)}</h3>
-                  <TabellaOrdinabile
-                    colonne={[{ nome: t('st.voce') }, { nome: t('st.giornate'), num: true }, { nome: t('pr.costo'), num: true }, { nome: t('pr.prezzo'), num: true }]}
-                    righe={[...x.setup.righe, ...x.setup.quote, ...x.customizzazione.righe, ...x.customizzazione.quote].map((y, i) => ({
-                      key: `${y.id}-${i}`, celle: [{ v: y.nome }, { v: y.gg, html: numero(y.gg) }, { v: y.costo, html: euro(y.costo) }, { v: y.prezzo, html: euro(y.prezzo) }]
-                    }))}
-                  />
-                  <TabellaOrdinabile
-                    colonne={[{ nome: t('re.ricorrenti') }, { nome: t('pr.costo'), num: true }]}
-                    righe={x.ricorrenti.map((y) => ({ key: y.id, celle: [{ v: y.nome }, { v: y.costo, html: euro(y.costo) }] }))}
-                    totale={[{ v: t('comune.totale') }, { v: x.costoRicorrente, html: euro(x.costoRicorrente) }]}
-                  />
-                </div>
-              ))}
-            </div></div>
-          )}
+          {fase === 'resoconto' && sub === 'r-sin' && <Sintesi {...propsRes} />}
+          {fase === 'resoconto' && sub === 'r-sos' && <Sostenibilita {...propsRes} />}
+          {fase === 'resoconto' && sub === 'r-det' && <DettaglioCosti {...propsRes} />}
         </main>
 
         <aside className="rail" aria-label={t('re.licenza')}>
+          {sub === 'r-sin' ? <RailSintesi {...propsRes} /> : sub === 'r-sos' ? <RailSostenibilita {...propsRes} /> : sub === 'r-det' ? <RailDettaglio {...propsRes} /> : (<>
           <div className="rail__card rail__card--brand">
             <p className="rail__h">{t('re.licenza')}</p>
             {saas && <div className="rail__stat"><span>SaaS</span><b>{euro(r.saas.licenza.totale)}</b></div>}
@@ -716,6 +665,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
             <div className="rail__stat"><span>{t('off.definito')}</span><b>{pct[fase]}%</b></div>
             <div className="rail__stat"><span>{t('re.critici')}</span><b>{bloccanti(o, stati).length}</b></div>
           </div>
+          </>)}
         </aside>
       </div>
       <Footer o={o} r={r} solaLettura={solaLettura}

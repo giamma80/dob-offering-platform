@@ -15,6 +15,7 @@ export interface RigaOfferta {
   config_versione: number | null;
   origine_id: string | null;
   aggiornata_il: string;
+  approvata_il: string | null;
   creata_il: string;
 }
 
