@@ -36,7 +36,7 @@ export function CampoNumero({ etichetta, valore, onChange, suffisso, min, max, p
 
   const input = (
     <span className={`alt-inputwrap${stato === 'assunto' ? ' st-a' : stato === 'confermato' ? ' st-c' : ''}`}
-      style={compatto ? { maxWidth: 110, display: 'inline-flex' } : undefined} data-err={errore ? '' : undefined}>
+      style={compatto ? { maxWidth: suffisso && suffisso.length > 2 ? 160 : 120, display: 'inline-flex' } : undefined} data-err={errore ? '' : undefined}>
       <input id={id} className="alt-input" inputMode="decimal" value={testo} step={passo}
         aria-label={compatto ? etichetta : undefined}
         aria-invalid={errore ? true : undefined} aria-describedby={errore ? `${id}-e` : undefined}

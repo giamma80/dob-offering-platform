@@ -12,7 +12,7 @@ const k = (v: number) => (Math.abs(v) >= 1000 ? `${Math.round(v / 1000).toLocale
 export interface Livello { colore: string; nome: string; valori: number[] }
 
 /** Area impilata cumulata sui mesi, con linea tratteggiata dei costi. */
-export function AreaCumulata({ livelli, costo, etichettaCosti, etichetta, h = 230, w = 660 }: {
+export function AreaCumulata({ livelli, costo, etichettaCosti, etichetta, h = 260, w = 900 }: {
   livelli: Livello[]; costo?: number[]; etichettaCosti?: string; etichetta: string; h?: number; w?: number;
 }) {
   const t = useT();
@@ -32,7 +32,7 @@ export function AreaCumulata({ livelli, costo, etichettaCosti, etichetta, h = 23
   });
   const contorno = base.map((v, m) => `${px(m).toFixed(1)},${py(v).toFixed(1)}`).join(' ');
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={h} role="img" aria-label={etichetta}>
+    <svg viewBox={`0 0 ${w} ${h}`} width="100%" style={{ display: 'block', height: 'auto', maxHeight: 320 }} role="img" aria-label={etichetta}>
       <g fontFamily="Metropolis, Arial" fontSize="10" fill="var(--ink-muted)">
         {[0, 1, 2, 3, 4].map((i) => {
           const v = (ymax * i) / 4;
@@ -166,7 +166,7 @@ export function CurvaRecupero({ punti, pareggio, etichetta }: { punti: PuntoTrim
   const pts = punti.map((p, i) => `${px(i).toFixed(0)},${py(p.cumulato).toFixed(0)}`).join(' ');
   const ip = pareggio ? punti.findIndex((p) => p.etichetta === pareggio) : -1;
   return (
-    <svg viewBox="0 0 660 232" width="100%" height={232} role="img" aria-label={etichetta}>
+    <svg viewBox="0 0 660 232" width="100%" style={{ display: 'block', height: 'auto', maxHeight: 320 }} role="img" aria-label={etichetta}>
       <g fontFamily="Metropolis, Arial">
         <rect x={xs0} y={y0} width={xs1 - xs0} height={Math.max(0, zero - y0)} fill="var(--signal-positive-soft)" />
         <rect x={xs0} y={zero} width={xs1 - xs0} height={Math.max(0, y1 - zero)} fill="var(--signal-negative-soft)" />
