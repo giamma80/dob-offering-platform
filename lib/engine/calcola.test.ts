@@ -77,11 +77,19 @@ describe('vincoli', () => {
 });
 
 describe('specchietto', () => {
-  it('tre righe, nessun dato interno', () => {
-    const s = specchietto(cfg, o(), 'saas');
-    expect(s.righe.map((r) => r.voce)).toEqual(['Setup e impianto', 'Customizzazione', 'Canone annuo']);
+  it('messa in opera, adeguamento infrastruttura e canone annuo, con sottovoci, nessun dato interno', () => {
+    const x = o(); x.soluzione.connettori = ['namirial', 'cleverchain', 'api-gw'];
+    const s = specchietto(cfg, x, 'saas');
+    expect(s.righe.map((r) => r.voce)).toEqual(['Messa in opera', 'Adeguamento infrastruttura', 'Canone annuo']);
+    for (const r of s.righe) expect(r.sottovoci.reduce((a, v) => a + v.importo, 0)).toBeCloseTo(r.importo, 2);
     const json = JSON.stringify(s);
-    for (const vietato of [/reevo/i, /"costo"/, /margine/i, /"gg"/, /n8n/i]) expect(json).not.toMatch(vietato);
+    for (const vietato of [/reevo/i, /"costo"/, /margine/i, /"gg"/, /n8n/i, /namirial/i, /cleverchain/i, /api gateway/i])
+      expect(json).not.toMatch(vietato);
+  });
+  it('on-premise: il target CI/CD compare per nome nell\'adeguamento infrastruttura', () => {
+    const x = o(); x.approccio = 'on_premise'; x.soluzione.cicd = 'openshift';
+    const infra = specchietto(cfg, x, 'on_premise').righe.find((r) => r.id === 'infra')!;
+    expect(infra.sottovoci[0].voce).toBe('OpenShift');
   });
 });
 

@@ -39,7 +39,9 @@ export function sintesi(cfg: Config, o: Offerta) {
 export interface Specchietto {
   cliente: string;
   scenario: 'saas' | 'on_premise';
-  righe: { voce: string; importo: number; ricorrente: boolean; nota?: string }[];
+  /** voci principali con le sottovoci mostrabili al cliente: solo importi, niente giornate, costi o fornitori */
+  righe: { id: 'messa' | 'infra' | 'canone'; voce: string; importo: number; ricorrente: boolean; nota?: string;
+    sottovoci: { id: string; voce?: string; importo: number }[] }[];
   totalePrimoAnno: number;
   extra: { voce: string; importo: number }[];
   /** moduli DOB inclusi: è tutto ciò che il cliente ha scelto */
@@ -54,11 +56,34 @@ export function specchietto(cfg: Config, o: Offerta, sc: 'saas' | 'on_premise'):
   const x = sc === 'saas' ? r.saas : r.onPremise;
   const note = cfg.vincoli.filter((v) => o.vincoli[v.id] && v.specchietto && v.effetto.tipo === 'ricorrente_fisso')
     .map((v) => v.specchietto as string);
-  const righe = [
-    { voce: 'Setup e impianto', importo: x.setup.prezzo, ricorrente: false },
-    { voce: 'Customizzazione', importo: x.customizzazione.prezzo, ricorrente: false },
-    { voce: 'Canone annuo', importo: x.licenza.totale, ricorrente: true, nota: note.join(' · ') || undefined }
-  ];
+  /* sottovoci: id traducibili; `voce` solo per nomi propri che il cliente conosce (il suo target CI/CD) */
+  const base = x.setup.righe.filter((v) => !x.setup.infrastruttura.includes(v));
+  const custom = (g: string) => x.customizzazione.righe.filter((v) => (v.gruppo ?? 'catalogo') === g).reduce((a, v) => a + v.prezzo, 0);
+  const quote = [...x.setup.quote, ...x.customizzazione.quote];
+  const nonZero = <T extends { importo: number }>(xs: T[]) => xs.filter((y) => Math.abs(y.importo) > 0.004);
+  const infraRighe = x.setup.infrastruttura.map((v, i) => ({
+    id: v.id === 'ambienti-saas' ? 'ambienti' : 'adeguamento',
+    voce: v.id === 'ambienti-saas' ? undefined : v.nome.replace(/^Adeguamento\s+/, ''),
+    /* la quota dei servizi di piattaforma una tantum sta nella prima voce, senza nominarla */
+    importo: v.prezzo + (i === 0 ? x.infrastruttura.prezzo - x.setup.infrastruttura.reduce((a, y) => a + y.prezzo, 0) : 0)
+  }));
+  const righe: Specchietto['righe'] = [
+    { id: 'messa', voce: 'Messa in opera', importo: x.messaInOpera.prezzo, ricorrente: false, sottovoci: nonZero([
+      { id: 'base', importo: base.reduce((a, v) => a + v.prezzo, 0) },
+      { id: 'integrazioni', importo: custom('integrazioni') },
+      { id: 'catalogo', importo: custom('catalogo') },
+      { id: 'moduli', importo: custom('moduli') },
+      { id: 'stima', importo: custom('stima') },
+      { id: 'parametriche', importo: quote.reduce((a, v) => a + v.prezzo, 0) }
+    ]) },
+    { id: 'infra', voce: 'Adeguamento infrastruttura', importo: x.infrastruttura.prezzo, ricorrente: false, sottovoci: nonZero(infraRighe) },
+    { id: 'canone', voce: 'Canone annuo', importo: x.licenza.totale, ricorrente: true, nota: note.join(' · ') || undefined, sottovoci: nonZero([
+      { id: 'software', importo: x.licenza.software },
+      { id: 'consumo', importo: x.licenza.consumo },
+      { id: 'manutenzione', importo: x.licenza.manutenzione },
+      { id: 'ai', importo: x.licenza.aiRifatturata }
+    ]) }
+  ].filter((rr) => rr.id !== 'infra' || Math.abs(rr.importo) > 0.004) as Specchietto['righe'];
   return {
     cliente: o.cliente,
     scenario: sc,

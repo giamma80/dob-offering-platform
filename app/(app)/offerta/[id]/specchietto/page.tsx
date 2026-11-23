@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { configOfferta, offerta } from '@/lib/dati';
@@ -23,7 +24,7 @@ export default async function Specchietto({ params, searchParams }: {
   const approvata = o.stato === 'approvata';
   const s = approvata ? specchietto(cfg, o.dati, scenario) : null;
   const tot = Object.fromEntries(scenari.map((x) => [x, specchietto(cfg, o.dati, x).totalePrimoAnno]));
-  const VOCE: Record<string, Chiave> = { 'Setup e impianto': 're.setup', Customizzazione: 're.custom', 'Canone annuo': 're.licenza' };
+  const VOCE: Record<string, Chiave> = { messa: 'st.messa', infra: 'st.infra', canone: 're.licenza' };
 
   return (
     <div className="alt-root">
@@ -55,13 +56,21 @@ export default async function Specchietto({ params, searchParams }: {
               <table className="alt-table" style={{ fontSize: 15 }}>
                 <tbody>
                   {s.righe.map((rr) => (
-                    <tr key={rr.voce}>
-                      <td style={{ padding: '15px 14px' }}><strong>{t(VOCE[rr.voce])}</strong>
-                        {rr.nota && <div style={{ fontSize: 12, color: 'var(--ink-muted)' }}>{t('sp.aggiornamenti')}</div>}</td>
-                      <td className="is-num" style={{ padding: '15px 14px', fontSize: 20, fontWeight: 700 }}>
-                        {euro(rr.importo)}{rr.ricorrente && <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-muted)' }}>&nbsp;{t('sp.anno')}</span>}
-                      </td>
-                    </tr>
+                    <Fragment key={rr.id}>
+                      <tr>
+                        <td style={{ padding: '15px 14px' }}><strong>{t(VOCE[rr.id])}</strong>
+                          {rr.nota && <div style={{ fontSize: 12, color: 'var(--ink-muted)' }}>{t('sp.aggiornamenti')}</div>}</td>
+                        <td className="is-num" style={{ padding: '15px 14px', fontSize: 20, fontWeight: 700 }}>
+                          {euro(rr.importo)}{rr.ricorrente && <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-muted)' }}>&nbsp;{t('sp.anno')}</span>}
+                        </td>
+                      </tr>
+                      {rr.sottovoci.length > 1 || (rr.sottovoci.length === 1 && rr.sottovoci[0].voce) ? rr.sottovoci.map((v) => (
+                        <tr key={`${rr.id}-${v.id}`} className="sp-sotto">
+                          <td>{v.voce ? t(`sp.sv.${v.id}` as Chiave, { v: v.voce }) : t(`sp.sv.${v.id}` as Chiave)}</td>
+                          <td className="is-num">{euro(v.importo)}</td>
+                        </tr>
+                      )) : null}
+                    </Fragment>
                   ))}
                   <tr className="is-total"><td style={{ padding: '16px 14px' }}>{t('re.primoAnno')}</td>
                     <td className="is-num" style={{ padding: '16px 14px', fontSize: 24 }}>{euro(s.totalePrimoAnno)}</td></tr>

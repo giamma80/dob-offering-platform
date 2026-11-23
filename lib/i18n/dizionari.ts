@@ -2,6 +2,18 @@
    ogni chiave aggiunta qui deve avere la sua traduzione in `en`, altrimenti il typecheck fallisce. */
 
 export const it = {
+  "sp.sv.base": "Base applicativa",
+  "sp.sv.integrazioni": "Integrazioni con i vostri sistemi",
+  "sp.sv.catalogo": "Connettori e integrazioni di catalogo",
+  "sp.sv.moduli": "Personalizzazioni dei moduli",
+  "sp.sv.stima": "Altre personalizzazioni",
+  "sp.sv.parametriche": "Gestione del progetto, test e garanzia",
+  "sp.sv.adeguamento": "Adeguamento a {v}",
+  "sp.sv.ambienti": "Ambienti della piattaforma",
+  "sp.sv.software": "Software",
+  "sp.sv.consumo": "Consumo a pratiche",
+  "sp.sv.manutenzione": "Manutenzione (AMS)",
+  "sp.sv.ai": "Elaborazione AI",
   "st.quoteSuCustom": "Sulle customizzazioni",
   "st.quoteSuBase": "Sulla base applicativa",
   "st.quoteBaseTip": "Giornate su cui si calcolano le voci parametriche, a cascata",
@@ -428,6 +440,18 @@ export const it = {
 export type Chiave = keyof typeof it;
 
 export const en: Record<Chiave, string> = {
+  "sp.sv.base": "Application baseline",
+  "sp.sv.integrazioni": "Integrations with your systems",
+  "sp.sv.catalogo": "Catalogue connectors and integrations",
+  "sp.sv.moduli": "Module customisations",
+  "sp.sv.stima": "Other customisations",
+  "sp.sv.parametriche": "Project management, testing and warranty",
+  "sp.sv.adeguamento": "Adaptation to {v}",
+  "sp.sv.ambienti": "Platform environments",
+  "sp.sv.software": "Software",
+  "sp.sv.consumo": "Usage per application",
+  "sp.sv.manutenzione": "Maintenance (AMS)",
+  "sp.sv.ai": "AI processing",
   "st.quoteSuCustom": "On customisations",
   "st.quoteSuBase": "On the application baseline",
   "st.quoteBaseTip": "Days the parametric items are calculated on, cascading",
