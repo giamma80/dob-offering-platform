@@ -143,3 +143,9 @@ html, body { overflow: hidden; }
 .moduli-tot b { font-size: 15px; color: var(--ink-primary); font-variant-numeric: tabular-nums; }
 .sp-moduli { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 6px 18px; font-size: 14px; color: var(--ink-primary); }
 .sp-moduli li::before { content: "✓"; color: var(--signal-positive); font-weight: 700; margin-right: 8px; }
+
+/* cascata: tabelle uniformi */
+.alt-badge.origine { margin-left: 8px; text-transform: none; letter-spacing: 0; font-weight: 600; }
+tr.is-gruppo td { background: var(--surface-sunken); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-secondary); }
+tr.is-bloccato td { color: var(--ink-muted); }
+tr.is-bloccato .alt-switch { cursor: not-allowed; }

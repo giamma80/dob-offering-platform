@@ -158,7 +158,17 @@ export function EditorParametri({ versione, iniziale }: { versione: number; iniz
                     ...(m.connettori ?? []).map((id) => c.catalogo.connettori.find((y) => y.id === id)?.nome ?? id),
                     ...(m.integrazioni ?? []).map((id) => c.catalogo.integrazioni.find((y) => y.id === id)?.nome ?? id),
                     ...(m.customizzazione ? [`${m.customizzazione.nome} · ${m.customizzazione.gg} gg`] : [])
-                  ].join(', ') || '—'}</span></td>
+                  ].join(', ') || (m.opzioneClassi ? '' : '—')}</span>
+                  {m.opzioneClassi && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <span>{m.opzioneClassi.nome}</span>
+                      <CampoNumero compatto etichetta={t('par.impiantoOpz')} valore={m.opzioneClassi.impianto} min={0} suffisso="gg"
+                        onChange={(v) => upd((x) => { x.moduli[i].opzioneClassi!.impianto = v; })} />
+                      <span className="muted">+</span>
+                      <CampoNumero compatto etichetta={t('par.perClasse')} valore={m.opzioneClassi.perClasse} min={0} suffisso={t('par.ggClasse')}
+                        onChange={(v) => upd((x) => { x.moduli[i].opzioneClassi!.perClasse = v; })} />
+                    </span>
+                  )}</td>
                 </tr>
               ))}
             </tbody>
@@ -171,6 +181,14 @@ export function EditorParametri({ versione, iniziale }: { versione: number; iniz
           <table className="alt-table">
             <thead><tr><th>{t('st.voce')}</th><th>{t('par.tipo')}</th><th className="is-num">{t('par.ggDefault')}</th></tr></thead>
             <tbody>
+              {(['bassa', 'media', 'alta'] as const).map((k) => (
+                <tr key={`is-${k}`}>
+                  <td>{t('par.integrazioneSistema')} · {t(`as.compl.${k}`)}</td><td><span className="muted">{t('as.complessita')}</span></td>
+                  <td className="is-num"><CampoNumero compatto etichetta={`${t('par.integrazioneSistema')} ${t(`as.compl.${k}`)}`} suffisso="gg" min={0}
+                    valore={c.integrazioneSistema?.[k] ?? { bassa: 5, media: 10, alta: 20 }[k]}
+                    onChange={(v) => upd((x) => { x.integrazioneSistema = { ...(x.integrazioneSistema ?? { bassa: 5, media: 10, alta: 20, figura: 'dev' }), [k]: v }; })} /></td>
+                </tr>
+              ))}
               {catalogo.map((x) => (
                 <tr key={`${x.tipo}-${x.v.id}`}>
                   <td>{x.v.nome}</td><td><span className="muted">{t(x.tipo)}</span></td>

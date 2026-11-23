@@ -51,7 +51,9 @@ export interface ModuloDob {
   peso: number;                     // % del costo dell'impianto; la somma dei moduli è 100
   connettori?: string[];            // id di catalogo collegati
   integrazioni?: string[];
-  customizzazione?: VoceCatalogo;   // voce che il modulo aggiunge alla customizzazione
+  customizzazione?: VoceCatalogo;   // voce che il modulo aggiunge sempre alla customizzazione
+  /** opzione a classi: se attivata nell'offerta, impianto + giornate per classe */
+  opzioneClassi?: { id: string; nome: string; impianto: number; perClasse: number; figura: FiguraId };
 }
 
 /** Configurazione di sistema: una riga versionata di public.configurazione.dati */
@@ -69,6 +71,8 @@ export interface Config {
   };
   ai: { perDocumento: number; documentiPerPratica: number };
   moduli: ModuloDob[];
+  /** giornate dell'integrazione dedicata a un sistema, per complessità */
+  integrazioneSistema: { bassa: number; media: number; alta: number; figura: FiguraId };
   catalogo: {
     base: VoceCatalogo[];
     connettori: (VoceCatalogo & { default: boolean })[];
@@ -92,7 +96,25 @@ export type ModalitaAi = 'incluso' | 'proxy' | 'cliente';
 export type Approccio = 'saas' | 'on_premise' | 'entrambi';
 export type StatoValore = 'assunto' | 'dichiarato' | 'confermato';
 
-export interface RigaGg { id: string; nome: string; gg: number; figura: FiguraId }
+export type GruppoCustom = 'integrazioni' | 'catalogo' | 'moduli' | 'stima';
+
+export interface RigaGg {
+  id: string; nome: string; gg: number; figura: FiguraId;
+  /** per le customizzazioni: gruppo e origine, per rendere tracciabile la cascata */
+  gruppo?: GruppoCustom;
+  origine?: string;
+}
+
+export type Complessita = 'bassa' | 'media' | 'alta';
+
+/** Sistema del cliente da integrare (Assessment). In Soluzione si copre con un connettore di catalogo
+   oppure genera un'integrazione dedicata con le giornate della sua complessità. */
+export interface Sistema {
+  id: string;
+  nome: string;
+  complessita: Complessita;
+  copertoDa?: string | null;        // id del connettore di catalogo che lo copre
+}
 
 /** Input di un'offerta: public.offerte.dati */
 export interface Offerta {
@@ -107,7 +129,9 @@ export interface Offerta {
     volumeAnnuo: number;
     crescita: number;
     documentiPerPratica: number;
-    sistemi: string[];
+    sistemi: (Sistema | string)[];   // string: formato precedente, normalizzato dal motore
+    /** opzioni a classi dei moduli: { [idModulo]: { attiva, classi } } */
+    opzioniModuli?: Record<string, { attiva: boolean; classi: number }>;
   };
   soluzione: {
     connettori: string[];                 // id di catalogo selezionati
@@ -121,7 +145,9 @@ export interface Offerta {
   };
   stima: {
     base: RigaGg[];                       // giornate della base applicativa (copiate dal catalogo)
-    gg: Record<string, number>;           // giornate sovrascritte per id di connettore/integrazione/cicd
+    gg: Record<string, number>;           // giornate sovrascritte per id di connettore/integrazione/cicd/sistema
+    /** customizzazioni aggiunte dal delivery in Stima (origine "in stima") */
+    extra?: RigaGg[];
     quote: Record<Quota['id'], number>;   // percentuali per questa offerta
   };
   prezzo: {

@@ -104,9 +104,20 @@ Target CI/CD: OpenShift 150 gg, Kubernetes 120, VM 180, AWS/GCP/Azure 130 (da ve
 
 La piattaforma completa include dieci moduli standard: workflow management, documenti d'identità, document management evoluto, firma elettronica digitale, credit screening (CRIF / CleverChain), liste PEP e AML, SPID / wallet, SSO, design system custom, observability del cliente.
 
-In Assessment l'interruttore **Configurazione light** permette di deselezionare moduli. L'impianto della piattaforma (base applicativa) si quota in proporzione alla somma dei **pesi** dei moduli inclusi; i pesi sono nei Parametri di sistema e devono sommare a 100%. Un modulo spento **blocca** in Soluzione i connettori e le integrazioni collegati (firma → Namirial, Aruba; credit screening → CleverChain, Cerved; SSO → integrazione SSO; design system → grafica del front-end). Il document management evoluto aggiunge alla customizzazione la voce "Gestione documentazione custom".
+In Assessment l'interruttore **Configurazione light** permette di deselezionare moduli. L'impianto della piattaforma (base applicativa) si quota in proporzione alla somma dei **pesi** dei moduli inclusi; i pesi sono nei Parametri di sistema e devono sommare a 100%. Un modulo spento **blocca** in Soluzione i connettori e le integrazioni collegati (firma → Namirial, Aruba; credit screening → CleverChain, Cerved; SSO → integrazione SSO; design system → grafica del front-end). Il document management evoluto offre l'opzione "Gestione documentazione custom": 5 gg di impianto più 3 gg per ogni classe documentale, attivabile per offerta.
 
 I moduli inclusi compaiono nel Resoconto come promemoria e nello specchietto cliente.
+
+## 6-ter. Cascata Assessment → Soluzione → Stima
+
+Specifica completa: `DOB/Cascata di valutazione - specifica.md` (progetto).
+
+- Ogni **sistema da integrare** ha una complessità (bassa 5, media 10, alta 20 gg dev, in Parametri) e genera da solo un'integrazione dedicata nella customizzazione.
+- In Soluzione, la card **Copertura dei sistemi** permette di coprire un sistema con un connettore di catalogo: niente integrazione dedicata, il connettore si conta una volta. Se il connettore è bloccato da un modulo spento, torna l'integrazione dedicata.
+- La voce base "Integrazioni con i sistemi" (48 gg) diventa **"Impostazione delle integrazioni"** (16 gg): il resto è ora per sistema.
+- In Stima la customizzazione è raggruppata (integrazioni con i sistemi · catalogo · moduli DOB · aggiunte in stima) e ogni riga mostra l'origine. Le aggiunte manuali in Stima vivono in `stima.extra`.
+- Le tre voci per il cliente non cambiano: tutto resta dentro Customizzazione.
+- Moduli, sistemi, connettori e integrazioni usano lo stesso componente tabella (come Vincoli).
 
 ## 7. Le tre voci per il cliente
 

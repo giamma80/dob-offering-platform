@@ -10,6 +10,7 @@ Stato al primo rilascio. In ordine di priorità; ogni voce indica la schermata d
 - Motore di calcolo v2 con test: tariffe dal margine sul venduto, N + 1, quote a cascata, consumo a scaglioni, tre modalità AI, manutenzione on-premise, vincoli, soglia del canone, specchietto, serie a 36 mesi, composizioni, sensibilità ai clienti, curva di recupero.
 - Fasi 1–4 come pagina unica di card (mockup), righe aggiungibili, interruttori della Soluzione, card Canoni e Minimo garantito.
 - Resoconto con grafici ad area e barre (toggle scenario, Area/Barre, €/%), Sostenibilità, Dettaglio costi A/B.
+- Cascata Assessment → Soluzione → Stima: sistemi con complessità, copertura via connettore, classi documentali, customizzazione raggruppata per origine (configurazione v3).
 - Business plan con curva di recupero, timeline dei progetti e contributi; Parametri di sistema in card.
 
 ## Da fare

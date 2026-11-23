@@ -10,15 +10,20 @@ const s = (v) => (v === null ? 'null' : `'${String(v).replace(/'/g, "''")}'`);
 /* ------------------------------------------------ Findomestic Banca — bozza, in corso */
 const fin = nuovaOfferta(cfg, 'Findomestic Banca');
 fin.approccio = 'entrambi';
-fin.assessment.sistemi = ['CRM Salesforce', 'Core banking · ESB interno', 'Firma elettronica Namirial', 'Antifrode, provider terzo'];
+fin.assessment.sistemi = [
+  { id: 'sis-crm', nome: 'CRM Salesforce', complessita: 'media' },
+  { id: 'sis-core', nome: 'Core banking · ESB interno', complessita: 'alta' },
+  { id: 'sis-firma', nome: 'Firma elettronica Namirial', complessita: 'bassa', copertoDa: 'namirial' },
+  { id: 'sis-antifrode', nome: 'Antifrode, provider terzo', complessita: 'media' }
+];
 fin.soluzione.cicd = 'openshift';
 fin.prezzo.metrica = 'avviata';
 const finStati = {
   'assessment.documentiPerPratica': 'dichiarato',
-  'assessment.sistemi.CRM Salesforce': 'dichiarato',
-  'assessment.sistemi.Core banking · ESB interno': 'dichiarato',
-  'assessment.sistemi.Firma elettronica Namirial': 'confermato',
-  'assessment.sistemi.Antifrode, provider terzo': 'assunto',
+  'assessment.sistemi.sis-crm': 'dichiarato',
+  'assessment.sistemi.sis-core': 'dichiarato',
+  'assessment.sistemi.sis-firma': 'confermato',
+  'assessment.sistemi.sis-antifrode': 'assunto',
   vincoli: 'dichiarato',
   approccio: 'confermato',
   'soluzione.connettori': 'dichiarato',
@@ -36,7 +41,10 @@ const finStati = {
 /* ------------------------------------------------ Unipol · journey vita — bozza on-premise */
 const uni = nuovaOfferta(cfg, 'Unipol · journey vita');
 uni.approccio = 'on_premise';
-uni.assessment.sistemi = ['Banca collocatrice', 'Sistema polizze Vita'];
+uni.assessment.sistemi = [
+  { id: 'sis-banca', nome: 'Banca collocatrice', complessita: 'media' },
+  { id: 'sis-polizze', nome: 'Sistema polizze Vita', complessita: 'media' }
+];
 uni.soluzione.connettori = ['cleverchain', 'namirial'];
 const uniStati = { approccio: 'confermato', 'soluzione.connettori': 'dichiarato', 'assessment.documentiPerPratica': 'dichiarato' };
 

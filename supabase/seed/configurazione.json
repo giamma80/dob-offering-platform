@@ -97,10 +97,11 @@
       "id": "docmgmt",
       "nome": "Document management evoluto",
       "peso": 12,
-      "customizzazione": {
+      "opzioneClassi": {
         "id": "doc-custom",
         "nome": "Gestione documentazione custom",
-        "gg": 15,
+        "impianto": 5,
+        "perClasse": 3,
         "figura": "dev"
       }
     },
@@ -154,6 +155,12 @@
       "peso": 5
     }
   ],
+  "integrazioneSistema": {
+    "bassa": 5,
+    "media": 10,
+    "alta": 20,
+    "figura": "dev"
+  },
   "catalogo": {
     "base": [
       {
@@ -170,8 +177,8 @@
       },
       {
         "id": "integr",
-        "nome": "Integrazioni con i sistemi",
-        "gg": 48,
+        "nome": "Impostazione delle integrazioni",
+        "gg": 16,
         "figura": "dev"
       },
       {

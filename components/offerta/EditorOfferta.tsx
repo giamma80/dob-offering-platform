@@ -5,8 +5,8 @@ import { scorriA } from '@/lib/ui/scorri';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import {
-  FASI, avanzamento, bloccanti, calcola, fattoreImpianto, moduliAttivi, moduloBloccante, vociCustomizzazione,
-  type Config, type Fase, type FiguraId, type Offerta, type RigaGg, type StatoValore
+  FASI, avanzamento, bloccanti, calcola, coperturaSistema, fattoreImpianto, moduliAttivi, moduloBloccante, sistemi, vociCustomizzazione,
+  type Complessita, type Config, type Fase, type FiguraId, type Offerta, type RigaGg, type Sistema, type StatoValore
 } from '@/lib/engine';
 import { salvaOfferta } from '@/lib/azioni';
 import { useT } from '@/lib/i18n/client';
@@ -35,6 +35,7 @@ const SEZIONI: Record<Fase, Sezione[]> = {
   ],
   soluzione: [
     { id: 's-app', k: 'so.approccio', ico: 'approccio' },
+    { id: 's-sis', k: 'so.coperturaTit', ico: 'sistemi' },
     { id: 's-con', k: 'so.connettori', ico: 'sistemi' },
     { id: 's-int', k: 'so.integrazioni', ico: 'integraz' },
     { id: 's-ci', k: 'so.cicd', ico: 'cicd' },
@@ -90,8 +91,8 @@ function Card({ id, titolo, ico, aside, bloccata, children }: {
   );
 }
 
-function RigaGiornate({ v, onGg, onNome, onFigura, onRimuovi, stato, onStato, figure, solaLettura, t, importo, nota }: {
-  importo?: number; nota?: string;
+function RigaGiornate({ v, onGg, onNome, onFigura, onRimuovi, stato, onStato, figure, solaLettura, t, importo, nota, origine }: {
+  importo?: number; nota?: string; origine?: string;
   v: RigaGg; onGg: (g: number) => void; onNome?: (n: string) => void; onFigura?: (f: FiguraId) => void; onRimuovi?: () => void;
   stato?: StatoValore; onStato?: (s: StatoValore) => void; figure: Config['figure']; solaLettura: boolean; t: ReturnType<typeof useT>;
 }) {
@@ -104,6 +105,7 @@ function RigaGiornate({ v, onGg, onNome, onFigura, onRimuovi, stato, onStato, fi
               onChange={(e) => onNome(e.target.value)} />
           </span>
         ) : v.nome}
+        {origine && <span className="alt-badge alt-badge--neutro origine">{origine}</span>}
         {stato && onStato && <StatoPulsanti stato={stato} onStato={onStato} />}
       </td>
       <td className="is-num"><CampoNumero compatto etichetta={v.nome} valore={v.gg} min={0} stato={stato} onChange={onGg} /></td>
@@ -205,12 +207,24 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
       </label>
     </span>
   );
+  const sis = sistemi(o);
+  const is = cfg.integrazioneSistema ?? { bassa: 5, media: 10, alta: 20, figura: 'dev' as const };
+  const ggSistema = (x: Sistema) => o.stima.gg[x.id] ?? is[x.complessita] ?? is.media;
+  const updSis = (f: (y: Sistema[]) => void, campo = 'assessment.sistemi') => upd((x) => {
+    const y = sistemi(x); f(y); x.assessment.sistemi = y;
+  }, campo);
   const fImp = fattoreImpianto(cfg, o);
   const modAtt = moduliAttivi(cfg, o);
   const sezioni = SEZIONI[fase];
   const propsRes = { cfg, o, r, definito: pct.resoconto, critici: bloccanti(o, stati) };
   const sub = fase === 'resoconto' ? attiva : null;
   const vociCust = vociCustomizzazione(cfg, o).filter((v) => !o.stima.base.some((b) => b.id === v.id));
+  const origine = (x?: string) => {
+    if (!x) return undefined;
+    const [k, ...resto] = x.split(':'); const v = resto.join(':');
+    return k === 'sistema' ? t('st.daSistema', { v }) : k === 'copre' ? t('so.copreSistema', { v }) : k === 'modulo' ? t('so.daModulo', { v })
+      : k === 'vincolo' ? t('so.daVincolo', { v }) : k === 'soluzione' ? t('so.vocecustom') : t('st.daCatalogo');
+  };
   const dovCustom = (idv: string) =>
     o.soluzione.connettoriCustom.some((c) => c.id === idv) ? 'connettoriCustom' as const
       : o.soluzione.integrazioniCustom.some((c) => c.id === idv) ? 'integrazioniCustom' as const : null;
@@ -267,28 +281,44 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                   <span className="alt-switch__box" aria-hidden="true" /><span>{t('as.light')}</span>
                 </label>
               </span>}>
-              <div className="griglia">
-                {(cfg.moduli ?? []).map((m) => {
+              <TabellaOrdinabile
+                colonne={[{ nome: t('as.incluso') }, { nome: t('as.modulo') }, { nome: t('par.peso'), num: true }, { nome: t('as.effetto') }]}
+                righe={(cfg.moduli ?? []).map((m) => {
                   const on = modAtt.includes(m.id);
-                  return (
-                    <label key={m.id} className={`opt${on ? ' opt--on' : ''}`}
-                      title={[...(m.connettori ?? []), ...(m.integrazioni ?? [])].length || m.customizzazione
-                        ? t('as.moduloCollegati', { v: [
-                            ...(m.connettori ?? []).map((id) => cfg.catalogo.connettori.find((c) => c.id === id)?.nome ?? id),
-                            ...(m.integrazioni ?? []).map((id) => cfg.catalogo.integrazioni.find((c) => c.id === id)?.nome ?? id),
-                            ...(m.customizzazione ? [m.customizzazione.nome] : [])].join(', ') })
-                        : undefined}>
-                      <input type="checkbox" checked={on} disabled={solaLettura || !o.assessment.light}
-                        onChange={(e) => upd((x) => {
-                          const cur = x.assessment.moduli ?? (cfg.moduli ?? []).map((y) => y.id);
-                          x.assessment.moduli = e.target.checked ? [...cur, m.id] : cur.filter((y) => y !== m.id);
-                        }, 'assessment.moduli')} />
-                      <span className="opt__box" aria-hidden="true" />
-                      <span className="opt__t">{m.nome}<span className="opt__sub">{perc(m.peso / 100)}</span></span>
-                    </label>
-                  );
+                  const op = m.opzioneClassi, sc = o.assessment.opzioniModuli?.[m.id] ?? { attiva: false, classi: 1 };
+                  const collegati = [
+                    ...(m.connettori ?? []).map((id) => cfg.catalogo.connettori.find((c) => c.id === id)?.nome ?? id),
+                    ...(m.integrazioni ?? []).map((id) => cfg.catalogo.integrazioni.find((c) => c.id === id)?.nome ?? id)
+                  ];
+                  return {
+                    key: m.id, className: on ? undefined : 'is-off',
+                    celle: [
+                      { v: on ? 1 : 0, html: (
+                        <label className="alt-switch"><input type="checkbox" checked={on} aria-label={m.nome} disabled={solaLettura || !o.assessment.light}
+                          onChange={(e) => upd((x) => {
+                            const cur = x.assessment.moduli ?? (cfg.moduli ?? []).map((y) => y.id);
+                            x.assessment.moduli = e.target.checked ? [...cur, m.id] : cur.filter((y) => y !== m.id);
+                          }, 'assessment.moduli')} /><span className="alt-switch__box" aria-hidden="true" /></label>) },
+                      { v: m.nome, html: <strong>{m.nome}</strong> },
+                      { v: m.peso, html: perc(m.peso / 100) },
+                      { v: collegati.join(), html: op ? (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                          <label className="alt-switch alt-switch--sm"><input type="checkbox" checked={on && sc.attiva} disabled={solaLettura || !on}
+                            onChange={(e) => upd((x) => { x.assessment.opzioniModuli = { ...(x.assessment.opzioniModuli ?? {}), [m.id]: { ...sc, attiva: e.target.checked } }; }, 'assessment.moduli')} />
+                            <span className="alt-switch__box" aria-hidden="true" /><span>{op.nome}</span></label>
+                          {on && sc.attiva && (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                              <CampoNumero compatto etichetta={t('as.classi')} valore={sc.classi} min={0} suffisso={t('as.classiBreve')}
+                                onChange={(v) => upd((x) => { x.assessment.opzioniModuli = { ...(x.assessment.opzioniModuli ?? {}), [m.id]: { ...sc, classi: v } }; }, 'assessment.moduli')} />
+                              <span className="muted" style={{ fontSize: 12 }}>{t('as.classiFormula', { i: op.impianto, c: op.perClasse, g: numero(op.impianto + op.perClasse * sc.classi) })}</span>
+                            </span>
+                          )}
+                        </span>
+                      ) : <span className="muted">{collegati.length ? t('as.moduloCollegati', { v: collegati.join(', ') }) : '—'}</span> }
+                    ]
+                  };
                 })}
-              </div>
+              />
               <div className="moduli-tot">
                 <span>{t('as.impianto')}</span>
                 <div className="bar bar--xs" style={{ flex: 1 }}><span className="s3" style={{ flex: fImp }} /><span style={{ flex: 1 - fImp }} /></div>
@@ -309,24 +339,34 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
               </div>
             </Card>
             <Card {...cp("a-sis")}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-                {o.assessment.sistemi.map((n, i) => {
-                  const k = `assessment.sistemi.${n}`;
-                  return (
-                    <span key={i} className="chip">
-                      <span className="alt-inputwrap" style={{ display: 'inline-flex' }}>
-                        <input className="alt-input" value={n} aria-label={t('as.sistemi')} disabled={solaLettura}
-                          style={{ width: `${Math.max(10, n.length + 2)}ch` }}
-                          onChange={(e) => upd((x) => { x.assessment.sistemi[i] = e.target.value; })} />
-                      </span>
-                      <StatoPulsanti stato={st(k)} onStato={setSt(k)} />
-                      {!solaLettura && <button type="button" className="chip__x" aria-label={t('comune.rimuovi')} title={t('comune.rimuovi')}
-                        onClick={() => upd((x) => { x.assessment.sistemi.splice(i, 1); })}>×</button>}
-                    </span>
-                  );
-                })}
-                {!solaLettura && <button type="button" className="btn-piu" onClick={() => upd((x) => { x.assessment.sistemi.push(t('as.nuovoSistema')); })}>{t('so.aggiungi')}</button>}
-              </div>
+              <TabellaOrdinabile
+                colonne={[{ nome: t('as.sistema') }, { nome: t('as.complessita') }, { nome: t('as.integrazioneGg'), num: true }, { nome: '' }]}
+                righe={sis.map((x, i) => ({
+                  key: x.id,
+                  celle: [
+                    { v: x.nome, html: (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        <span className="alt-inputwrap" style={{ maxWidth: 280 }}>
+                          <input className="alt-input" value={x.nome} aria-label={t('as.sistema')} disabled={solaLettura}
+                            onChange={(e) => updSis((y) => { y[i].nome = e.target.value; })} />
+                        </span>
+                        <StatoPulsanti stato={st(`assessment.sistemi.${x.id}`)} onStato={setSt(`assessment.sistemi.${x.id}`)} />
+                      </span>) },
+                    { v: ['bassa', 'media', 'alta'].indexOf(x.complessita), html: (
+                      <span className="alt-inputwrap" style={{ maxWidth: 160 }}>
+                        <select className="alt-input" value={x.complessita} aria-label={t('as.complessita')} disabled={solaLettura}
+                          onChange={(e) => updSis((y) => { y[i].complessita = e.target.value as Complessita; })}>
+                          {(['bassa', 'media', 'alta'] as const).map((c) => <option key={c} value={c}>{t(`as.compl.${c}` as Chiave)}</option>)}
+                        </select>
+                      </span>) },
+                    { v: ggSistema(x), html: x.copertoDa ? <span className="muted">{t('as.copertoDa', { v: cfg.catalogo.connettori.find((c) => c.id === x.copertoDa)?.nome ?? '' })}</span> : `${numero(ggSistema(x))} gg` },
+                    { v: '', html: !solaLettura && <button type="button" className="chip__x" aria-label={t('comune.rimuovi')} title={t('comune.rimuovi')}
+                      onClick={() => updSis((y) => { y.splice(i, 1); })}>×</button> }
+                  ]
+                }))}
+              />
+              {!solaLettura && <button type="button" className="btn-piu" style={{ marginTop: 10 }}
+                onClick={() => updSis((y) => { y.push({ id: nuovoId('sis'), nome: t('as.nuovoSistema'), complessita: 'media' }); })}>{t('as.aggiungiSistema')}</button>}
             </Card>
             <Card {...cp("a-vin")} aside={<StatoPulsanti stato={st('vincoli')} onStato={setSt('vincoli')} />}>
               <TabellaOrdinabile
@@ -361,42 +401,90 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                 ))}
               </div>
             </Card>
+            <Card {...cp("s-sis")}>
+              {sis.length === 0 ? <p className="vuoto">{t('so.nessunSistema')}</p> : (
+                <TabellaOrdinabile
+                  colonne={[{ nome: t('as.sistema') }, { nome: t('as.complessita') }, { nome: t('so.copertura') }, { nome: t('st.giornate'), num: true }]}
+                  righe={sis.map((x, i) => {
+                    const cop = coperturaSistema(cfg, o, x);
+                    const con = cop ? cfg.catalogo.connettori.find((c) => c.id === cop) : null;
+                    return {
+                      key: x.id,
+                      celle: [
+                        { v: x.nome, html: <strong>{x.nome}</strong> },
+                        { v: x.complessita, html: t(`as.compl.${x.complessita}` as Chiave) },
+                        { v: cop ?? '', html: (
+                          <span className="alt-inputwrap" style={{ maxWidth: 300 }}>
+                            <select className="alt-input" value={x.copertoDa ?? ''} aria-label={t('so.copertura')} disabled={solaLettura}
+                              onChange={(e) => updSis((y) => { y[i].copertoDa = e.target.value || null; }, 'soluzione.sistemi')}>
+                              <option value="">{t('so.integrazioneDedicata')}</option>
+                              {cfg.catalogo.connettori.filter((c) => !moduloBloccante(cfg, o, 'connettori', c.id)).map((c) =>
+                                <option key={c.id} value={c.id}>{t('so.connettoreX', { v: c.nome })}</option>)}
+                            </select>
+                          </span>) },
+                        { v: con ? (o.stima.gg[con.id] ?? con.gg) : ggSistema(x), html: `${numero(con ? (o.stima.gg[con.id] ?? con.gg) : ggSistema(x))} gg` }
+                      ]
+                    };
+                  })}
+                />
+              )}
+            </Card>
             {(['connettori', 'integrazioni'] as const).map((k) => {
               const kc = k === 'connettori' ? 'connettoriCustom' as const : 'integrazioniCustom' as const;
+              const coperti = new Map(sis.map((x) => [coperturaSistema(cfg, o, x), x.nome] as const).filter(([c]) => !!c));
               return (
                 <Card key={k} {...cp(k === 'connettori' ? 's-con' : 's-int')}
                   aside={interr(k, <StatoPulsanti stato={st(`soluzione.${k}`)} onStato={setSt(`soluzione.${k}`)} />)}>
-                  <div className={`griglia${offSol.includes(k) ? ' is-off' : ''}`} inert={offSol.includes(k) ? true : undefined}>
-                    {cfg.catalogo[k].map((c) => {
-                      const vinc = 'vincolo' in c && c.vincolo ? c.vincolo : null;
-                      const modB = moduloBloccante(cfg, o, k, c.id);
-                      const bloccato = (!!vinc && !o.vincoli[vinc]) || !!modB;
-                      const on = o.soluzione[k].includes(c.id) && !bloccato;
-                      return (
-                        <label key={c.id} className={`opt${on ? ' opt--on' : ''}${bloccato ? ' is-bloccato' : ''}`}
-                          title={modB ? t('so.bloccatoModulo', { v: modB.nome }) : bloccato ? t('so.bloccatoDa', { v: cfg.vincoli.find((v) => v.id === vinc)?.nome ?? '' }) : undefined}>
-                          <input type="checkbox" checked={on} disabled={bloccato || solaLettura}
-                            onChange={(e) => upd((x) => {
-                              x.soluzione[k] = e.target.checked ? [...x.soluzione[k], c.id] : x.soluzione[k].filter((i) => i !== c.id);
-                            }, `soluzione.${k}`)} />
-                          <span className="opt__box" aria-hidden="true" />
-                          <span className="opt__t">{c.nome}<span className="opt__sub">{o.stima.gg[c.id] ?? c.gg} gg</span></span>
-                        </label>
-                      );
-                    })}
-                    {o.soluzione[kc].map((c, i) => (
-                      <div key={c.id} className="opt opt--on">
-                        <span className="opt__t" style={{ flex: 1 }}>
-                          <span className="alt-inputwrap"><input className="alt-input" value={c.nome} aria-label={t('so.nuovaVoce')} disabled={solaLettura}
-                            onChange={(e) => upd((x) => { x.soluzione[kc][i].nome = e.target.value; }, `soluzione.${k}`)} /></span>
-                          <span className="opt__sub">{c.gg} gg</span>
-                        </span>
-                        {!solaLettura && <button type="button" className="chip__x" aria-label={t('comune.rimuovi')} title={t('comune.rimuovi')}
-                          onClick={() => upd((x) => { x.soluzione[kc].splice(i, 1); }, `soluzione.${k}`)}>×</button>}
-                      </div>
-                    ))}
+                  <div className={offSol.includes(k) ? 'is-off' : undefined} inert={offSol.includes(k) ? true : undefined}>
+                    <TabellaOrdinabile
+                      colonne={[{ nome: t('as.incluso') }, { nome: t('st.voce') }, { nome: t('st.giornate'), num: true }, { nome: t('so.collegamento') }, { nome: '' }]}
+                      righe={[
+                        ...cfg.catalogo[k].map((c) => {
+                          const vinc = 'vincolo' in c && c.vincolo ? c.vincolo : null;
+                          const modB = moduloBloccante(cfg, o, k, c.id);
+                          const bloccato = (!!vinc && !o.vincoli[vinc]) || !!modB;
+                          const copre = k === 'connettori' ? coperti.get(c.id) : undefined;
+                          const on = (o.soluzione[k].includes(c.id) || !!copre) && !bloccato;
+                          const modOn = (cfg.moduli ?? []).find((m) => modAtt.includes(m.id) && (m[k] ?? []).includes(c.id));
+                          return {
+                            key: c.id, className: bloccato ? 'is-bloccato' : on ? undefined : 'is-off',
+                            celle: [
+                              { v: on ? 1 : 0, html: (
+                                <label className="alt-switch" title={copre ? t('as.copertoDa', { v: copre }) : undefined}>
+                                  <input type="checkbox" checked={on} aria-label={c.nome} disabled={bloccato || solaLettura || !!copre}
+                                    onChange={(e) => upd((x) => {
+                                      x.soluzione[k] = e.target.checked ? [...x.soluzione[k], c.id] : x.soluzione[k].filter((i) => i !== c.id);
+                                    }, `soluzione.${k}`)} /><span className="alt-switch__box" aria-hidden="true" /></label>) },
+                              { v: c.nome, html: <strong>{c.nome}</strong> },
+                              { v: o.stima.gg[c.id] ?? c.gg, html: `${numero(o.stima.gg[c.id] ?? c.gg)} gg` },
+                              { v: '', html: <span className="muted">{
+                                modB ? t('so.bloccatoModulo', { v: modB.nome })
+                                  : vinc && !o.vincoli[vinc] ? t('so.bloccatoDa', { v: cfg.vincoli.find((v) => v.id === vinc)?.nome ?? '' })
+                                  : copre ? t('so.copreSistema', { v: copre })
+                                  : modOn ? t('so.daModulo', { v: modOn.nome })
+                                  : vinc ? t('so.daVincolo', { v: cfg.vincoli.find((v) => v.id === vinc)?.nome ?? '' }) : '—'}</span> },
+                              { v: '', html: null }
+                            ]
+                          };
+                        }),
+                        ...o.soluzione[kc].map((c, i) => ({
+                          key: c.id,
+                          celle: [
+                            { v: 1, html: <span className="muted" aria-hidden="true">✓</span> },
+                            { v: c.nome, html: (
+                              <span className="alt-inputwrap" style={{ maxWidth: 280 }}><input className="alt-input" value={c.nome} aria-label={t('so.nuovaVoce')} disabled={solaLettura}
+                                onChange={(e) => upd((x) => { x.soluzione[kc][i].nome = e.target.value; }, `soluzione.${k}`)} /></span>) },
+                            { v: c.gg, html: <CampoNumero compatto etichetta={c.nome} valore={c.gg} min={0} suffisso="gg"
+                              onChange={(g) => upd((x) => { x.soluzione[kc][i].gg = g; }, `soluzione.${k}`)} /> },
+                            { v: '', html: <span className="muted">{t('so.vocecustom')}</span> },
+                            { v: '', html: !solaLettura && <button type="button" className="chip__x" aria-label={t('comune.rimuovi')} title={t('comune.rimuovi')}
+                              onClick={() => upd((x) => { x.soluzione[kc].splice(i, 1); }, `soluzione.${k}`)}>×</button> }
+                          ]
+                        }))
+                      ]}
+                    />
                     {!solaLettura && (
-                      <button type="button" className="opt opt--piu" onClick={() => upd((x) => {
+                      <button type="button" className="btn-piu" style={{ marginTop: 10 }} onClick={() => upd((x) => {
                         x.soluzione[kc].push({ id: nuovoId(k), nome: t(k === 'connettori' ? 'so.nuovoConnettore' : 'so.nuovaIntegrazione'), gg: 5, figura: 'dev' });
                       }, `soluzione.${k}`)}>{t(k === 'connettori' ? 'so.aggiungiConnettore' : 'so.aggiungiIntegrazione')}</button>
                     )}
@@ -485,30 +573,40 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
             <Card {...cp("st-cust")}>
               <table className="alt-table">
                 <thead><tr><th>{t('st.voce')}</th><th className="is-num">{t('st.giornate')}</th><th>{t('st.figura')}</th><th className="is-num">{t('st.importo')}</th><th /></tr></thead>
-                <tbody>
-                  {vociCust.map((v) => {
-                    const dove = dovCustom(v.id);
-                    return (
-                      <RigaGiornate key={v.id} v={v} {...comuni} importo={v.gg * r.tariffe[v.figura]}
-                        onGg={(g) => upd((x) => {
-                          const c = dove ? x.soluzione[dove].find((y) => y.id === v.id) : null;
-                          if (c) c.gg = g; else x.stima.gg[v.id] = g;
-                        }, 'stima.custom')}
-                        onNome={dove ? (n) => upd((x) => { x.soluzione[dove].find((y) => y.id === v.id)!.nome = n; }) : undefined}
-                        onFigura={dove ? (f) => upd((x) => { x.soluzione[dove].find((y) => y.id === v.id)!.figura = f; }) : undefined}
-                        onRimuovi={(cfg.moduli ?? []).some((m) => m.customizzazione?.id === v.id) ? undefined : () => upd((x) => {
-                          if (dove) x.soluzione[dove] = x.soluzione[dove].filter((y) => y.id !== v.id);
-                          else {
-                            x.soluzione.connettori = x.soluzione.connettori.filter((y) => y !== v.id);
-                            x.soluzione.integrazioni = x.soluzione.integrazioni.filter((y) => y !== v.id);
-                          }
-                        })} />
-                    );
-                  })}
-                  <RigaPiu colonne={5} solaLettura={solaLettura} testo={t('st.aggiungiCustom')} onClick={() => upd((x) => {
-                    x.soluzione.integrazioniCustom.push({ id: nuovoId('cust'), nome: t('st.nuovaCustom'), gg: 5, figura: 'dev' });
-                  })} />
-                </tbody>
+                {(['integrazioni', 'catalogo', 'moduli', 'stima'] as const).map((g) => {
+                  const righe = vociCust.filter((v) => (v.gruppo ?? 'catalogo') === g);
+                  if (!righe.length && g !== 'stima') return null;
+                  return (
+                    <tbody key={g}>
+                      <tr className="is-gruppo"><td colSpan={3}><strong>{t(`st.gruppo.${g}` as Chiave)}</strong></td>
+                        <td className="is-num muted">{euro(righe.reduce((a, v) => a + v.gg * r.tariffe[v.figura], 0))}</td><td /></tr>
+                      {righe.map((v) => {
+                        const dove = dovCustom(v.id);
+                        const extra = g === 'stima';
+                        return (
+                          <RigaGiornate key={v.id} v={v} {...comuni} importo={v.gg * r.tariffe[v.figura]} origine={extra ? undefined : origine(v.origine)}
+                            onGg={(n) => upd((x) => {
+                              const c = extra ? x.stima.extra?.find((y) => y.id === v.id) : dove ? x.soluzione[dove].find((y) => y.id === v.id) : null;
+                              if (c) c.gg = n; else x.stima.gg[v.id] = n;
+                            }, 'stima.custom')}
+                            onNome={extra ? (n) => upd((x) => { x.stima.extra!.find((y) => y.id === v.id)!.nome = n; })
+                              : dove ? (n) => upd((x) => { x.soluzione[dove].find((y) => y.id === v.id)!.nome = n; }) : undefined}
+                            onFigura={extra ? (f) => upd((x) => { x.stima.extra!.find((y) => y.id === v.id)!.figura = f; })
+                              : dove ? (f) => upd((x) => { x.soluzione[dove].find((y) => y.id === v.id)!.figura = f; }) : undefined}
+                            onRimuovi={extra ? () => upd((x) => { x.stima.extra = (x.stima.extra ?? []).filter((y) => y.id !== v.id); })
+                              : dove ? () => upd((x) => { x.soluzione[dove] = x.soluzione[dove].filter((y) => y.id !== v.id); })
+                              : g === 'catalogo' && !v.origine?.startsWith('copre:') ? () => upd((x) => {
+                                x.soluzione.connettori = x.soluzione.connettori.filter((y) => y !== v.id);
+                                x.soluzione.integrazioni = x.soluzione.integrazioni.filter((y) => y !== v.id);
+                              }) : undefined} />
+                        );
+                      })}
+                      {g === 'stima' && <RigaPiu colonne={5} solaLettura={solaLettura} testo={t('st.aggiungiCustom')} onClick={() => upd((x) => {
+                        x.stima.extra = [...(x.stima.extra ?? []), { id: nuovoId('extra'), nome: t('st.nuovaCustom'), gg: 5, figura: 'dev' }];
+                      }, 'stima.custom')} />}
+                    </tbody>
+                  );
+                })}
                 <tfoot><tr className="is-total"><td>{t('comune.totale')}</td>
                   <td className="is-num">{numero(vociCust.reduce((a, v) => a + v.gg, 0))}</td><td />
                   <td className="is-num">{euro(vociCust.reduce((a, v) => a + v.gg * r.tariffe[v.figura], 0))}</td><td /></tr></tfoot>

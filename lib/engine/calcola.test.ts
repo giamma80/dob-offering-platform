@@ -176,13 +176,65 @@ describe('moduli DOB', () => {
     expect(moduloBloccante(cfg, x, 'connettori', 'namirial')?.id).toBe('firma');
     expect(vociCustomizzazione(cfg, x).map((v) => v.id)).not.toContain('namirial');
   });
-  it('document management evoluto aggiunge la gestione documentazione custom', () => {
+  it('documentazione custom: solo se attivata nel modulo, impianto + giornate per classe', () => {
     const x = o();
-    expect(vociCustomizzazione(cfg, x).map((v) => v.id)).toContain('doc-custom');
-    x.assessment.light = true; x.assessment.moduli = ['workflow'];
     expect(vociCustomizzazione(cfg, x).map((v) => v.id)).not.toContain('doc-custom');
+    x.assessment.opzioniModuli = { docmgmt: { attiva: true, classi: 4 } };
+    const v = vociCustomizzazione(cfg, x).find((y) => y.id === 'doc-custom')!;
+    expect(v.gg).toBe(5 + 3 * 4);
+    expect(v.gruppo).toBe('moduli');
+    x.assessment.light = true; x.assessment.moduli = ['workflow'];
+    expect(vociCustomizzazione(cfg, x).map((y) => y.id)).not.toContain('doc-custom');
   });
   it('i pesi di default sommano a 100', () => {
     expect(cfg.moduli.reduce((a, m) => a + m.peso, 0)).toBe(100);
+  });
+});
+
+
+describe('cascata sistemi → integrazioni → customizzazioni', () => {
+  const conSistemi = () => {
+    const x = o(); x.soluzione.connettori = []; x.soluzione.integrazioni = [];
+    x.assessment.sistemi = [
+      { id: 's1', nome: 'Core banking', complessita: 'alta' },
+      { id: 's2', nome: 'CRM', complessita: 'bassa' }
+    ];
+    return x;
+  };
+  it('ogni sistema genera un\'integrazione con le giornate della sua complessità', () => {
+    const v = vociCustomizzazione(cfg, conSistemi()).filter((y) => y.gruppo === 'integrazioni');
+    expect(v.map((y) => [y.nome, y.gg])).toEqual([['Integrazione Core banking', 20], ['Integrazione CRM', 5]]);
+  });
+  it('aggiungere un sistema aumenta il prezzo', () => {
+    const x = conSistemi();
+    const prima = calcola(cfg, x).saas.customizzazione.prezzo;
+    (x.assessment.sistemi as { id: string; nome: string; complessita: 'media' }[]).push({ id: 's3', nome: 'DMS', complessita: 'media' });
+    expect(calcola(cfg, x).saas.customizzazione.prezzo).toBeGreaterThan(prima);
+  });
+  it('un sistema coperto da un connettore non genera integrazione e il connettore entra una sola volta', () => {
+    const x = conSistemi();
+    (x.assessment.sistemi[0] as { copertoDa?: string }).copertoDa = 'api-gw';
+    x.soluzione.connettori = ['api-gw'];
+    const v = vociCustomizzazione(cfg, x);
+    expect(v.filter((y) => y.gruppo === 'integrazioni').map((y) => y.nome)).toEqual(['Integrazione CRM']);
+    expect(v.filter((y) => y.id === 'api-gw')).toHaveLength(1);
+    expect(v.find((y) => y.id === 'api-gw')!.origine).toBe('copre:Core banking');
+  });
+  it('connettore bloccato da un modulo spento: torna l\'integrazione dedicata', () => {
+    const x = conSistemi();
+    (x.assessment.sistemi[0] as { copertoDa?: string }).copertoDa = 'namirial';
+    x.assessment.light = true; x.assessment.moduli = ['workflow'];
+    expect(vociCustomizzazione(cfg, x).some((y) => y.nome === 'Integrazione Core banking')).toBe(true);
+  });
+  it('formato precedente dei sistemi (solo nome): complessità media', () => {
+    const x = o(); x.assessment.sistemi = ['Banca collocatrice'];
+    expect(vociCustomizzazione(cfg, x).find((y) => y.gruppo === 'integrazioni')!.gg).toBe(10);
+  });
+  it('aggiunte in stima con origine stima', () => {
+    const x = o(); x.stima.extra = [{ id: 'e1', nome: 'Report regolatorio', gg: 8, figura: 'dev' }];
+    expect(vociCustomizzazione(cfg, x).find((y) => y.id === 'e1')!.origine).toBe('stima');
+  });
+  it('impostazione delle integrazioni nella base: 16 gg', () => {
+    expect(cfg.catalogo.base.find((b) => b.id === 'integr')!.gg).toBe(16);
   });
 });

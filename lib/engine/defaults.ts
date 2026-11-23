@@ -37,7 +37,7 @@ export const CONFIG_DEFAULT: Config = {
     { id: 'workflow',    nome: 'Workflow management',                         peso: 18 },
     { id: 'identita',    nome: 'Documenti d\'identità',                         peso: 14 },
     { id: 'docmgmt',     nome: 'Document management evoluto',                 peso: 12,
-      customizzazione: { id: 'doc-custom', nome: 'Gestione documentazione custom', gg: 15, figura: 'dev' } },
+      opzioneClassi: { id: 'doc-custom', nome: 'Gestione documentazione custom', impianto: 5, perClasse: 3, figura: 'dev' } },
     { id: 'firma',       nome: 'Firma elettronica digitale',                  peso: 10, connettori: ['namirial', 'aruba'] },
     { id: 'credit',      nome: 'Integrazione credit screening (CRIF / CleverChain)', peso: 10, connettori: ['cleverchain', 'cerved'] },
     { id: 'pep',         nome: 'Liste PEP e AML',                             peso: 10 },
@@ -46,11 +46,12 @@ export const CONFIG_DEFAULT: Config = {
     { id: 'design',      nome: 'Integrazione design system custom',           peso: 6, integrazioni: ['grafica'] },
     { id: 'observ',      nome: 'Integrazione observability cliente',          peso: 5 }
   ],
+  integrazioneSistema: { bassa: 5, media: 10, alta: 20, figura: 'dev' },
   catalogo: {
     base: [
       { id: 'journey',   nome: 'Analisi journey e requisiti', gg: 60, figura: 'funz' },
       { id: 'flussi',    nome: 'Configurazione dei flussi',   gg: 48, figura: 'dev' },
-      { id: 'integr',    nome: 'Integrazioni con i sistemi',  gg: 48, figura: 'dev' },
+      { id: 'integr',    nome: 'Impostazione delle integrazioni', gg: 16, figura: 'dev' },
       { id: 'test-uat',  nome: 'Test e supporto UAT',         gg: 32, figura: 'dev' },
       { id: 'formaz',    nome: 'Formazione e avvio',          gg: 30, figura: 'funz' }
     ],
@@ -108,7 +109,7 @@ export function nuovaOfferta(cfg: Config, cliente = ''): Offerta {
     approccio: 'entrambi',
     assessment: {
       volumeAnnuo: 20000, crescita: 0.30, documentiPerPratica: cfg.ai.documentiPerPratica, sistemi: [],
-      light: false, moduli: (cfg.moduli ?? []).map((m) => m.id)
+      light: false, moduli: (cfg.moduli ?? []).map((m) => m.id), opzioniModuli: {}
     },
     soluzione: {
       connettori: cfg.catalogo.connettori.filter((c) => c.default).map((c) => c.id),
@@ -121,6 +122,7 @@ export function nuovaOfferta(cfg: Config, cliente = ''): Offerta {
     stima: {
       base: cfg.catalogo.base.map((v) => ({ ...v })),
       gg: {},
+      extra: [],
       quote: Object.fromEntries(cfg.quote.map((q) => [q.id, q.pct])) as Offerta['stima']['quote']
     },
     prezzo: {

@@ -1,4 +1,4 @@
-import type { Config, FiguraId, Offerta, Quota, RigaGg, Scaglione } from './types';
+import type { Config, FiguraId, Offerta, Quota, RigaGg, Scaglione, Sistema } from './types';
 
 /* Regole di calcolo DOB, versione 2. Riferimento: docs/design-v2.md §5–§7, §13–§14.
 
@@ -8,11 +8,7 @@ import type { Config, FiguraId, Offerta, Quota, RigaGg, Scaglione } from './type
 
 export const r2 = (v: number) => Math.round(v * 100) / 100;
 
-export interface Riga {
-  id: string;
-  nome: string;
-  gg: number;
-  figura: FiguraId;
+export interface Riga extends RigaGg {
   costo: number;
   prezzo: number;
 }
@@ -122,24 +118,80 @@ export function vociBase(cfg: Config, o: Offerta): RigaGg[] {
   return o.stima.base.map((b) => ({ ...b, gg: f === 1 ? b.gg : Math.round(b.gg * f * 10) / 10 }));
 }
 
-/** Voci di customizzazione: connettori, integrazioni e voci custom scelti, più le voci aggiunte dai moduli.
-   La base applicativa non è qui: sta in Setup e impianto. */
+/** Sistemi da integrare normalizzati: accetta anche il formato precedente (solo nome). */
+export function sistemi(o: Offerta): Sistema[] {
+  return (o.assessment.sistemi ?? []).map((x, i) =>
+    typeof x === 'string' ? { id: `sis-${i}-${x.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`, nome: x, complessita: 'media' as const } : x);
+}
+
+/** Connettore di catalogo che copre davvero un sistema (selezionabile: non bloccato da moduli, sezione accesa). */
+export function coperturaSistema(cfg: Config, o: Offerta, s: Sistema): string | null {
+  if (!s.copertoDa) return null;
+  if ((o.soluzione.sezioniOff ?? []).includes('connettori')) return null;
+  if (!cfg.catalogo.connettori.some((c) => c.id === s.copertoDa)) return null;
+  if (moduloBloccante(cfg, o, 'connettori', s.copertoDa)) return null;
+  return s.copertoDa;
+}
+
+/** Voci di customizzazione, ognuna con gruppo e origine. La base applicativa non è qui: sta in Setup e impianto.
+   1. integrazioni: una per sistema da integrare non coperto da un connettore
+   2. catalogo: connettori e integrazioni scelti (o che coprono un sistema), voci custom di Soluzione
+   3. moduli: voci fisse e opzioni a classi dei moduli inclusi
+   4. stima: voci aggiunte dal delivery */
 export function vociCustomizzazione(cfg: Config, o: Offerta): RigaGg[] {
   const gg = (id: string, def: number) => o.stima.gg[id] ?? def;
   const sso = !!o.vincoli.sso;
   const off = o.soluzione.sezioniOff ?? [];
   const conOn = !off.includes('connettori'), intOn = !off.includes('integrazioni');
-  const con = conOn ? cfg.catalogo.connettori.filter((c) => o.soluzione.connettori.includes(c.id) && !moduloBloccante(cfg, o, 'connettori', c.id)) : [];
+  const att = moduliAttivi(cfg, o);
+  const nomeModulo = (tipo: 'connettori' | 'integrazioni', id: string) =>
+    (cfg.moduli ?? []).find((m) => att.includes(m.id) && (m[tipo] ?? []).includes(id))?.nome;
+
+  /* 1. sistemi */
+  const sis = sistemi(o);
+  const coperture = new Map<string, string[]>();
+  const integrazioniSistema: RigaGg[] = [];
+  const is = cfg.integrazioneSistema ?? { bassa: 5, media: 10, alta: 20, figura: 'dev' as const };
+  for (const s of sis) {
+    const c = coperturaSistema(cfg, o, s);
+    if (c) coperture.set(c, [...(coperture.get(c) ?? []), s.nome]);
+    else integrazioniSistema.push({
+      id: s.id, nome: `Integrazione ${s.nome}`, gg: gg(s.id, is[s.complessita] ?? is.media), figura: is.figura,
+      gruppo: 'integrazioni', origine: `sistema:${s.nome}`
+    });
+  }
+
+  /* 2. catalogo */
+  const con = conOn ? cfg.catalogo.connettori.filter((c) =>
+    (o.soluzione.connettori.includes(c.id) || coperture.has(c.id)) && !moduloBloccante(cfg, o, 'connettori', c.id)) : [];
   const int = intOn ? cfg.catalogo.integrazioni.filter(
     (c) => o.soluzione.integrazioni.includes(c.id) && (c.vincolo !== 'sso' || sso) && !moduloBloccante(cfg, o, 'integrazioni', c.id)
   ) : [];
-  const att = moduliAttivi(cfg, o);
-  const daModuli = (cfg.moduli ?? []).filter((m) => m.customizzazione && att.includes(m.id)).map((m) => m.customizzazione!);
-  return [
-    ...[...con, ...int, ...daModuli].map((c) => ({ id: c.id, nome: c.nome, gg: gg(c.id, c.gg), figura: c.figura })),
-    ...(conOn ? o.soluzione.connettoriCustom : []),
-    ...(intOn ? o.soluzione.integrazioniCustom : [])
+  const catalogo: RigaGg[] = [
+    ...con.map((c) => ({ id: c.id, nome: c.nome, gg: gg(c.id, c.gg), figura: c.figura, gruppo: 'catalogo' as const,
+      origine: coperture.has(c.id) ? `copre:${coperture.get(c.id)!.join(', ')}` : nomeModulo('connettori', c.id) ? `modulo:${nomeModulo('connettori', c.id)}` : 'catalogo' })),
+    ...int.map((c) => ({ id: c.id, nome: c.nome, gg: gg(c.id, c.gg), figura: c.figura, gruppo: 'catalogo' as const,
+      origine: c.vincolo === 'sso' ? 'vincolo:SSO' : nomeModulo('integrazioni', c.id) ? `modulo:${nomeModulo('integrazioni', c.id)}` : 'catalogo' })),
+    ...(conOn ? o.soluzione.connettoriCustom : []).map((c) => ({ ...c, gruppo: 'catalogo' as const, origine: 'soluzione' })),
+    ...(intOn ? o.soluzione.integrazioniCustom : []).map((c) => ({ ...c, gruppo: 'catalogo' as const, origine: 'soluzione' }))
   ];
+
+  /* 3. moduli */
+  const moduli: RigaGg[] = [];
+  for (const m of cfg.moduli ?? []) {
+    if (!att.includes(m.id)) continue;
+    if (m.customizzazione) moduli.push({ ...m.customizzazione, gg: gg(m.customizzazione.id, m.customizzazione.gg), gruppo: 'moduli', origine: `modulo:${m.nome}` });
+    const op = m.opzioneClassi, scelta = o.assessment.opzioniModuli?.[m.id];
+    if (op && scelta?.attiva) {
+      const def = op.impianto + op.perClasse * Math.max(0, scelta.classi);
+      moduli.push({ id: op.id, nome: `${op.nome} · ${scelta.classi} classi`, gg: gg(op.id, def), figura: op.figura, gruppo: 'moduli', origine: `modulo:${m.nome}` });
+    }
+  }
+
+  /* 4. aggiunte in stima */
+  const extra = (o.stima.extra ?? []).map((c) => ({ ...c, gruppo: 'stima' as const, origine: 'stima' }));
+
+  return [...integrazioniSistema, ...catalogo, ...moduli, ...extra];
 }
 
 export function calcola(cfg: Config, o: Offerta): Risultato {
