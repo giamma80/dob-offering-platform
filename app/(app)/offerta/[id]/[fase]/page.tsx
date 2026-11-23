@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { configVersione, offerta } from '@/lib/dati';
+import { configOfferta, offerta } from '@/lib/dati';
 import { FASI, type Fase } from '@/lib/engine';
 import { Testata } from '@/components/Testata';
 import { t as traduci } from '@/lib/i18n/server';
@@ -12,7 +12,7 @@ export default async function PaginaFase({ params }: { params: Promise<{ id: str
   if (!FASI.some((f) => f.id === fase)) notFound();
   const o = await offerta(id);
   if (!o) notFound();
-  const [{ dati: cfg }, t] = await Promise.all([configVersione(o.config_versione), traduci()]);
+  const [{ dati: cfg, versione, ultima, congelata }, t] = await Promise.all([configOfferta(o), traduci()]);
   return (
     <div className="alt-root">
       <Testata area="offerta" hrefOfferta={`/offerta/${id}/assessment`}
@@ -24,7 +24,7 @@ export default async function PaginaFase({ params }: { params: Promise<{ id: str
         </>}
         azioni={<AzioniOfferta id={id} stato={o.stato} />} />
       <EditorOfferta id={id} fase={fase as Fase} cfg={cfg} iniziale={o.dati} statiIniziali={o.stati_valore}
-        solaLettura={o.stato === 'approvata'} />
+        solaLettura={o.stato === 'approvata'} versione={{ numero: versione, ultima, congelata }} />
     </div>
   );
 }

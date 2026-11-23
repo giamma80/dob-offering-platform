@@ -228,3 +228,4 @@ a.brand, a.brand:hover { color: #fff; }
 .mappa__l--spento { border: 1px dashed var(--line-strong); }
 tr.is-evid > td { background: var(--signal-open-soft) !important; }
 tr.is-nativo .alt-switch { cursor: not-allowed; }
+.rail__avviso { margin: 8px 0 0; padding: 6px 8px; border-radius: var(--radius-sm); background: var(--signal-open-soft); color: var(--signal-open-ink); font-size: 12px; font-weight: 600; cursor: help; }

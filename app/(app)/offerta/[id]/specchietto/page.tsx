@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { configVersione, offerta } from '@/lib/dati';
+import { configOfferta, offerta } from '@/lib/dati';
 import { bloccanti, specchietto } from '@/lib/engine';
 import { Testata } from '@/components/Testata';
 import { t as traduci } from '@/lib/i18n/server';
@@ -17,7 +17,7 @@ export default async function Specchietto({ params, searchParams }: {
   const [{ id }, { sc }] = await Promise.all([params, searchParams]);
   const o = await offerta(id);
   if (!o) notFound();
-  const [{ dati: cfg }, t] = await Promise.all([configVersione(o.config_versione), traduci()]);
+  const [{ dati: cfg, versione, ultima, congelata }, t] = await Promise.all([configOfferta(o), traduci()]);
   const scenari = (['saas', 'on_premise'] as const).filter((x) => x === 'saas' ? o.approccio !== 'on_premise' : o.approccio !== 'saas');
   const scenario = scenari.includes(sc as never) ? (sc as 'saas' | 'on_premise') : scenari[0];
   const approvata = o.stato === 'approvata';

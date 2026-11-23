@@ -2,6 +2,12 @@
    ogni chiave aggiunta qui deve avere la sua traduzione in `en`, altrimenti il typecheck fallisce. */
 
 export const it = {
+  "off.parametri": "Parametri",
+  "off.versioneCongelata": "Versione dei parametri congelata all’invio in approvazione",
+  "off.versioneUltima": "Le bozze usano sempre l’ultima versione dei parametri",
+  "off.versioneSuperata": "Disponibile la v{u}",
+  "off.versioneSuperataTip": "L’offerta resta calcolata con la v{v}. Per ricalcolarla con la v{u}, duplicala.",
+  "par.superata": "Nel frattempo è stata salvata la versione {v}. Ricarica la pagina prima di salvare: le tue modifiche non sono state salvate.",
   "par.tipoBase": "Base applicativa",
   "par.tipoMessa": "Messa in opera",
   "par.ambientiSaas": "Ambienti SaaS (×{n})",
@@ -389,6 +395,12 @@ export const it = {
 export type Chiave = keyof typeof it;
 
 export const en: Record<Chiave, string> = {
+  "off.parametri": "Parameters",
+  "off.versioneCongelata": "Parameter version frozen when sent for approval",
+  "off.versioneUltima": "Drafts always use the latest parameter version",
+  "off.versioneSuperata": "v{u} available",
+  "off.versioneSuperataTip": "The offer stays calculated with v{v}. To recalculate it with v{u}, duplicate it.",
+  "par.superata": "Version {v} was saved in the meantime. Reload the page before saving: your changes were not saved.",
   "par.tipoBase": "Application base",
   "par.tipoMessa": "Deployment",
   "par.ambientiSaas": "SaaS environments (×{n})",

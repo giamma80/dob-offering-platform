@@ -1,6 +1,6 @@
 import 'server-only';
 import { supabaseServer } from '@/lib/supabase/server';
-import type { Config, Offerta, StatoValore } from '@/lib/engine';
+import { sintesi, type Config, type Offerta, type StatoValore } from '@/lib/engine';
 
 export interface RigaOfferta {
   id: string;
@@ -34,11 +34,25 @@ export async function configVersione(versione: number | null) {
   return (data as { versione: number; dati: Config } | null) ?? configAttiva();
 }
 
+/** Parametri con cui si calcola un'offerta: una bozza usa sempre l'ultima versione;
+   dall'invio in approvazione in poi la versione è congelata. `ultima` serve all'avviso di versione superata. */
+export async function configOfferta(o: { stato: RigaOfferta['stato']; config_versione: number | null }) {
+  const attiva = await configAttiva();
+  if (o.stato === 'bozza') return { ...attiva, ultima: attiva.versione, congelata: false };
+  const v = await configVersione(o.config_versione);
+  return { ...v, ultima: attiva.versione, congelata: true };
+}
+
 export async function elencoOfferte(): Promise<RigaOfferta[]> {
   const sb = await supabaseServer();
   const { data, error } = await sb.from('offerte').select('*').neq('stato', 'archiviata').order('aggiornata_il', { ascending: false });
   if (error) throw error;
-  return (data ?? []) as RigaOfferta[];
+  const righe = (data ?? []) as RigaOfferta[];
+  /* le bozze si mostrano con i parametri attuali, come nell'editor */
+  if (!righe.some((r) => r.stato === 'bozza')) return righe;
+  const { versione, dati: cfg } = await configAttiva();
+  return righe.map((r) => r.stato === 'bozza'
+    ? { ...r, config_versione: versione, sintesi: sintesi(cfg, r.dati, r.stati_valore) as RigaOfferta['sintesi'] } : r);
 }
 
 export async function offerta(id: string): Promise<RigaOfferta | null> {

@@ -157,8 +157,9 @@ function RigaPiu({ testo, onClick, colonne = 4, solaLettura }: { testo: string; 
   );
 }
 
-export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLettura }: {
+export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLettura, versione }: {
   id: string; fase: Fase; cfg: Config; iniziale: Offerta; statiIniziali: Stati; solaLettura: boolean;
+  versione: { numero: number; ultima: number; congelata: boolean };
 }) {
   const t = useT();
   const [o, setO] = useState<Offerta>(iniziale);
@@ -883,6 +884,12 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
             <p className="rail__h">{t('re.approvazione')}</p>
             <div className="rail__stat"><span>{t('off.definito')}</span><b>{pct[fase]}%</b></div>
             <div className="rail__stat"><span>{t('re.critici')}</span><b>{bloccanti(o, stati).length}</b></div>
+            <div className="rail__stat" title={t(versione.congelata ? 'off.versioneCongelata' : 'off.versioneUltima')}>
+              <span>{t('off.parametri')}</span><b>v{versione.numero}</b></div>
+            {versione.congelata && versione.ultima > versione.numero && (
+              <p className="rail__avviso" title={t('off.versioneSuperataTip', { v: versione.numero, u: versione.ultima })}>
+                {t('off.versioneSuperata', { u: versione.ultima })}</p>
+            )}
           </div>
           </>)}
         </aside>

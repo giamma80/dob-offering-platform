@@ -35,6 +35,7 @@ function Card({ id, titolo, ico, children }: { id: string; titolo: string; ico: 
 export function EditorParametri({ versione, iniziale }: { versione: number; iniziale: Config }) {
   const t = useT();
   const [c, setC] = useState<Config>(iniziale);
+  const [base, setBase] = useState(versione);
   const [sez, setSez] = useState(SEZIONI[0].id);
   const [nota, setNota] = useState('');
   const [pending, start] = useTransition();
@@ -44,8 +45,11 @@ export function EditorParametri({ versione, iniziale }: { versione: number; iniz
   const sommaPesi = (c.moduli ?? []).reduce((a, m) => a + m.peso, 0);
   const salva = () => start(async () => {
     if (c.moduli?.length && Math.abs(sommaPesi - 100) > 0.001) { mostra({ tipo: 'errore', testo: t('par.pesiErrati') }); return; }
-    const r = await salvaConfig(c, nota);
-    mostra(r.errore ? { tipo: 'errore', testo: r.errore } : { tipo: 'conferma', testo: t('par.salvata') });
+    const r = await salvaConfig(c, nota, base);
+    if ('superata' in r && r.superata) { mostra({ tipo: 'errore', testo: t('par.superata', { v: r.superata }) }); return; }
+    if ('errore' in r && r.errore) { mostra({ tipo: 'errore', testo: r.errore }); return; }
+    if ('versione' in r && r.versione) setBase(r.versione);
+    mostra({ tipo: 'conferma', testo: t('par.salvata') });
   });
   const cc = c.costiCondivisi;
   const reevoAnno = cc.reevo.reduce((a, r) => a + r.mese, 0) * 12;

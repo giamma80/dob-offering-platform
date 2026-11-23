@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { supabaseServer } from '@/lib/supabase/server';
-import { configAttiva, configVersione, offerta } from '@/lib/dati';
+import { configAttiva, configOfferta, offerta } from '@/lib/dati';
 import { bloccanti, nuovaOfferta, sintesi, type Config, type Offerta, type StatoValore } from '@/lib/engine';
 
 export async function creaOfferta(form: FormData) {
@@ -41,10 +41,12 @@ export async function salvaOfferta(id: string, dati: Offerta, stati: Record<stri
   const corrente = await offerta(id);
   if (!corrente) return { errore: 'Offerta non trovata' };
   if (corrente.stato === 'approvata') return { errore: "Un'offerta approvata non si modifica: duplicala" };
-  const { dati: cfg } = await configVersione(corrente.config_versione);
+  /* una bozza si ricalcola sempre con l'ultima versione dei parametri e la registra */
+  const { versione, dati: cfg } = await configOfferta(corrente);
   const s = sintesi(cfg, dati, stati);
   const { error } = await sb.from('offerte').update({
-    cliente: dati.cliente, approccio: dati.approccio, dati, vincoli: dati.vincoli, stati_valore: stati, sintesi: s
+    cliente: dati.cliente, approccio: dati.approccio, dati, vincoli: dati.vincoli, stati_valore: stati, sintesi: s,
+    ...(corrente.stato === 'bozza' ? { config_versione: versione } : {})
   }).eq('id', id);
   if (error) return { errore: error.message };
   if (snapshot) {
@@ -77,7 +79,13 @@ async function cambiaStato(id: string, stato: 'in_approvazione' | 'approvata' | 
   const { data: { user } } = await sb.auth.getUser();
   const o = await offerta(id);
   if (!o) return { errore: 'Offerta non trovata' };
-  const extra = stato === 'approvata' ? { approvata_da: user?.id, approvata_il: new Date().toISOString() } : {};
+  const extra: Record<string, unknown> = stato === 'approvata' ? { approvata_da: user?.id, approvata_il: new Date().toISOString() } : {};
+  /* all'invio in approvazione la versione dei parametri si congela: l'ultima, con la sintesi ricalcolata */
+  if (stato === 'in_approvazione' && o.stato === 'bozza') {
+    const { versione, dati: cfg } = await configAttiva();
+    extra.config_versione = versione;
+    extra.sintesi = sintesi(cfg, o.dati, o.stati_valore);
+  }
   const { error } = await sb.from('offerte').update({ stato, ...extra }).eq('id', id);
   if (error) return { errore: error.message };
   await sb.from('offerte_versioni').insert({
@@ -88,15 +96,20 @@ async function cambiaStato(id: string, stato: 'in_approvazione' | 'approvata' | 
   return { ok: true };
 }
 
-export async function salvaConfig(dati: Config, nota: string) {
+/** Salva una nuova versione dei parametri. `base` è la versione da cui la pagina è partita:
+   se nel frattempo ne è uscita un'altra, il salvataggio si rifiuta invece di sovrascriverla. */
+export async function salvaConfig(dati: Config, nota: string, base: number) {
   if (!(dati.margineVenduto >= 0 && dati.margineVenduto < 1)) return { errore: 'Il margine deve stare fra 0 e 99%' };
   if (dati.figure.some((f) => !(f.costo > 0))) return { errore: 'Ogni figura deve avere un costo positivo' };
   if (!(dati.costiCondivisi.clientiAttivi >= 0)) return { errore: 'Clienti attivi non valido' };
   const pesi = (dati.moduli ?? []).reduce((a, m) => a + m.peso, 0);
   if (dati.moduli?.length && Math.abs(pesi - 100) > 0.001) return { errore: 'I pesi dei moduli devono sommare a 100%' };
+  const attiva = await configAttiva();
+  if (attiva.versione !== base) return { superata: attiva.versione };
   const sb = await supabaseServer();
-  const { error } = await sb.from('configurazione').insert({ dati, nota: nota || null });
+  const { data, error } = await sb.from('configurazione').insert({ dati, nota: nota || null }).select('versione').single();
   if (error) return { errore: error.message };
   revalidatePath('/monitoraggio', 'layout');
-  return { ok: true };
+  revalidatePath('/offerta', 'layout');
+  return { ok: true, versione: (data as { versione: number } | null)?.versione };
 }
