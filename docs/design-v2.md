@@ -35,8 +35,8 @@ Le offerte approvate si aprono in lettura o si **duplicano**: i default della nu
 
 | | Fase | Cosa si fissa | Chi la compila |
 |---|---|---|---|
-| 1 | **Assessment** | cliente, moduli DOB (i nativi fissi in testa), volumi annui e crescita, documenti per pratica, vincoli contrattuali | business manager |
-| 2 | **Soluzione** | architettura, approccio (SaaS, on-premise o entrambi), sistemi da integrare con la loro copertura, connettori, integrazioni, target CI/CD per l'on-premise, modalità AI | presales |
+| 1 | **Assessment** | cliente, approccio (SaaS, on-premise o entrambi), moduli DOB (i nativi fissi in testa), volumi annui e crescita, documenti per pratica, vincoli contrattuali | business manager |
+| 2 | **Soluzione** | architettura, sistemi da integrare con la loro copertura, connettori, integrazioni, target CI/CD per l'on-premise, modalità AI | presales |
 | 3 | **Stima** | giornate per voce, con i default di catalogo da confermare; voci parametriche | delivery |
 | 4 | **Prezzo** | tariffe, margine sul venduto, canoni, scaglioni, minimo garantito | business manager |
 | 5 | **Resoconto** | sintesi delle quattro fasi; da qui escono i due output | chi chiude l'offerta |

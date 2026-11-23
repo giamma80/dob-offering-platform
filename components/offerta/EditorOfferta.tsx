@@ -29,13 +29,13 @@ type Sezione = { id: string; k: Chiave; ico: string };
 const SEZIONI: Record<Fase, Sezione[]> = {
   assessment: [
     { id: 'a-cli', k: 'as.cliente', ico: 'cliente' },
+    { id: 'a-app', k: 'so.approccio', ico: 'approccio' },
     { id: 'a-mod', k: 'as.moduli', ico: 'catalogo' },
     { id: 'a-vol', k: 'as.volumi', ico: 'volumi' },
     { id: 'a-vin', k: 'as.vincoli', ico: 'vincoli' }
   ],
   soluzione: [
     { id: 's-arch', k: 'so.architettura', ico: 'catalogo' },
-    { id: 's-app', k: 'so.approccio', ico: 'approccio' },
     { id: 's-sis', k: 'as.sistemi', ico: 'sistemi' },
     { id: 's-con', k: 'so.connettori', ico: 'sistemi' },
     { id: 's-int', k: 'so.integrazioni', ico: 'integraz' },
@@ -78,16 +78,19 @@ function Barra({ parti, etichetta }: { parti: { v: number; cls: string; titolo: 
 
 /** Card del mockup: titolo con icona, aside a destra. Definita fuori dall'editor perché un componente
    creato a ogni render verrebbe rimontato e i campi perderebbero il focus a ogni carattere. */
-function Card({ id, titolo, ico, aside, bloccata, children }: {
-  id: string; titolo: string; ico: string; aside?: React.ReactNode; bloccata?: boolean; children: React.ReactNode;
+function Card({ id, titolo, ico, aside, bloccata, motivo, children }: {
+  id: string; titolo: string; ico: string; aside?: React.ReactNode; bloccata?: boolean; motivo?: string; children: React.ReactNode;
 }) {
   return (
-    <div className={`alt-card${bloccata ? ' is-bloccato' : ''}`} id={id}>
+    <div title={bloccata ? motivo : undefined}>
+    <div className={`alt-card${bloccata ? ' is-bloccato' : ''}`} id={id}
+      inert={bloccata ? true : undefined} aria-disabled={bloccata || undefined}>
       <div className="alt-card__head">
         <h2 className="alt-card__title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Icona nome={ico} />{titolo}</h2>
         {aside && <span style={{ marginLeft: 'auto' }}>{aside}</span>}
       </div>
       <div className="alt-card__body">{children}</div>
+    </div>
     </div>
   );
 }
@@ -296,6 +299,18 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
                     onChange={(e) => upd((x) => { x.assessment.referente = e.target.value; })} /></span></label>
               </div>
             </Card>
+            <Card {...cp("a-app")}>
+              <div className="scelta">
+                {(['saas', 'on_premise', 'entrambi'] as const).map((a) => (
+                  <label key={a} className={`scelta__c${o.approccio === a ? ' on' : ''}`}>
+                    <input type="radio" name="approccio" checked={o.approccio === a} disabled={solaLettura}
+                      onChange={() => upd((x) => { x.approccio = a; }, 'approccio')} />
+                    <h3>{t(`approccio.${a}` as Chiave)}</h3>
+                    <span className="v">{a === 'saas' ? euro(r.saas.primoAnno.prezzo) : a === 'on_premise' ? euro(r.onPremise.primoAnno.prezzo) : '—'}</span>
+                  </label>
+                ))}
+              </div>
+            </Card>
             <Card {...cp("a-mod")} aside={
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
                 <label className="alt-switch">
@@ -384,18 +399,6 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
           {fase === 'soluzione' && (<>
             <Card {...cp("s-arch")}>
               <MappaArchitettura dati={arch} attiva={areaAtt} onAttiva={setAreaAtt} />
-            </Card>
-            <Card {...cp("s-app")}>
-              <div className="scelta">
-                {(['saas', 'on_premise', 'entrambi'] as const).map((a) => (
-                  <label key={a} className={`scelta__c${o.approccio === a ? ' on' : ''}`}>
-                    <input type="radio" name="approccio" checked={o.approccio === a} disabled={solaLettura}
-                      onChange={() => upd((x) => { x.approccio = a; }, 'approccio')} />
-                    <h3>{t(`approccio.${a}` as Chiave)}</h3>
-                    <span className="v">{a === 'saas' ? euro(r.saas.primoAnno.prezzo) : a === 'on_premise' ? euro(r.onPremise.primoAnno.prezzo) : '—'}</span>
-                  </label>
-                ))}
-              </div>
             </Card>
             <Card {...cp("s-sis")}>
               <TabellaOrdinabile
@@ -510,7 +513,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
                 </Card>
               );
             })}
-            <Card {...cp("s-ci")} bloccata={!onp} aside={onp ? interr('cicd') : undefined}>
+            <Card {...cp("s-ci")} bloccata={!onp} motivo={t('so.soloOnPremise')} aside={onp ? interr('cicd') : undefined}>
               <div className={`scelta${offSol.includes('cicd') ? ' is-off' : ''}`} inert={offSol.includes('cicd') ? true : undefined}>
                 {cfg.catalogo.cicd.map((c) => (
                   <label key={c.id} className={`scelta__c${o.soluzione.cicd === c.id ? ' on' : ''}`}>
@@ -527,7 +530,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
                 <span className="opt__t">{t('so.consegne')}<span className="opt__sub">{cfg.catalogo.passaggioConsegne.gg} gg</span></span>
               </label>
             </Card>
-            <Card {...cp("s-ai")} bloccata={!onp}>
+            <Card {...cp("s-ai")} bloccata={!onp} motivo={t('so.soloOnPremise')}>
               <div className="scelta">
                 {(['incluso', 'proxy', 'cliente'] as const).map((m) => (
                   <label key={m} className={`scelta__c${o.leve.aiOnPremise === m ? ' on' : ''}`}
@@ -540,7 +543,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
                 ))}
               </div>
             </Card>
-            <Card {...cp("s-man")} bloccata={!onp} aside={onp ? (
+            <Card {...cp("s-man")} bloccata={!onp} motivo={t('so.soloOnPremise')} aside={onp ? (
               <label className="alt-switch"><input type="checkbox" checked={o.leve.manutenzioneOnPremise.attiva} disabled={solaLettura}
                 aria-label={t('so.manutenzione')}
                 onChange={(e) => upd((x) => { x.leve.manutenzioneOnPremise.attiva = e.target.checked; }, 'leve.manutenzioneOnPremise')} />

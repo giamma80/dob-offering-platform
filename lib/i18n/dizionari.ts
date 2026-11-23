@@ -2,6 +2,7 @@
    ogni chiave aggiunta qui deve avere la sua traduzione in `en`, altrimenti il typecheck fallisce. */
 
 export const it = {
+  "so.soloOnPremise": "Disponibile solo con l’approccio on-premise, scelto in Assessment",
   "st.scenario": "Scenario",
   "st.ggQuotate": "Giornate quotate",
   "st.ggPiattaformaTip": "Giornate per la piattaforma completa",
@@ -364,7 +365,7 @@ export const it = {
   'so.ai.incluso': 'Inclusa nel canone',
   'so.ai.proxy': 'Proxy sul nostro cloud',
   'so.ai.cliente': 'API key del cliente',
-  'so.manutenzione': 'Manutenzione on-premise',
+  'so.manutenzione': 'Manutenzione on-premise (AMS)',
   'so.bloccatoDa': 'Bloccato dal vincolo {v}',
   'so.aggiungi': '+ voce',
   'so.nuovaVoce': 'Nuova voce',
@@ -418,6 +419,7 @@ export const it = {
 export type Chiave = keyof typeof it;
 
 export const en: Record<Chiave, string> = {
+  "so.soloOnPremise": "Available only with the on-premise approach, chosen in Assessment",
   "st.scenario": "Scenario",
   "st.ggQuotate": "Quoted days",
   "st.ggPiattaformaTip": "Days for the full platform",
@@ -780,7 +782,7 @@ export const en: Record<Chiave, string> = {
   'so.ai.incluso': 'Included in the fee',
   'so.ai.proxy': 'Proxy on our cloud',
   'so.ai.cliente': 'Client API key',
-  'so.manutenzione': 'On-premise maintenance',
+  'so.manutenzione': 'On-premise maintenance (AMS)',
   'so.bloccatoDa': 'Locked by constraint {v}',
   'so.aggiungi': '+ item',
   'so.nuovaVoce': 'New item',
