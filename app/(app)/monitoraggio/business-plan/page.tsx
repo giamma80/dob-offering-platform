@@ -1,7 +1,7 @@
 import { configAttiva, elencoOfferte } from '@/lib/dati';
 import { VistaBusinessPlan, type ProgettoBP } from './VistaBusinessPlan';
 
-/* Recupero dell'investimento di piattaforma: progetti approvati (dalla data di approvazione) e,
+/* Recupero dell'investimento di piattaforma: progetti approvati (dall'avvio reale, o dall'approvazione se manca) e,
    a scelta, le offerte in corso (avvio stimato al trimestre successivo). Durata contratto 36 mesi. */
 export default async function BusinessPlan() {
   const [{ dati: cfg }, offerte] = await Promise.all([configAttiva(), elencoOfferte()]);
@@ -12,7 +12,7 @@ export default async function BusinessPlan() {
     const approvata = o.stato === 'approvata';
     return {
       id: o.id, cliente: o.cliente, inCorso: !approvata,
-      inizio: (approvata ? new Date(o.approvata_il ?? o.creata_il) : prossimoTrimestre).toISOString(),
+      inizio: (approvata ? new Date(o.avviata_il ?? o.approvata_il ?? o.creata_il) : prossimoTrimestre).toISOString(),
       margineAnnuo: s.margineAnnuo, marginePrimoAnno: s.marginePrimoAnno, licenzaAnnua: s.licenza, durataMesi: 36
     };
   });

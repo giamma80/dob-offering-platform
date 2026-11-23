@@ -137,7 +137,7 @@ describe('business plan', () => {
   it('parte da meno investimento e raggiunge il pareggio quando i margini lo coprono', () => {
     const c = curvaRecupero(120000, [p('2026-01-01', 120000)], new Date('2026-01-01'), 8);
     expect(c[0].cumulato).toBeCloseTo(-90000, 0);
-    expect(pareggio(c)).toBe('2026 T4');
+    expect(pareggio(c)).toBe('2026 Q4');
   });
   it('senza progetti il pareggio non arriva', () => {
     expect(pareggio(curvaRecupero(1000, [], new Date('2026-01-01'), 4))).toBeNull();

@@ -31,7 +31,7 @@ export function curvaRecupero(investimento: number, progetti: Progetto[], da: Da
     const q = q0 + i, anno = y0 + Math.floor(q / 4), tq = q % 4;
     const fine = new Date(Date.UTC(anno, tq * 3 + 2, 1));
     const somma = progetti.reduce((a, p) => a + contributoAl(p, fine), 0);
-    return { etichetta: `${anno} T${tq + 1}`, cumulato: somma - investimento };
+    return { etichetta: `${anno} Q${tq + 1}`, cumulato: somma - investimento };
   });
 }
 

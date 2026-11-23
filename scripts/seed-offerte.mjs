@@ -66,25 +66,25 @@ function storico(cliente, una, licenza, margineAnnuo, approvata) {
 }
 
 const righe = [
-  { id: '00000000-0000-4000-8000-000000000001', o: fin, stati: finStati, stato: 'bozza', sint: sintesi(cfg, fin, finStati), approvata: null },
-  { id: '00000000-0000-4000-8000-000000000002', ...(() => { const x = storico('Numia', 106000, 120000, 38400, '2026-02-06'); return { o: x.o, stati: x.stati, sint: x.sint, approvata: x.approvata }; })(), stato: 'approvata' },
-  { id: '00000000-0000-4000-8000-000000000003', ...(() => { const x = storico('Alba Leasing', 30000, 10000, 4200, '2026-03-14'); return { o: x.o, stati: x.stati, sint: x.sint, approvata: x.approvata }; })(), stato: 'approvata' },
-  { id: '00000000-0000-4000-8000-000000000004', o: uni, stati: uniStati, stato: 'bozza', sint: sintesi(cfg, uni, uniStati), approvata: null }
+  { id: '00000000-0000-4000-8000-000000000001', o: fin, stati: finStati, stato: 'bozza', sint: sintesi(cfg, fin, finStati), approvata: null, avviata: null },
+  { id: '00000000-0000-4000-8000-000000000002', ...(() => { const x = storico('Numia', 106000, 120000, 38400, '2026-02-06'); return { o: x.o, stati: x.stati, sint: x.sint, approvata: x.approvata, avviata: '2026-09-01' }; })(), stato: 'approvata' },
+  { id: '00000000-0000-4000-8000-000000000003', ...(() => { const x = storico('Alba Leasing', 30000, 10000, 4200, '2026-03-14'); return { o: x.o, stati: x.stati, sint: x.sint, approvata: x.approvata, avviata: '2026-09-01' }; })(), stato: 'approvata' },
+  { id: '00000000-0000-4000-8000-000000000004', o: uni, stati: uniStati, stato: 'bozza', sint: sintesi(cfg, uni, uniStati), approvata: null, avviata: null }
 ];
 
 const valori = righe.map((r) => `  (${s(r.id)}, ${s(r.o.cliente)}, '${r.stato}', '${r.o.approccio}', ${q(r.o)}, ${q(r.stati)}, ${q(r.o.vincoli)}, ${q(r.sint)},
    (select max(versione) from public.configurazione), ${r.approvata ? `'${r.approvata}'::timestamptz` : 'null'},
-   ${r.approvata ? `'${r.approvata}'::timestamptz` : 'now()'})`).join(',\n');
+   ${r.approvata ? `'${r.approvata}'::timestamptz` : 'now()'}, ${r.avviata ? `'${r.avviata}'::date` : 'null'})`).join(',\n');
 
-const sql = `-- Offerte iniziali: Findomestic (in corso), Numia e Alba Leasing (approvate, importi storici), Unipol (bozza).
+const sql = `-- Offerte iniziali: Findomestic (in corso), Numia e Alba Leasing (approvate, importi storici, avviate a settembre 2026), Unipol (bozza).
 -- Generato da scripts/seed-offerte.mjs. Idempotente: riapplicarlo riporta le offerte a questi valori.
-insert into public.offerte (id, cliente, stato, approccio, dati, stati_valore, vincoli, sintesi, config_versione, approvata_il, creata_il)
+insert into public.offerte (id, cliente, stato, approccio, dati, stati_valore, vincoli, sintesi, config_versione, approvata_il, creata_il, avviata_il)
 values
 ${valori}
 on conflict (id) do update set
   cliente = excluded.cliente, stato = excluded.stato, approccio = excluded.approccio, dati = excluded.dati,
   stati_valore = excluded.stati_valore, vincoli = excluded.vincoli, sintesi = excluded.sintesi,
-  config_versione = excluded.config_versione, approvata_il = excluded.approvata_il;
+  config_versione = excluded.config_versione, approvata_il = excluded.approvata_il, avviata_il = excluded.avviata_il;
 `;
 writeFileSync(new URL('../supabase/seed/02_offerte.sql', import.meta.url), sql);
 console.log('supabase/seed/02_offerte.sql', sql.length);
