@@ -17,6 +17,7 @@ const SEZIONI: { id: string; k: Chiave; ico: string }[] = [
   { id: 'ps-fig', k: 'par.figureProf', ico: 'figure' },
   { id: 'ps-marg', k: 'par.margineDef', ico: 'margine' },
   { id: 'ps-cond', k: 'par.condivisi', ico: 'costi' },
+  { id: 'ps-mod', k: 'par.moduli', ico: 'catalogo' },
   { id: 'ps-cat', k: 'par.catalogo', ico: 'catalogo' },
   { id: 'ps-ai', k: 'par.aiTitolo', ico: 'ai' }
 ];
@@ -39,7 +40,9 @@ export function EditorParametri({ versione, iniziale }: { versione: number; iniz
   const { toast, mostra } = useToast();
   const n = c.costiCondivisi.clientiAttivi + 1;
   const upd = (f: (x: Config) => void) => setC((p) => { const x = structuredClone(p); f(x); return x; });
+  const sommaPesi = (c.moduli ?? []).reduce((a, m) => a + m.peso, 0);
   const salva = () => start(async () => {
+    if (c.moduli?.length && Math.abs(sommaPesi - 100) > 0.001) { mostra({ tipo: 'errore', testo: t('par.pesiErrati') }); return; }
     const r = await salvaConfig(c, nota);
     mostra(r.errore ? { tipo: 'errore', testo: r.errore } : { tipo: 'conferma', testo: t('par.salvata') });
   });
@@ -49,6 +52,7 @@ export function EditorParametri({ versione, iniziale }: { versione: number; iniz
   const cp = (id: string) => { const s = SEZIONI.find((x) => x.id === id)!; return { id, titolo: t(s.k), ico: s.ico }; };
   const badge: Record<string, string> = {
     'ps-fig': String(c.figure.length), 'ps-marg': perc(c.margineVenduto), 'ps-cond': '',
+    'ps-mod': String((c.moduli ?? []).length),
     'ps-cat': String(c.catalogo.connettori.length + c.catalogo.integrazioni.length + c.catalogo.cicd.length), 'ps-ai': ''
   };
   const catalogo = [
@@ -139,6 +143,28 @@ export function EditorParametri({ versione, iniziale }: { versione: number; iniz
               onChange={(v) => upd((x) => { x.costiCondivisi.clientiAttivi = v; })} />
             <div className="campo"><span>{t('par.divisoreN1')}</span><b className="valore">{n}</b></div>
           </div>
+        </Card>
+
+        <Card {...cp('ps-mod')}>
+          <table className="alt-table">
+            <thead><tr><th>{t('par.moduli')}</th><th className="is-num">{t('par.peso')}</th><th>{t('par.collegati')}</th></tr></thead>
+            <tbody>
+              {(c.moduli ?? []).map((m, i) => (
+                <tr key={m.id}>
+                  <td>{m.nome}</td>
+                  <td className="is-num"><CampoNumero compatto etichetta={m.nome} valore={m.peso} min={0} max={100} suffisso="%"
+                    onChange={(v) => upd((x) => { x.moduli[i].peso = v; })} /></td>
+                  <td><span className="muted">{[
+                    ...(m.connettori ?? []).map((id) => c.catalogo.connettori.find((y) => y.id === id)?.nome ?? id),
+                    ...(m.integrazioni ?? []).map((id) => c.catalogo.integrazioni.find((y) => y.id === id)?.nome ?? id),
+                    ...(m.customizzazione ? [`${m.customizzazione.nome} · ${m.customizzazione.gg} gg`] : [])
+                  ].join(', ') || '—'}</span></td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot><tr className="is-total"><td>{t('par.sommaPesi')}</td>
+              <td className="is-num" style={Math.abs(sommaPesi - 100) > 0.001 ? { color: 'var(--signal-open)' } : undefined}>{perc(sommaPesi / 100)}</td><td /></tr></tfoot>
+          </table>
         </Card>
 
         <Card {...cp('ps-cat')}>

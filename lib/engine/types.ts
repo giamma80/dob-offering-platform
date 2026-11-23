@@ -43,6 +43,17 @@ export interface VincoloDef {
 
 export interface Scaglione { da: number; a: number | null; prezzo: number }
 
+/** Modulo standard della piattaforma DOB. In configurazione light l'impianto si paga per la quota
+   dei moduli scelti; un modulo spento blocca connettori e integrazioni collegati. */
+export interface ModuloDob {
+  id: string;
+  nome: string;
+  peso: number;                     // % del costo dell'impianto; la somma dei moduli è 100
+  connettori?: string[];            // id di catalogo collegati
+  integrazioni?: string[];
+  customizzazione?: VoceCatalogo;   // voce che il modulo aggiunge alla customizzazione
+}
+
 /** Configurazione di sistema: una riga versionata di public.configurazione.dati */
 export interface Config {
   margineVenduto: number;                 // 0.30 = 30% sul venduto
@@ -57,6 +68,7 @@ export interface Config {
     clientiAttivi: number;                // N: clienti GIÀ attivi, senza l'offerta in corso
   };
   ai: { perDocumento: number; documentiPerPratica: number };
+  moduli: ModuloDob[];
   catalogo: {
     base: VoceCatalogo[];
     connettori: (VoceCatalogo & { default: boolean })[];
@@ -89,6 +101,9 @@ export interface Offerta {
   assessment: {
     settore?: string;
     referente?: string;
+    /** configurazione light: solo i moduli in `moduli`; altrimenti piattaforma completa */
+    light?: boolean;
+    moduli?: string[];
     volumeAnnuo: number;
     crescita: number;
     documentiPerPratica: number;

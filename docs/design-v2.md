@@ -100,12 +100,20 @@ N = clienti **già** attivi, senza contare l'offerta in corso.
 
 Target CI/CD: OpenShift 150 gg, Kubernetes 120, VM 180, AWS/GCP/Azure 130 (da verificare), passaggio di consegne 30.
 
+## 6-bis. Moduli DOB e configurazione light
+
+La piattaforma completa include dieci moduli standard: workflow management, documenti d'identità, document management evoluto, firma elettronica digitale, credit screening (CRIF / CleverChain), liste PEP e AML, SPID / wallet, SSO, design system custom, observability del cliente.
+
+In Assessment l'interruttore **Configurazione light** permette di deselezionare moduli. L'impianto della piattaforma (base applicativa) si quota in proporzione alla somma dei **pesi** dei moduli inclusi; i pesi sono nei Parametri di sistema e devono sommare a 100%. Un modulo spento **blocca** in Soluzione i connettori e le integrazioni collegati (firma → Namirial, Aruba; credit screening → CleverChain, Cerved; SSO → integrazione SSO; design system → grafica del front-end). Il document management evoluto aggiunge alla customizzazione la voce "Gestione documentazione custom".
+
+I moduli inclusi compaiono nel Resoconto come promemoria e nello specchietto cliente.
+
 ## 7. Le tre voci per il cliente
 
 | Voce | Natura | Si compone di |
 |---|---|---|
-| **Setup e impianto** | una tantum | messa in opera nello scenario + garanzia + quota servizi ReeVo (SaaS) |
-| **Customizzazione** | una tantum | base applicativa + connettori e integrazioni scelti + quote a cascata. Identica nei due scenari |
+| **Setup e impianto** | una tantum | base applicativa (impianto della piattaforma, ridotto in configurazione light) + messa in opera nello scenario + quote a cascata e garanzia + quota servizi ReeVo (SaaS) |
+| **Customizzazione** | una tantum | solo connettori, integrazioni e voci custom scelti, più le voci aggiunte dai moduli, con le quote a cascata. Identica nei due scenari; zero se non ci sono customizzazioni |
 | **Licenza annuale** | ricorrente | SaaS: canone + consumo. On-premise: software + manutenzione + AI rifatturata (+ consumo) |
 
 ## 8. Output

@@ -69,6 +69,10 @@ export default async function Specchietto({ params, searchParams }: {
                   ))}
                 </tbody>
               </table>
+              <p style={{ margin: '22px 0 8px', fontSize: 12, fontWeight: 700, letterSpacing: '.09em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>
+                {t('sp.moduli')}
+              </p>
+              <ul className="sp-moduli">{s.moduli.map((m) => <li key={m}>{m}</li>)}</ul>
             </div></div>
           )}
         </main>

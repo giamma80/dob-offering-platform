@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  composizioneMargine, composizioneRicavo, sensibilitaClienti, serieMensile,
+  composizioneMargine, composizioneRicavo, moduliAttivi, sensibilitaClienti, serieMensile,
   type Config, type Offerta, type Risultato, type Scenario
 } from '@/lib/engine';
 import { useT } from '@/lib/i18n/client';
@@ -24,8 +24,9 @@ function scenariAttivi(r: Risultato): Scen[] {
 }
 
 /* ---------------------------------------------------------------- Sintesi */
-export function Sintesi({ r, definito, critici, inviaApprovazione }: Props & { inviaApprovazione?: React.ReactNode }) {
+export function Sintesi({ cfg, o, r, definito, critici, inviaApprovazione }: Props & { inviaApprovazione?: React.ReactNode }) {
   const t = useT();
+  const att = moduliAttivi(cfg, o);
   const sc = (x: Scen): Scenario => (x === 'on_premise' ? r.onPremise : r.saas);
   const extra = r.vincoliUnaTantum;
   const ricavo = (s: Scenario) => {
@@ -66,6 +67,18 @@ export function Sintesi({ r, definito, critici, inviaApprovazione }: Props & { i
         </div>
         <div style={{ marginLeft: 'auto' }}>{inviaApprovazione}</div>
       </div>
+      <div className="alt-card" id="r-mod">
+        <div className="alt-card__head">
+          <h2 className="alt-card__title" style={{ display: 'flex', gap: 8, alignItems: 'center' }}><Icona nome="catalogo" />{t('re.moduli')}</h2>
+          <span className="muted" style={{ marginLeft: 'auto', fontSize: 12, fontWeight: 600 }}>{o.assessment.light ? t('as.light') : t('re.piattaformaCompleta')}</span>
+        </div>
+        <div className="alt-card__body" style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {(cfg.moduli ?? []).map((m) => (
+            <span key={m.id} className={`alt-badge ${att.includes(m.id) ? 'alt-badge--incluso' : 'alt-badge--escluso'}`}
+              style={{ textTransform: 'none', letterSpacing: 0, fontSize: 12, opacity: att.includes(m.id) ? 1 : 0.55 }}>{m.nome}</span>
+          ))}
+        </div>
+      </div>
       <CardVista id="r-area" titolo={t('re.ricavo36')} icona={<Icona nome="sintesi" />} scenari={scenariAttivi(r)}
         render={(x, vista) => x === 'confronto'
           ? <div className="confronto">{(['saas', 'on_premise'] as const).map((k) => (
@@ -91,7 +104,44 @@ export function Sintesi({ r, definito, critici, inviaApprovazione }: Props & { i
           </table>
         </div>
       </div>
+      <CostiEsercizio r={r} />
     </>
+  );
+}
+
+/** Costi di esercizio annui per scenario: infrastruttura, AI, AMS/manutenzione, supporto, riserve. */
+function CostiEsercizio({ r }: { r: Risultato }) {
+  const t = useT();
+  const gruppi: { k: Chiave; ids: string[] }[] = [
+    { k: 're.infra', ids: ['reevo'] },
+    { k: 're.aiCosto', ids: ['n8n', 'ai'] },
+    { k: 're.amsMan', ids: ['ams', 'manutenzione'] },
+    { k: 're.supporto', ids: ['supp'] },
+    { k: 're.riserve', ids: ['normativo', 'kpi', 'audit'] }
+  ];
+  const v = (s: Scenario, ids: string[]) => s.ricorrenti.filter((x) => ids.includes(x.id)).reduce((a, x) => a + x.costo, 0);
+  return (
+    <div className="alt-card" id="r-eserc">
+      <div className="alt-card__head"><h2 className="alt-card__title" style={{ display: 'flex', gap: 8, alignItems: 'center' }}><Icona nome="costi" />{t('re.esercizio')}</h2>
+        <span className="alt-badge alt-badge--riservato" style={{ marginLeft: 'auto' }}>{t('re.riservato')}</span></div>
+      <div className="alt-card__body">
+        <table className="alt-table">
+          <thead><tr><th>{t('st.voce')}</th>{r.saas.attivo && <th className="is-num">SaaS</th>}{r.onPremise.attivo && <th className="is-num">On-premise</th>}</tr></thead>
+          <tbody>
+            {gruppi.map((g) => (
+              <tr key={g.k}><td>{t(g.k)}</td>
+                {r.saas.attivo && <td className="is-num">{euro(v(r.saas, g.ids))}</td>}
+                {r.onPremise.attivo && <td className="is-num">{euro(v(r.onPremise, g.ids))}
+                  {g.k === 're.infra' && <div className="muted" style={{ fontSize: 11 }}>{t('re.infraNota')}</div>}</td>}
+              </tr>
+            ))}
+          </tbody>
+          <tfoot><tr className="is-total"><td>{t('comune.totale')}</td>
+            {r.saas.attivo && <td className="is-num">{euro(r.saas.costoRicorrente)}</td>}
+            {r.onPremise.attivo && <td className="is-num">{euro(r.onPremise.costoRicorrente)}</td>}</tr></tfoot>
+        </table>
+      </div>
+    </div>
   );
 }
 

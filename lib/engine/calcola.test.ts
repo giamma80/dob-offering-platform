@@ -147,6 +147,42 @@ describe('interruttori della Soluzione', () => {
   });
   it('CI/CD spento: resta solo il passaggio di consegne nel setup on-premise', () => {
     const x = o(); x.soluzione.sezioniOff = ['cicd'];
-    expect(calcola(cfg, x).onPremise.setup.righe.map((r) => r.id)).toEqual(['consegne']);
+    const ids = calcola(cfg, x).onPremise.setup.righe.map((r) => r.id);
+    expect(ids).toContain('consegne');
+    expect(ids).not.toContain('openshift');
+  });
+});
+
+
+import { fattoreImpianto, moduloBloccante, vociCustomizzazione } from './index';
+
+describe('moduli DOB', () => {
+  it('la base applicativa sta nel setup: senza customizzazioni la customizzazione vale zero', () => {
+    const x = o(); x.soluzione.connettori = []; x.soluzione.integrazioni = [];
+    x.assessment.light = true; x.assessment.moduli = cfg.moduli.filter((m) => m.id !== 'docmgmt').map((m) => m.id);
+    expect(calcola(cfg, x).onPremise.customizzazione.prezzo).toBe(0);
+  });
+  it('piattaforma completa: impianto al 100%', () => {
+    expect(fattoreImpianto(cfg, o())).toBe(1);
+  });
+  it('light: impianto in proporzione ai pesi dei moduli scelti', () => {
+    const x = o(); x.assessment.light = true; x.assessment.moduli = ['workflow', 'identita'];
+    expect(fattoreImpianto(cfg, x)).toBeCloseTo(0.32, 5);
+    const pieno = calcola(cfg, o()).saas.setup.gg;
+    expect(calcola(cfg, x).saas.setup.gg).toBeLessThan(pieno);
+  });
+  it('modulo spento blocca i connettori collegati', () => {
+    const x = o(); x.assessment.light = true; x.assessment.moduli = ['workflow'];
+    expect(moduloBloccante(cfg, x, 'connettori', 'namirial')?.id).toBe('firma');
+    expect(vociCustomizzazione(cfg, x).map((v) => v.id)).not.toContain('namirial');
+  });
+  it('document management evoluto aggiunge la gestione documentazione custom', () => {
+    const x = o();
+    expect(vociCustomizzazione(cfg, x).map((v) => v.id)).toContain('doc-custom');
+    x.assessment.light = true; x.assessment.moduli = ['workflow'];
+    expect(vociCustomizzazione(cfg, x).map((v) => v.id)).not.toContain('doc-custom');
+  });
+  it('i pesi di default sommano a 100', () => {
+    expect(cfg.moduli.reduce((a, m) => a + m.peso, 0)).toBe(100);
   });
 });

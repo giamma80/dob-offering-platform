@@ -5,7 +5,7 @@ import { scorriA } from '@/lib/ui/scorri';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import {
-  FASI, avanzamento, bloccanti, calcola, vociCustomizzazione,
+  FASI, avanzamento, bloccanti, calcola, fattoreImpianto, moduliAttivi, moduloBloccante, vociCustomizzazione,
   type Config, type Fase, type FiguraId, type Offerta, type RigaGg, type StatoValore
 } from '@/lib/engine';
 import { salvaOfferta } from '@/lib/azioni';
@@ -28,6 +28,7 @@ type Sezione = { id: string; k: Chiave; ico: string };
 const SEZIONI: Record<Fase, Sezione[]> = {
   assessment: [
     { id: 'a-cli', k: 'as.cliente', ico: 'cliente' },
+    { id: 'a-mod', k: 'as.moduli', ico: 'catalogo' },
     { id: 'a-vol', k: 'as.volumi', ico: 'volumi' },
     { id: 'a-sis', k: 'as.sistemi', ico: 'sistemi' },
     { id: 'a-vin', k: 'as.vincoli', ico: 'vincoli' }
@@ -89,7 +90,8 @@ function Card({ id, titolo, ico, aside, bloccata, children }: {
   );
 }
 
-function RigaGiornate({ v, onGg, onNome, onFigura, onRimuovi, stato, onStato, figure, solaLettura, t }: {
+function RigaGiornate({ v, onGg, onNome, onFigura, onRimuovi, stato, onStato, figure, solaLettura, t, importo, nota }: {
+  importo?: number; nota?: string;
   v: RigaGg; onGg: (g: number) => void; onNome?: (n: string) => void; onFigura?: (f: FiguraId) => void; onRimuovi?: () => void;
   stato?: StatoValore; onStato?: (s: StatoValore) => void; figure: Config['figure']; solaLettura: boolean; t: ReturnType<typeof useT>;
 }) {
@@ -115,6 +117,7 @@ function RigaGiornate({ v, onGg, onNome, onFigura, onRimuovi, stato, onStato, fi
           </span>
         ) : (figure.find((f) => f.id === v.figura)?.nome ?? v.figura)}
       </td>
+      {importo !== undefined && <td className="is-num">{euro(importo)}{nota && <div className="muted" style={{ fontSize: 11 }}>{nota}</div>}</td>}
       <td style={{ width: 40 }}>
         {onRimuovi && !solaLettura && (
           <button type="button" className="chip__x" aria-label={t('comune.rimuovi')} title={t('comune.rimuovi')} onClick={onRimuovi}>×</button>
@@ -202,6 +205,8 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
       </label>
     </span>
   );
+  const fImp = fattoreImpianto(cfg, o);
+  const modAtt = moduliAttivi(cfg, o);
   const sezioni = SEZIONI[fase];
   const propsRes = { cfg, o, r, definito: pct.resoconto, critici: bloccanti(o, stati) };
   const sub = fase === 'resoconto' ? attiva : null;
@@ -248,6 +253,46 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                 <label className="campo"><span>{t('as.referente')}</span>
                   <span className="alt-inputwrap"><input className="alt-input" value={o.assessment.referente ?? ''} disabled={solaLettura}
                     onChange={(e) => upd((x) => { x.assessment.referente = e.target.value; })} /></span></label>
+              </div>
+            </Card>
+            <Card {...cp("a-mod")} aside={
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
+                <StatoPulsanti stato={st('assessment.moduli')} onStato={setSt('assessment.moduli')} />
+                <label className="alt-switch">
+                  <input type="checkbox" checked={!!o.assessment.light} disabled={solaLettura}
+                    onChange={(e) => upd((x) => {
+                      x.assessment.light = e.target.checked;
+                      if (!x.assessment.moduli) x.assessment.moduli = (cfg.moduli ?? []).map((m) => m.id);
+                    }, 'assessment.moduli')} />
+                  <span className="alt-switch__box" aria-hidden="true" /><span>{t('as.light')}</span>
+                </label>
+              </span>}>
+              <div className="griglia">
+                {(cfg.moduli ?? []).map((m) => {
+                  const on = modAtt.includes(m.id);
+                  return (
+                    <label key={m.id} className={`opt${on ? ' opt--on' : ''}`}
+                      title={[...(m.connettori ?? []), ...(m.integrazioni ?? [])].length || m.customizzazione
+                        ? t('as.moduloCollegati', { v: [
+                            ...(m.connettori ?? []).map((id) => cfg.catalogo.connettori.find((c) => c.id === id)?.nome ?? id),
+                            ...(m.integrazioni ?? []).map((id) => cfg.catalogo.integrazioni.find((c) => c.id === id)?.nome ?? id),
+                            ...(m.customizzazione ? [m.customizzazione.nome] : [])].join(', ') })
+                        : undefined}>
+                      <input type="checkbox" checked={on} disabled={solaLettura || !o.assessment.light}
+                        onChange={(e) => upd((x) => {
+                          const cur = x.assessment.moduli ?? (cfg.moduli ?? []).map((y) => y.id);
+                          x.assessment.moduli = e.target.checked ? [...cur, m.id] : cur.filter((y) => y !== m.id);
+                        }, 'assessment.moduli')} />
+                      <span className="opt__box" aria-hidden="true" />
+                      <span className="opt__t">{m.nome}<span className="opt__sub">{perc(m.peso / 100)}</span></span>
+                    </label>
+                  );
+                })}
+              </div>
+              <div className="moduli-tot">
+                <span>{t('as.impianto')}</span>
+                <div className="bar bar--xs" style={{ flex: 1 }}><span className="s3" style={{ flex: fImp }} /><span style={{ flex: 1 - fImp }} /></div>
+                <b>{perc(fImp)}</b>
               </div>
             </Card>
             <Card {...cp("a-vol")}>
@@ -324,11 +369,12 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                   <div className={`griglia${offSol.includes(k) ? ' is-off' : ''}`} inert={offSol.includes(k) ? true : undefined}>
                     {cfg.catalogo[k].map((c) => {
                       const vinc = 'vincolo' in c && c.vincolo ? c.vincolo : null;
-                      const bloccato = !!vinc && !o.vincoli[vinc];
+                      const modB = moduloBloccante(cfg, o, k, c.id);
+                      const bloccato = (!!vinc && !o.vincoli[vinc]) || !!modB;
                       const on = o.soluzione[k].includes(c.id) && !bloccato;
                       return (
                         <label key={c.id} className={`opt${on ? ' opt--on' : ''}${bloccato ? ' is-bloccato' : ''}`}
-                          title={bloccato ? t('so.bloccatoDa', { v: cfg.vincoli.find((v) => v.id === vinc)?.nome ?? '' }) : undefined}>
+                          title={modB ? t('so.bloccatoModulo', { v: modB.nome }) : bloccato ? t('so.bloccatoDa', { v: cfg.vincoli.find((v) => v.id === vinc)?.nome ?? '' }) : undefined}>
                           <input type="checkbox" checked={on} disabled={bloccato || solaLettura}
                             onChange={(e) => upd((x) => {
                               x.soluzione[k] = e.target.checked ? [...x.soluzione[k], c.id] : x.soluzione[k].filter((i) => i !== c.id);
@@ -411,41 +457,46 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
           {fase === 'stima' && (<>
             <Card {...cp("st-base")}>
               <table className="alt-table">
-                <thead><tr><th>{t('st.voce')}</th><th className="is-num">{t('st.giornate')}</th><th>{t('st.figura')}</th><th /></tr></thead>
+                <thead><tr><th>{t('st.voce')}</th><th className="is-num">{t('st.giornate')}</th><th>{t('st.figura')}</th><th className="is-num">{t('st.importo')}</th><th /></tr></thead>
                 <tbody>
+                  {fImp < 1 && (
+                    <tr className="is-sub"><td colSpan={5}>{t('st.baseLight', { p: perc(fImp), g: numero(Math.round(o.stima.base.reduce((a, b) => a + b.gg, 0) * fImp)) })}</td></tr>
+                  )}
                   {o.stima.base.map((b, i) => {
                     const daCatalogo = cfg.catalogo.base.some((c) => c.id === b.id);
                     return (
                       <RigaGiornate key={b.id} v={b} {...comuni} stato={st(`stima.base.${b.id}`)} onStato={setSt(`stima.base.${b.id}`)}
+                        importo={b.gg * fImp * r.tariffe[b.figura]} nota={fImp < 1 ? t('st.ggEffettive', { g: numero(Math.round(b.gg * fImp * 10) / 10) }) : undefined}
                         onGg={(g) => upd((x) => { x.stima.base[i].gg = g; }, `stima.base.${b.id}`)}
                         onNome={daCatalogo ? undefined : (n) => upd((x) => { x.stima.base[i].nome = n; })}
                         onFigura={daCatalogo ? undefined : (f) => upd((x) => { x.stima.base[i].figura = f; })}
                         onRimuovi={() => upd((x) => { x.stima.base.splice(i, 1); })} />
                     );
                   })}
-                  <RigaPiu solaLettura={solaLettura} testo={t('st.aggiungiVoce')} onClick={() => upd((x) => {
+                  <RigaPiu colonne={5} solaLettura={solaLettura} testo={t('st.aggiungiVoce')} onClick={() => upd((x) => {
                     x.stima.base.push({ id: nuovoId('base'), nome: t('so.nuovaVoce'), gg: 5, figura: 'dev' });
                   })} />
                 </tbody>
                 <tfoot><tr className="is-total"><td>{t('comune.totale')}</td>
-                  <td className="is-num">{numero(o.stima.base.reduce((a, b) => a + b.gg, 0))}</td><td /><td /></tr></tfoot>
+                  <td className="is-num">{numero(Math.round(o.stima.base.reduce((a, b) => a + b.gg, 0) * fImp * 10) / 10)}</td><td />
+                  <td className="is-num">{euro(o.stima.base.reduce((a, b) => a + b.gg * fImp * r.tariffe[b.figura], 0))}</td><td /></tr></tfoot>
               </table>
             </Card>
             <Card {...cp("st-cust")}>
               <table className="alt-table">
-                <thead><tr><th>{t('st.voce')}</th><th className="is-num">{t('st.giornate')}</th><th>{t('st.figura')}</th><th /></tr></thead>
+                <thead><tr><th>{t('st.voce')}</th><th className="is-num">{t('st.giornate')}</th><th>{t('st.figura')}</th><th className="is-num">{t('st.importo')}</th><th /></tr></thead>
                 <tbody>
                   {vociCust.map((v) => {
                     const dove = dovCustom(v.id);
                     return (
-                      <RigaGiornate key={v.id} v={v} {...comuni}
+                      <RigaGiornate key={v.id} v={v} {...comuni} importo={v.gg * r.tariffe[v.figura]}
                         onGg={(g) => upd((x) => {
                           const c = dove ? x.soluzione[dove].find((y) => y.id === v.id) : null;
                           if (c) c.gg = g; else x.stima.gg[v.id] = g;
                         }, 'stima.custom')}
                         onNome={dove ? (n) => upd((x) => { x.soluzione[dove].find((y) => y.id === v.id)!.nome = n; }) : undefined}
                         onFigura={dove ? (f) => upd((x) => { x.soluzione[dove].find((y) => y.id === v.id)!.figura = f; }) : undefined}
-                        onRimuovi={() => upd((x) => {
+                        onRimuovi={(cfg.moduli ?? []).some((m) => m.customizzazione?.id === v.id) ? undefined : () => upd((x) => {
                           if (dove) x.soluzione[dove] = x.soluzione[dove].filter((y) => y.id !== v.id);
                           else {
                             x.soluzione.connettori = x.soluzione.connettori.filter((y) => y !== v.id);
@@ -454,46 +505,68 @@ export function EditorOfferta({ id, fase, cfg, iniziale, statiIniziali, solaLett
                         })} />
                     );
                   })}
-                  <RigaPiu solaLettura={solaLettura} testo={t('st.aggiungiCustom')} onClick={() => upd((x) => {
+                  <RigaPiu colonne={5} solaLettura={solaLettura} testo={t('st.aggiungiCustom')} onClick={() => upd((x) => {
                     x.soluzione.integrazioniCustom.push({ id: nuovoId('cust'), nome: t('st.nuovaCustom'), gg: 5, figura: 'dev' });
                   })} />
                 </tbody>
                 <tfoot><tr className="is-total"><td>{t('comune.totale')}</td>
-                  <td className="is-num">{numero(vociCust.reduce((a, v) => a + v.gg, 0))}</td><td /><td /></tr></tfoot>
+                  <td className="is-num">{numero(vociCust.reduce((a, v) => a + v.gg, 0))}</td><td />
+                  <td className="is-num">{euro(vociCust.reduce((a, v) => a + v.gg * r.tariffe[v.figura], 0))}</td><td /></tr></tfoot>
               </table>
             </Card>
             <Card {...cp("st-op")}>
               <table className="alt-table">
                 <thead><tr><th>{t('st.voce')}</th>{saas && <th className="is-num">SaaS</th>}{onp && <th className="is-num">On-premise</th>}</tr></thead>
                 <tbody>
-                  {saas && r.saas.setup.righe.map((x) => (
+                  {saas && r.saas.setup.righe.filter((x) => !o.stima.base.some((b) => b.id === x.id)).map((x) => (
                     <tr key={`s-${x.id}`}><td>{x.nome}</td>
                       <td className="is-num"><CampoNumero compatto etichetta={x.nome} valore={x.gg} min={0}
-                        onChange={(g) => upd((y) => { y.stima.gg[x.id] = g; }, 'stima.messa')} /></td>
+                        onChange={(g) => upd((y) => { y.stima.gg[x.id] = g; }, 'stima.messa')} />
+                        <div className="muted" style={{ fontSize: 11 }}>{euro(x.prezzo)}</div></td>
                       {onp && <td className="is-num">—</td>}</tr>
                   ))}
-                  {onp && r.onPremise.setup.righe.map((x) => (
+                  {onp && r.onPremise.setup.righe.filter((x) => !o.stima.base.some((b) => b.id === x.id)).map((x) => (
                     <tr key={`o-${x.id}`}><td>{x.nome}</td>
                       {saas && <td className="is-num">—</td>}
                       <td className="is-num"><CampoNumero compatto etichetta={x.nome} valore={x.gg} min={0}
-                        onChange={(g) => upd((y) => { y.stima.gg[x.id] = g; }, 'stima.messa')} /></td></tr>
+                        onChange={(g) => upd((y) => { y.stima.gg[x.id] = g; }, 'stima.messa')} />
+                        <div className="muted" style={{ fontSize: 11 }}>{euro(x.prezzo)}</div></td></tr>
                   ))}
+                  <tr><td>{t('st.base')}</td>
+                    {saas && <td className="is-num">{numero(r.saas.setup.righe.filter((x) => o.stima.base.some((b) => b.id === x.id)).reduce((a, x) => a + x.gg, 0))} gg · {euro(r.saas.setup.righe.filter((x) => o.stima.base.some((b) => b.id === x.id)).reduce((a, x) => a + x.prezzo, 0))}</td>}
+                    {onp && <td className="is-num">{numero(r.onPremise.setup.righe.filter((x) => o.stima.base.some((b) => b.id === x.id)).reduce((a, x) => a + x.gg, 0))} gg · {euro(r.onPremise.setup.righe.filter((x) => o.stima.base.some((b) => b.id === x.id)).reduce((a, x) => a + x.prezzo, 0))}</td>}</tr>
                   <tr><td>{t('st.quote')}</td>
-                    {saas && <td className="is-num">{numero(r.saas.setup.quote.reduce((a, q) => a + q.gg, 0))}</td>}
-                    {onp && <td className="is-num">{numero(r.onPremise.setup.quote.reduce((a, q) => a + q.gg, 0))}</td>}</tr>
+                    {saas && <td className="is-num">{numero(r.saas.setup.quote.reduce((a, q) => a + q.gg, 0))} gg · {euro(r.saas.setup.quote.reduce((a, q) => a + q.prezzo, 0))}</td>}
+                    {onp && <td className="is-num">{numero(r.onPremise.setup.quote.reduce((a, q) => a + q.gg, 0))} gg · {euro(r.onPremise.setup.quote.reduce((a, q) => a + q.prezzo, 0))}</td>}</tr>
+                  {saas && r.saas.setup.reevoServizi > 0 && (
+                    <tr><td>{t('st.serviziReevo')}</td><td className="is-num">{euro(r.saas.setup.prezzo - r.saas.setup.righe.concat(r.saas.setup.quote).reduce((a, x) => a + x.prezzo, 0))}</td>{onp && <td className="is-num">—</td>}</tr>
+                  )}
                 </tbody>
-                <tfoot><tr className="is-total"><td>{t('comune.totale')}</td>
-                  {saas && <td className="is-num">{numero(r.saas.setup.gg)}</td>}
-                  {onp && <td className="is-num">{numero(r.onPremise.setup.gg)}</td>}</tr></tfoot>
+                <tfoot>
+                  <tr className="is-total"><td>{t('st.totaleSetup')}</td>
+                    {saas && <td className="is-num">{numero(r.saas.setup.gg)} gg · {euro(r.saas.setup.prezzo)}</td>}
+                    {onp && <td className="is-num">{numero(r.onPremise.setup.gg)} gg · {euro(r.onPremise.setup.prezzo)}</td>}</tr>
+                </tfoot>
               </table>
             </Card>
             <Card {...cp("st-q")} aside={<StatoPulsanti stato={st('stima.quote')} onStato={setSt('stima.quote')} />}>
-              <div className="griglia-campi">
-                {cfg.quote.map((q) => (
-                  <CampoNumero key={q.id} etichetta={q.nome} valore={(o.stima.quote[q.id] ?? q.pct) * 100} suffisso="%" min={0} max={100}
-                    onChange={(v) => upd((x) => { x.stima.quote[q.id] = v / 100; }, 'stima.quote')} />
-                ))}
-              </div>
+              <table className="alt-table">
+                <thead><tr><th>{t('st.voce')}</th><th className="is-num">%</th>
+                  <th className="is-num">{t('re.custom')}</th>{saas && <th className="is-num">{t('re.setup')} SaaS</th>}{onp && <th className="is-num">{t('re.setup')} on-premise</th>}</tr></thead>
+                <tbody>
+                  {cfg.quote.map((q) => {
+                    const cella = (b: typeof r.saas.customizzazione) => { const x = b.quote.find((y) => y.id === q.id); return x ? `${numero(x.gg)} gg · ${euro(x.prezzo)}` : '—'; };
+                    return (
+                      <tr key={q.id}><td>{q.nome}</td>
+                        <td className="is-num"><CampoNumero compatto etichetta={q.nome} valore={(o.stima.quote[q.id] ?? q.pct) * 100} suffisso="%" min={0} max={100}
+                          onChange={(v) => upd((x) => { x.stima.quote[q.id] = v / 100; }, 'stima.quote')} /></td>
+                        <td className="is-num">{cella(r.saas.customizzazione)}</td>
+                        {saas && <td className="is-num">{cella(r.saas.setup)}</td>}
+                        {onp && <td className="is-num">{cella(r.onPremise.setup)}</td>}</tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </Card>
           </>)}
 

@@ -92,6 +92,8 @@ export async function salvaConfig(dati: Config, nota: string) {
   if (!(dati.margineVenduto >= 0 && dati.margineVenduto < 1)) return { errore: 'Il margine deve stare fra 0 e 99%' };
   if (dati.figure.some((f) => !(f.costo > 0))) return { errore: 'Ogni figura deve avere un costo positivo' };
   if (!(dati.costiCondivisi.clientiAttivi >= 0)) return { errore: 'Clienti attivi non valido' };
+  const pesi = (dati.moduli ?? []).reduce((a, m) => a + m.peso, 0);
+  if (dati.moduli?.length && Math.abs(pesi - 100) > 0.001) return { errore: 'I pesi dei moduli devono sommare a 100%' };
   const sb = await supabaseServer();
   const { error } = await sb.from('configurazione').insert({ dati, nota: nota || null });
   if (error) return { errore: error.message };

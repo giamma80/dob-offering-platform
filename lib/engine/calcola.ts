@@ -92,19 +92,51 @@ export function consumo(scaglioni: Scaglione[], volume: number) {
   return { fasce, totale: fasce.reduce((a, f) => a + f.importo, 0) };
 }
 
-/** Voci di customizzazione: base + connettori + integrazioni scelti, con le giornate di stima. */
+/* ------------------------------------------------------------------ moduli DOB */
+
+/** Moduli inclusi: tutti nella piattaforma completa, quelli scelti in configurazione light. */
+export function moduliAttivi(cfg: Config, o: Offerta): string[] {
+  const tutti = (cfg.moduli ?? []).map((m) => m.id);
+  if (!o.assessment.light) return tutti;
+  return tutti.filter((id) => (o.assessment.moduli ?? []).includes(id));
+}
+
+/** Quota dell'impianto pagata: somma dei pesi dei moduli inclusi sul totale (1 = piattaforma completa). */
+export function fattoreImpianto(cfg: Config, o: Offerta): number {
+  const mod = cfg.moduli ?? [];
+  const tot = mod.reduce((a, m) => a + m.peso, 0);
+  if (!o.assessment.light || !tot) return 1;
+  const att = moduliAttivi(cfg, o);
+  return mod.filter((m) => att.includes(m.id)).reduce((a, m) => a + m.peso, 0) / tot;
+}
+
+/** Il modulo spento che blocca una voce di catalogo, se c'è. */
+export function moduloBloccante(cfg: Config, o: Offerta, tipo: 'connettori' | 'integrazioni', id: string) {
+  const att = moduliAttivi(cfg, o);
+  return (cfg.moduli ?? []).find((m) => !att.includes(m.id) && (m[tipo] ?? []).includes(id)) ?? null;
+}
+
+/** Base applicativa (impianto della piattaforma), ridotta in proporzione ai moduli inclusi. */
+export function vociBase(cfg: Config, o: Offerta): RigaGg[] {
+  const f = fattoreImpianto(cfg, o);
+  return o.stima.base.map((b) => ({ ...b, gg: f === 1 ? b.gg : Math.round(b.gg * f * 10) / 10 }));
+}
+
+/** Voci di customizzazione: connettori, integrazioni e voci custom scelti, più le voci aggiunte dai moduli.
+   La base applicativa non è qui: sta in Setup e impianto. */
 export function vociCustomizzazione(cfg: Config, o: Offerta): RigaGg[] {
   const gg = (id: string, def: number) => o.stima.gg[id] ?? def;
   const sso = !!o.vincoli.sso;
   const off = o.soluzione.sezioniOff ?? [];
   const conOn = !off.includes('connettori'), intOn = !off.includes('integrazioni');
-  const con = conOn ? cfg.catalogo.connettori.filter((c) => o.soluzione.connettori.includes(c.id)) : [];
+  const con = conOn ? cfg.catalogo.connettori.filter((c) => o.soluzione.connettori.includes(c.id) && !moduloBloccante(cfg, o, 'connettori', c.id)) : [];
   const int = intOn ? cfg.catalogo.integrazioni.filter(
-    (c) => o.soluzione.integrazioni.includes(c.id) && (c.vincolo !== 'sso' || sso)
+    (c) => o.soluzione.integrazioni.includes(c.id) && (c.vincolo !== 'sso' || sso) && !moduloBloccante(cfg, o, 'integrazioni', c.id)
   ) : [];
+  const att = moduliAttivi(cfg, o);
+  const daModuli = (cfg.moduli ?? []).filter((m) => m.customizzazione && att.includes(m.id)).map((m) => m.customizzazione!);
   return [
-    ...o.stima.base,
-    ...[...con, ...int].map((c) => ({ id: c.id, nome: c.nome, gg: gg(c.id, c.gg), figura: c.figura })),
+    ...[...con, ...int, ...daModuli].map((c) => ({ id: c.id, nome: c.nome, gg: gg(c.id, c.gg), figura: c.figura })),
     ...(conOn ? o.soluzione.connettoriCustom : []),
     ...(intOn ? o.soluzione.integrazioniCustom : [])
   ];
@@ -117,7 +149,9 @@ export function calcola(cfg: Config, o: Offerta): Risultato {
   const n = Math.max(1, cc.clientiAttivi + 1);
   const volume = o.assessment.volumeAnnuo;
   const quoteCust = cfg.quote.filter((q) => q.ambito === 'customizzazione');
-  const quoteSetup = cfg.quote.filter((q) => q.ambito === 'setup');
+  /* il setup comprende l'impianto della piattaforma: prende testing, PM e contingenza, più la garanzia */
+  const quoteSetup = cfg.quote;
+  const base = vociBase(cfg, o);
 
   /* Customizzazione: identica nei due scenari */
   const customizzazione = blocco(cfg, t, vociCustomizzazione(cfg, o), quoteCust, o.stima.quote);
@@ -125,7 +159,7 @@ export function calcola(cfg: Config, o: Offerta): Risultato {
   /* Setup SaaS: ambienti sul nostro cloud + quota dei servizi ReeVo */
   const amb = cfg.catalogo.ambientiSaas;
   const setupSaasBase = blocco(cfg, t,
-    [{ id: 'ambienti-saas', nome: 'Ambienti SaaS', gg: o.stima.gg['ambienti-saas'] ?? amb.numero * amb.ggPerAmbiente, figura: amb.figura }],
+    [...base, { id: 'ambienti-saas', nome: 'Ambienti SaaS', gg: o.stima.gg['ambienti-saas'] ?? amb.numero * amb.ggPerAmbiente, figura: amb.figura }],
     quoteSetup, o.stima.quote);
   const reevoServizi = cc.reevoServiziUnaTantum / n;
   const setupSaas = {
@@ -140,6 +174,7 @@ export function calcola(cfg: Config, o: Offerta): Risultato {
   const pc = cfg.catalogo.passaggioConsegne;
   const cicdOn = !(o.soluzione.sezioniOff ?? []).includes('cicd');
   const vociOnp: RigaGg[] = [
+    ...base,
     ...(cicdOn ? [{ id: target.id, nome: `Adeguamento ${target.nome}`, gg: o.stima.gg[target.id] ?? target.gg, figura: target.figura }] : []),
     ...(o.soluzione.passaggioConsegne ? [{ ...pc, gg: o.stima.gg[pc.id] ?? pc.gg }] : [])
   ];

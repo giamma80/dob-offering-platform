@@ -82,6 +82,78 @@
     "perDocumento": 0.1,
     "documentiPerPratica": 4
   },
+  "moduli": [
+    {
+      "id": "workflow",
+      "nome": "Workflow management",
+      "peso": 18
+    },
+    {
+      "id": "identita",
+      "nome": "Documenti d'identità",
+      "peso": 14
+    },
+    {
+      "id": "docmgmt",
+      "nome": "Document management evoluto",
+      "peso": 12,
+      "customizzazione": {
+        "id": "doc-custom",
+        "nome": "Gestione documentazione custom",
+        "gg": 15,
+        "figura": "dev"
+      }
+    },
+    {
+      "id": "firma",
+      "nome": "Firma elettronica digitale",
+      "peso": 10,
+      "connettori": [
+        "namirial",
+        "aruba"
+      ]
+    },
+    {
+      "id": "credit",
+      "nome": "Integrazione credit screening (CRIF / CleverChain)",
+      "peso": 10,
+      "connettori": [
+        "cleverchain",
+        "cerved"
+      ]
+    },
+    {
+      "id": "pep",
+      "nome": "Liste PEP e AML",
+      "peso": 10
+    },
+    {
+      "id": "spid",
+      "nome": "Integrazione SPID / wallet",
+      "peso": 9
+    },
+    {
+      "id": "sso",
+      "nome": "Integrazione SSO",
+      "peso": 6,
+      "integrazioni": [
+        "sso"
+      ]
+    },
+    {
+      "id": "design",
+      "nome": "Integrazione design system custom",
+      "peso": 6,
+      "integrazioni": [
+        "grafica"
+      ]
+    },
+    {
+      "id": "observ",
+      "nome": "Integrazione observability cliente",
+      "peso": 5
+    }
+  ],
   "catalogo": {
     "base": [
       {

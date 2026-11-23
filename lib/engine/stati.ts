@@ -1,5 +1,5 @@
 import type { Offerta, StatoValore } from './types';
-import { calcola } from './calcola';
+import { calcola, moduliAttivi } from './calcola';
 import type { Config } from './types';
 
 /* Stato dei valori (design v2 §4). Nessuna fase è bloccata: ogni valore esiste e dichiara
@@ -19,7 +19,7 @@ export const FASI: { id: Fase; nome: string }[] = [
 export function campiFase(o: Offerta, fase: Fase): string[] {
   switch (fase) {
     case 'assessment':
-      return ['assessment.volumeAnnuo', 'assessment.crescita', 'assessment.documentiPerPratica', 'vincoli'];
+      return ['assessment.moduli', 'assessment.volumeAnnuo', 'assessment.crescita', 'assessment.documentiPerPratica', 'vincoli'];
     case 'soluzione':
       return ['approccio', 'soluzione.connettori', 'soluzione.integrazioni',
         ...(o.approccio !== 'saas' ? ['soluzione.cicd', 'leve.aiOnPremise', 'leve.manutenzioneOnPremise'] : [])];
@@ -78,6 +78,9 @@ export interface Specchietto {
   righe: { voce: string; importo: number; ricorrente: boolean; nota?: string }[];
   totalePrimoAnno: number;
   extra: { voce: string; importo: number }[];
+  /** moduli DOB inclusi: è tutto ciò che il cliente ha scelto */
+  moduli: string[];
+  light: boolean;
 }
 
 export function specchietto(cfg: Config, o: Offerta, sc: 'saas' | 'on_premise'): Specchietto {
@@ -95,6 +98,8 @@ export function specchietto(cfg: Config, o: Offerta, sc: 'saas' | 'on_premise'):
     scenario: sc,
     righe,
     totalePrimoAnno: righe.reduce((a, rr) => a + rr.importo, 0),
-    extra: r.vincoliUnaTantum.map((u) => ({ voce: u.nome, importo: u.prezzo }))
+    extra: r.vincoliUnaTantum.map((u) => ({ voce: u.nome, importo: u.prezzo })),
+    moduli: (cfg.moduli ?? []).filter((m) => moduliAttivi(cfg, o).includes(m.id)).map((m) => m.nome),
+    light: !!o.assessment.light
   };
 }
