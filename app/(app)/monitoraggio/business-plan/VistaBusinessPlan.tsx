@@ -7,7 +7,8 @@ import { costoPiattaformaAl, pianoTrimestrale, type Progetto, type VocePiattafor
 import { useT } from '@/lib/i18n/client';
 import { euro, perc } from '@/lib/ui/formato';
 import { CurvaRecupero } from '@/components/grafici';
-import { AreeMargine, RicaviCosti } from '@/components/bp/GraficiBP';
+import { AreeMargine, RicaviCosti, indiceOggi } from '@/components/bp/GraficiBP';
+import { LegendaBP } from '@/components/bp/LegendaBP';
 import { TimelineBP } from '@/components/bp/TimelineBP';
 import { coloreProgetto } from '@/components/bp/colori';
 import { Icona } from '@/components/Icona';
@@ -22,7 +23,7 @@ const ANNI = 3;
 const mi = (d: Date) => d.getUTCFullYear() * 12 + d.getUTCMonth();
 
 export function VistaBusinessPlan({ investimento, progetti, piattaforma }: {
-  investimento: { sviluppo: number; amPrimoAnno: number }; progetti: ProgettoBP[];
+  investimento: { sviluppo: number; amPrimoAnno: number; mesiSviluppo: string[] }; progetti: ProgettoBP[];
   piattaforma: { dal: string; mese: number; unaTantum: number; voci?: (Omit<VocePiattaforma, 'dal'> & { dal: string })[] };
 }) {
   const t = useT();
@@ -73,11 +74,10 @@ export function VistaBusinessPlan({ investimento, progetti, piattaforma }: {
   const titolo = (ico: string, k: Parameters<typeof t>[0], tip?: string) => (
     <h2 className="alt-card__title" style={{ display: 'flex', gap: 8, alignItems: 'center' }} title={tip}><Icona nome={ico} />{t(k)}</h2>
   );
-  const legenda = (extra: { colore: string; nome: string }[]) => (
-    <div className="legenda">
-      {[...voci, ...extra].map((v) => <span key={v.nome}><i style={{ background: v.colore }} />{v.nome}</span>)}
-    </div>
-  );
+  const vociBox = voci.map((v) => ({ tipo: 'box' as const, nome: v.nome, colore: v.colore }));
+  const oggiTratto = { tipo: 'tratto' as const, nome: t('bp.oggi'), colore: 'var(--accent-azure)' };
+  const pareggioTratto = { tipo: 'tratto' as const, nome: t('bp.pareggio'), colore: 'var(--signal-positive)' };
+  const mesiSv = investimento.mesiSviluppo.map((m) => { const [a, mm] = m.split('-').map(Number); return new Date(Date.UTC(a, (mm || 1) - 1, 1)); });
 
   const righe = scelti.map((p) => {
     const r = ultimo.progetti.find((x) => x.id === p.id)!;
@@ -159,23 +159,29 @@ export function VistaBusinessPlan({ investimento, progetti, piattaforma }: {
         <div className="alt-card" id="bp-margini">
           <div className="alt-card__head">{titolo('costi', 'bp.margini')}</div>
           <div className="alt-card__body">
-            <AreeMargine piano={piano} progetti={voci} etichetta={t('bp.margini')} />
-            {legenda([{ colore: 'var(--line-strong)', nome: t('bp.investimentoRiga') }, { colore: 'var(--signal-negative)', nome: t('bp.costiPiattaforma') }])}
+            <AreeMargine piano={piano} progetti={voci} etichetta={t('bp.margini')} oggi={oggi} />
+            <LegendaBP voci={[{ tipo: 'titolo', nome: t('bp.legMargine') }, ...vociBox,
+              { tipo: 'box', nome: t('bp.investimentoRiga'), colore: 'var(--line-strong)', opacita: 0.5 }, { tipo: 'box', nome: t('bp.costiPiattaforma'), colore: 'var(--signal-negative)', opacita: 0.4 },
+              { tipo: 'linea', nome: t('bp.nettoLinea'), colore: 'var(--ink-primary)' }, pareggioTratto, oggiTratto]} />
           </div>
         </div>
 
         <div className="alt-card" id="bp-ricavi">
           <div className="alt-card__head">{titolo('offerte', 'bp.ricaviCosti')}</div>
           <div className="alt-card__body">
-            <RicaviCosti piano={piano} progetti={voci} etichetta={t('bp.ricaviCosti')} />
-            {legenda([{ colore: 'var(--ink-muted)', nome: t('bp.costiDiretti') }, { colore: 'var(--signal-negative)', nome: t('bp.costiPiattaforma') }])}
+            <RicaviCosti piano={piano} progetti={voci} etichetta={t('bp.ricaviCosti')} oggi={oggi} />
+            <LegendaBP voci={[{ tipo: 'titolo', nome: t('bp.legRicavi') }, ...vociBox,
+              { tipo: 'titolo', nome: t('bp.legCosti') }, { tipo: 'box', nome: t('bp.costiDiretti'), colore: 'var(--ink-muted)' }, { tipo: 'box', nome: t('bp.costiPiattaforma'), colore: 'var(--signal-negative)' }, oggiTratto]} />
           </div>
         </div>
 
         <div className="alt-card" id="bp-curva">
           <div className="alt-card__head">{titolo('bp', 'bp.curvaTit')}</div>
           <div className="alt-card__body">
-            <CurvaRecupero punti={punti} pareggio={piano.pareggio} etichetta={t('bp.curvaTit')} />
+            <CurvaRecupero punti={punti} pareggio={piano.pareggio} etichetta={t('bp.curvaTit')} oggi={indiceOggi(piano, oggi)} />
+            <LegendaBP voci={[{ tipo: 'linea', nome: t('bp.nettoLinea'), colore: 'var(--accent-azure)' },
+              { tipo: 'box', nome: t('bp.legSopra'), colore: 'var(--signal-positive-soft)' }, { tipo: 'box', nome: t('bp.legSotto'), colore: 'var(--signal-negative-soft)' },
+              pareggioTratto, oggiTratto]} />
           </div>
         </div>
 
@@ -184,8 +190,9 @@ export function VistaBusinessPlan({ investimento, progetti, piattaforma }: {
           <div className="alt-card__body">
             <TimelineBP
               progetti={scelti.map((p) => ({ id: p.id, cliente: p.cliente, inizio: p.inizio, durataMesi: p.durataMesi, inCorso: p.inCorso, colore: colori.get(p.id)!, licenzaAnnua: p.licenzaAnnua }))}
-              servizi={(pf.voci ?? []).map((v) => ({ id: v.id, dal: v.dal }))}
+              servizi={(pf.voci ?? []).map((v) => ({ id: v.id, dal: v.dal }))} sviluppo={mesiSv}
               da={da} anni={ANNI} pareggioIndice={piano.indicePareggio} pareggioEtichetta={piano.pareggio} oggi={oggi} nomeMese={nomeMese} />
+            <LegendaBP voci={[{ tipo: 'tratto', nome: t('bp.legAvvioProgetto'), colore: 'var(--ink-secondary)' }, { tipo: 'tratto', nome: t('bp.legAvvioCosto'), colore: 'var(--signal-negative)' }, pareggioTratto, oggiTratto]} />
           </div>
         </div>
 

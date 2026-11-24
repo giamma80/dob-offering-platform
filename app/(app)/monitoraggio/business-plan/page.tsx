@@ -1,5 +1,5 @@
 import { configAttiva, configVersione, elencoOfferte } from '@/lib/dati';
-import { costiPiattaforma, quotaPiattaforma, sviluppoTotale } from '@/lib/engine';
+import { costiPiattaforma, costiSistema, quotaPiattaforma, sviluppoTotale } from '@/lib/engine';
 import { VistaBusinessPlan, type ProgettoBP } from './VistaBusinessPlan';
 
 /* Recupero dell'investimento di piattaforma: progetti approvati (dall'avvio reale, o dall'approvazione se manca) e,
@@ -29,7 +29,7 @@ export default async function BusinessPlan() {
     };
   });
   const pf = costiPiattaforma(cfg);
-  return <VistaBusinessPlan investimento={{ sviluppo: sviluppoTotale(cfg), amPrimoAnno: cfg.investimento.amPrimoAnno }} progetti={progetti}
+  return <VistaBusinessPlan investimento={{ sviluppo: sviluppoTotale(cfg), amPrimoAnno: cfg.investimento.amPrimoAnno, mesiSviluppo: costiSistema(cfg).sviluppo.map((v) => v.mese) }} progetti={progetti}
     piattaforma={{
       dal: pf.dal.toISOString(), mese: pf.mese, unaTantum: pf.unaTantum,
       voci: (pf.voci ?? []).map((v) => ({ ...v, dal: v.dal.toISOString() }))

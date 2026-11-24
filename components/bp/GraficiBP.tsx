@@ -5,6 +5,20 @@ import { useT } from '@/lib/i18n/client';
 import { passoTacche } from '@/components/grafici';
 import type { Piano } from '@/lib/engine';
 
+/** Mesi trascorsi dall'inizio del primo trimestre del piano fino a `oggi` (frazionari), o null se fuori dal piano. */
+export function mesiDaInizio(piano: Piano, oggi: Date): number | null {
+  const f = piano.trimestri[0].fine;
+  const m = (oggi.getUTCFullYear() * 12 + oggi.getUTCMonth() + (oggi.getUTCDate() - 1) / 30) - (f.getUTCFullYear() * 12 + f.getUTCMonth() - 2);
+  return m >= 0 && m <= piano.trimestri.length * 3 ? m : null;
+}
+/** Posizione di oggi come indice (frazionario) dei punti a fine trimestre, usato dai grafici a linea e ad area. */
+export function indiceOggi(piano: Piano, oggi: Date): number | null {
+  const m = mesiDaInizio(piano, oggi);
+  if (m === null) return null;
+  const i = (m - 2) / 3;
+  return i < 0 ? 0 : Math.min(piano.trimestri.length - 1, i);
+}
+
 export interface VoceProgetto { id: string; nome: string; colore: string }
 
 const k = (v: number) => (Math.abs(v) >= 1000 ? `${Math.round(v / 1000).toLocaleString('it-IT')} k` : `${Math.round(v)}`);
@@ -20,7 +34,7 @@ function assi(lo: number, hi: number, y0: number, y1: number) {
 
 /** Margine cumulato per progetto in aree impilate sopra lo zero; sotto lo zero investimento e costi di piattaforma.
     La linea è il netto: dove sale sopra lo zero c'è il pareggio. */
-export function AreeMargine({ piano, progetti, etichetta }: { piano: Piano; progetti: VoceProgetto[]; etichetta: string }) {
+export function AreeMargine({ piano, progetti, etichetta, oggi }: { piano: Piano; progetti: VoceProgetto[]; etichetta: string; oggi?: Date }) {
   const t = useT();
   const tr = piano.trimestri, n = tr.length;
   const y0 = 20, y1 = 204, H = 244;
@@ -39,6 +53,7 @@ export function AreeMargine({ piano, progetti, etichetta }: { piano: Piano; prog
   });
   const inv = tr.map((q) => -q.investimento), tot = tr.map((q) => -(q.investimento + q.piattaformaCum));
   const ip = piano.indicePareggio;
+  const io = oggi ? indiceOggi(piano, oggi) : null;
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: 'block', height: 'auto', maxHeight: 340 }} role="img" aria-label={etichetta}>
       <g fontFamily="Metropolis, Arial">
@@ -60,6 +75,12 @@ export function AreeMargine({ piano, progetti, etichetta }: { piano: Piano; prog
             <text x={px(ip) + (ip > n * 0.7 ? -6 : 6)} y={y0 + 10} textAnchor={ip > n * 0.7 ? 'end' : 'start'} fontSize="10.5" fontWeight={700} fill="var(--signal-positive)">{t('bp.pareggioIl', { q: piano.pareggio! })}</text>
           </>
         )}
+        {io !== null && (
+          <>
+            <line x1={px(io)} y1={y0} x2={px(io)} y2={y1} stroke="var(--accent-azure)" strokeWidth={1.5} strokeDasharray="2 3" />
+            <text x={px(io) + (io > n * 0.8 ? -5 : 5)} y={y1 - 4} textAnchor={io > n * 0.8 ? 'end' : 'start'} fontSize="10" fontWeight={700} fill="var(--accent-azure-text)">{t('bp.oggi')}</text>
+          </>
+        )}
         {tr.map((q, i) => (
           <g key={q.etichetta}>
             <line x1={px(i)} y1={y1} x2={px(i)} y2={y1 + 4} stroke="var(--line-strong)" />
@@ -77,13 +98,14 @@ export function AreeMargine({ piano, progetti, etichetta }: { piano: Piano; prog
 }
 
 /** Per trimestre: a sinistra i ricavi impilati per progetto, a destra i costi (diretti e di piattaforma). */
-export function RicaviCosti({ piano, progetti, etichetta }: { piano: Piano; progetti: VoceProgetto[]; etichetta: string }) {
+export function RicaviCosti({ piano, progetti, etichetta, oggi }: { piano: Piano; progetti: VoceProgetto[]; etichetta: string; oggi?: Date }) {
   const t = useT();
   const tr = piano.trimestri, n = tr.length;
   const y0 = 16, y1 = 204, H = 236;
   const max = Math.max(1, ...tr.map((q) => Math.max(q.ricavi, q.costiDiretti + q.piattaforma)));
   const { alta, tacche, py } = assi(0, max, y0, y1);
   const passo = (X1 - X0) / n, bw = Math.min(14, passo * 0.34);
+  const mo = oggi ? mesiDaInizio(piano, oggi) : null;
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: 'block', height: 'auto', maxHeight: 320 }} role="img" aria-label={etichetta}>
       <g fontFamily="Metropolis, Arial">
@@ -114,6 +136,12 @@ export function RicaviCosti({ piano, progetti, etichetta }: { piano: Piano; prog
             </g>
           );
         })}
+        {mo !== null && (
+          <>
+            <line x1={X0 + passo * (mo / 3)} y1={y0} x2={X0 + passo * (mo / 3)} y2={y1} stroke="var(--accent-azure)" strokeWidth={1.5} strokeDasharray="2 3" />
+            <text x={X0 + passo * (mo / 3) + (mo > n * 2.4 ? -5 : 5)} y={y0 + 9} textAnchor={mo > n * 2.4 ? 'end' : 'start'} fontSize="10" fontWeight={700} fill="var(--accent-azure-text)">{t('bp.oggi')}</text>
+          </>
+        )}
         <text x={X0 - 7} y={y0 - 5} textAnchor="end" fontSize="9" fill="var(--ink-muted)">{alta > 0 ? '€' : ''}</text>
       </g>
     </svg>

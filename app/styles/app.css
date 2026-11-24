@@ -273,17 +273,16 @@ tr.is-nativo .alt-switch { cursor: not-allowed; }
   font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box; }
 .gnt__b.in-corso { background: color-mix(in srgb, var(--c) 18%, var(--surface-card)); color: var(--ink-primary); border: 1.5px dashed var(--c); }
 .gnt__b.servizio { background: var(--surface-sunken); color: var(--ink-secondary); border: 1px solid var(--line-soft); }
-.gnt__f { height: 26px; }
+.gnt__f { height: var(--foot, 26px); }
 .gnt__ov { position: absolute; left: calc(var(--lab) + 10px); right: 0; top: 24px; bottom: 0; pointer-events: none; }
-.gnt__ov i { position: absolute; top: 0; bottom: 26px; border-left: 1px solid var(--line-soft); opacity: .6; }
+.gnt__ov i { position: absolute; top: 0; bottom: var(--foot, 26px); border-left: 1px solid var(--line-soft); opacity: .6; }
 .gnt__ov i.anno { border-left: 1px solid var(--line-strong); opacity: .5; }
-.gnt__ov u { position: absolute; top: 0; bottom: 0; border-left: 2px solid; text-decoration: none; }
-.gnt__ov u.pari { border-color: var(--signal-positive); }
-.gnt__ov u.oggi { border-color: var(--accent-azure); border-left-style: dashed; }
-.gnt__ov u span { position: absolute; bottom: 4px; left: 6px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
-.gnt__ov u span.sx { left: auto; right: 6px; }
-.gnt__ov u.pari span { color: var(--signal-positive); }
-.gnt__ov u.oggi span { color: var(--accent-azure-text); bottom: 20px; }
+.gnt__ov u { position: absolute; top: 0; bottom: 0; text-decoration: none; border-left: 1.5px dotted var(--c); }
+.gnt__ov u.costo { border-left-style: dashed; }
+.gnt__ov u.oggi { border-left: 2px dashed var(--c); }
+.gnt__ov u.pareggio { border-left: 2px solid var(--c); }
+.gnt__ov u span { position: absolute; left: 3px; font-size: 10.5px; font-weight: 700; white-space: nowrap; color: var(--c); background: var(--surface-card); padding: 0 3px; border-radius: 2px; }
+.gnt__ov u span.sx { left: auto; right: 3px; }
 .bpsel { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .bpsel label { display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px 5px 9px; border: 1px solid var(--line-soft); border-radius: var(--radius-pill);
   font-size: 12.5px; font-weight: 600; color: var(--ink-primary); cursor: pointer; background: var(--surface-card); }

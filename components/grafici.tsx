@@ -162,7 +162,7 @@ export function passoTacche(intervallo: number, tacche = 5) {
   return ([1, 2, 2.5, 5, 10].find((m) => m * p >= grezzo) ?? 10) * p;
 }
 
-export function CurvaRecupero({ punti, pareggio, etichetta }: { punti: PuntoTrimestre[]; pareggio: string | null; etichetta: string }) {
+export function CurvaRecupero({ punti, pareggio, etichetta, oggi }: { punti: PuntoTrimestre[]; pareggio: string | null; etichetta: string; oggi?: number | null }) {
   const t = useT();
   const xs0 = 70, xs1 = 624, y0 = 24, y1 = 196;
   const vals = punti.map((p) => p.cumulato);
@@ -203,6 +203,12 @@ export function CurvaRecupero({ punti, pareggio, etichetta }: { punti: PuntoTrim
           <>
             <line x1={px(ip)} y1={y0} x2={px(ip)} y2={y1} stroke="var(--signal-positive)" strokeWidth={1.5} strokeDasharray="4 3" />
             <text x={px(ip) + 6} y={38} fontSize="10.5" fontWeight={700} fill="var(--signal-positive)">{t('bp.pareggioIl', { q: pareggio! })}</text>
+          </>
+        )}
+        {oggi != null && (
+          <>
+            <line x1={px(oggi)} y1={y0} x2={px(oggi)} y2={y1} stroke="var(--accent-azure)" strokeWidth={1.5} strokeDasharray="2 3" />
+            <text x={px(oggi) + (oggi > punti.length * 0.8 ? -5 : 5)} y={y1 - 5} textAnchor={oggi > punti.length * 0.8 ? 'end' : 'start'} fontSize="10" fontWeight={700} fill="var(--accent-azure-text)">{t('bp.oggi')}</text>
           </>
         )}
         {punti.map((p, i) => (

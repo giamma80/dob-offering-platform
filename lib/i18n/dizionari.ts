@@ -2,6 +2,14 @@
    ogni chiave aggiunta qui deve avere la sua traduzione in `en`, altrimenti il typecheck fallisce. */
 
 export const it = {
+  "bp.legSopra": "Sopra lo zero: in guadagno",
+  "bp.legSotto": "Sotto lo zero: da recuperare",
+  "bp.legRicavi": "Ricavi (barra a sinistra)",
+  "bp.legCosti": "Costi (barra a destra)",
+  "bp.legAvvioProgetto": "Avvio progetto",
+  "bp.legAvvioCosto": "Avvio costo",
+  "bp.sviluppoBreve": "Sviluppo",
+  "bp.legMargine": "Margine cumulato",
   "bp.sintesi": "Sintesi",
   "bp.margini": "Margine per progetto",
   "bp.ricaviCosti": "Ricavi e costi",
@@ -525,6 +533,14 @@ export const it = {
 export type Chiave = keyof typeof it;
 
 export const en: Record<Chiave, string> = {
+  "bp.legSopra": "Above zero: in profit",
+  "bp.legSotto": "Below zero: still to recover",
+  "bp.legRicavi": "Revenue (left bar)",
+  "bp.legCosti": "Costs (right bar)",
+  "bp.legAvvioProgetto": "Project start",
+  "bp.legAvvioCosto": "Cost start",
+  "bp.sviluppoBreve": "Development",
+  "bp.legMargine": "Cumulative margin",
   "bp.sintesi": "Summary",
   "bp.margini": "Margin by project",
   "bp.ricaviCosti": "Revenue and costs",
