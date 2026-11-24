@@ -40,7 +40,7 @@ export function VistaBusinessPlan({ investimento, progetti, piattaforma }: {
   const anni = [0, 1, 2, 3].map((i) => da.getUTCFullYear() + i);
   const span = fineOrizzonte.getTime() - da.getTime();
   const nomeMese = (d: Date) => `${(t('comune.lingua') === 'Language' ? MONTHS : MESI)[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
-  const contributi = tutti.map((p) => {
+  const contributi = tutti.filter((p) => conInCorso || !p.inCorso).map((p) => {
     const mesi = Math.max(0, Math.min(p.durataMesi, (fineOrizzonte.getUTCFullYear() * 12 + fineOrizzonte.getUTCMonth()) - (p.inizio.getUTCFullYear() * 12 + p.inizio.getUTCMonth())));
     return { ...p, mesi, contributo: contributoAl(p, new Date(fineOrizzonte.getTime() - 1)) };
   });
@@ -130,7 +130,7 @@ export function VistaBusinessPlan({ investimento, progetti, piattaforma }: {
                     { v: -pf.mese * 12, html: euro(-pf.mese * 12) }, { v: mesiPf }, { v: -costoPf, html: euro(-costoPf) }] }
               ]}
               totale={[{ v: t('bp.cumulatoA', { a: fineOrizzonte.getUTCFullYear() - 1 }) }, { v: '' }, { v: '' },
-                { v: 0, html: euro(contributi.filter((p) => conInCorso || !p.inCorso).reduce((a, p) => a + p.contributo, 0) - costoPf) }]}
+                { v: 0, html: euro(contributi.reduce((a, p) => a + p.contributo, 0) - costoPf) }]}
             />
           </div>
         </div>

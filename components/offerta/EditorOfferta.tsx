@@ -3,7 +3,8 @@
 import { scorriA } from '@/lib/ui/scorri';
 
 import Link from 'next/link';
-import { Fragment, useEffect, useMemo, useRef, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import {
   TIPI_SISTEMA, architettura, areaTipo, areaVoce, calcola, coperturaSistema, fattoreImpianto, moduliAttivi, moduloBloccante, sistemi, vociCustomizzazione,
   type AreaArchitettura, type Complessita, type Config, type TipoSistema, type Fase, type FiguraId, type Offerta, type RigaGg, type Sistema
@@ -12,6 +13,7 @@ import { salvaOfferta } from '@/lib/azioni';
 import { useT } from '@/lib/i18n/client';
 import type { Chiave } from '@/lib/i18n/dizionari';
 import { euro, numero, perc } from '@/lib/ui/formato';
+import { attendiSalvataggio, registraSalvataggio } from '@/lib/ui/salvataggio';
 import { CampoNumero } from '@/components/CampoNumero';
 import { TabellaOrdinabile } from '@/components/TabellaOrdinabile';
 import { Toast, useToast } from '@/components/Toast';
@@ -164,24 +166,42 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
   versione: { numero: number; ultima: number; congelata: boolean };
 }) {
   const t = useT();
+  const router = useRouter();
   const [o, setO] = useState<Offerta>(iniziale);
   const [attiva, setAttiva] = useState(SEZIONI[fase][0].id);
-  const [, start] = useTransition();
   const { toast, mostra } = useToast();
   const r = useMemo(() => calcola(cfg, o), [cfg, o]);
   const primo = useRef(true);
   const centro = useRef<HTMLElement>(null);
 
-  /* salvataggio automatico, 800 ms dopo l'ultima modifica */
+  /* salvataggio automatico, 800 ms dopo l'ultima modifica; chi cambia pagina o chiude aspetta che sia scritto */
+  const daSalvare = useRef<Offerta | null>(null);
+  const inCorso = useRef<Promise<void>>(Promise.resolve());
+  const scrivi = useRef<() => Promise<void>>(async () => {});
+  scrivi.current = async () => {
+    const x = daSalvare.current;
+    if (x) {
+      daSalvare.current = null;
+      inCorso.current = inCorso.current.then(async () => {
+        const e = await salvaOfferta(id, x);
+        if (e.errore) mostra({ tipo: 'errore', testo: e.errore });
+      });
+    }
+    await inCorso.current;
+  };
   useEffect(() => {
     if (primo.current) { primo.current = false; return; }
     if (solaLettura) return;
-    const h = setTimeout(() => start(async () => {
-      const x = await salvaOfferta(id, o);
-      if (x.errore) mostra({ tipo: 'errore', testo: x.errore });
-    }), 800);
+    daSalvare.current = o;
+    const h = setTimeout(() => { void scrivi.current(); }, 800);
     return () => clearTimeout(h);
-  }, [o, id, solaLettura, mostra]);
+  }, [o, solaLettura]);
+  useEffect(() => {
+    registraSalvataggio(() => scrivi.current());
+    const alVia = () => { void scrivi.current(); };
+    window.addEventListener('pagehide', alVia);
+    return () => { window.removeEventListener('pagehide', alVia); void scrivi.current(); registraSalvataggio(null); };
+  }, []);
 
   /* avviso sotto soglia: non blocca */
   const sotto = r.saas.attivo && r.saas.sottoSoglia;
@@ -267,7 +287,8 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
     <>
       <nav className="alt-tabs" style={{ background: 'var(--surface-card)', padding: '0 24px', borderBottom: '1px solid var(--line-soft)', flex: '0 0 auto' }}>
         <Link className="alt-tab" href={`/offerta/${id}/assessment`} aria-current="page">{t('tab.dettaglio')}</Link>
-        <Link className="alt-tab" href={`/offerta/${id}/specchietto`}>{t('tab.specchietto')}</Link>
+        <Link className="alt-tab" href={`/offerta/${id}/specchietto`}
+          onClick={(e) => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return; e.preventDefault(); void attendiSalvataggio().then(() => router.push(`/offerta/${id}/specchietto`)); }}>{t('tab.specchietto')}</Link>
       </nav>
       <Timeline id={id} corrente={fase} />
       <div className="shell">

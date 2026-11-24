@@ -1,5 +1,6 @@
 'use client';
 
+import { leggiNumero } from '@/lib/ui/numero';
 import { useEffect, useState } from 'react';
 import type { ModalitaAi, Offerta, Risultato } from '@/lib/engine';
 import { useT } from '@/lib/i18n/client';
@@ -12,7 +13,7 @@ function Leva({ etichetta, valore, max, onChange, disabilitata }: {
   const [testo, setTesto] = useState(valore.toLocaleString('it-IT'));
   useEffect(() => setTesto(valore.toLocaleString('it-IT')), [valore]);
   const conferma = () => {
-    const v = Number(testo.replace(/\./g, '').replace(',', '.'));
+    const v = leggiNumero(testo);
     if (Number.isFinite(v) && v >= 0) onChange(v); else setTesto(valore.toLocaleString('it-IT'));
   };
   return (

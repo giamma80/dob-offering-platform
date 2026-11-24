@@ -1,5 +1,6 @@
 'use client';
 
+import { leggiNumero } from '@/lib/ui/numero';
 import { useEffect, useId, useState } from 'react';
 import { useT } from '@/lib/i18n/client';
 
@@ -23,7 +24,7 @@ export function CampoNumero({ etichetta, valore, onChange, suffisso, min, max, p
   useEffect(() => { setTesto(fmt(valore)); }, [valore]);
 
   const conferma = (s: string) => {
-    const v = Number(s.replace(/\./g, '').replace(',', '.'));
+    const v = leggiNumero(s);
     if (s.trim() === '' || !Number.isFinite(v)) return setErrore(t('val.numero'));
     if (min !== undefined && v < min) return setErrore(t('val.min', { v: fmt(min) }));
     if (max !== undefined && v > max) return setErrore(t('val.max', { v: fmt(max) }));
