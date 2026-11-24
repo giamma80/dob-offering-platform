@@ -136,7 +136,7 @@ export function VistaBusinessPlanNew({ investimento, progetti, piattaforma }: Da
   const coperturaCol = r.copertura < 1 ? 'var(--signal-negative)' : 'var(--signal-positive)';
 
   return (
-    <div className="shell">
+    <div className="shell bpn-shell">
       <aside className="subnav" aria-label={t('mon.bpNew')}>
         <p className="subnav__title">{t('mon.bpNew')}</p>
         {SEZ.map((s) => (
@@ -157,6 +157,15 @@ export function VistaBusinessPlanNew({ investimento, progetti, piattaforma }: Da
             <b role="radio" tabIndex={0} aria-checked={!tuttiScelti && soloApprovati} className={!tuttiScelti && soloApprovati ? 'on' : undefined}
               onClick={() => setSel(tutti.filter((p) => !p.inCorso).map((p) => p.id))} onKeyDown={(e) => e.key === 'Enter' && setSel(tutti.filter((p) => !p.inCorso).map((p) => p.id))}>{t('bp.soloApprovati')}</b>
           </span>
+        </div>
+
+        <div className="bpsel bpn-sel" role="group" aria-label={t('bp.perimetro')}>
+          {tutti.map((p) => (
+            <label key={p.id} className={p.inCorso ? 'bozza' : undefined} style={{ ['--c' as string]: colori.get(p.id) }}>
+              <input type="checkbox" checked={sel.includes(p.id)} onChange={() => alterna(p.id)} />
+              {p.cliente}{p.inCorso && <small>{t('bp.inCorsoBreve')}</small>}
+            </label>
+          ))}
         </div>
 
         <section className="bpn-hero" id="bpn-sintesi" aria-label={t('bp.sintesi')}>
@@ -237,18 +246,6 @@ export function VistaBusinessPlanNew({ investimento, progetti, piattaforma }: Da
             <div className="bpn-gauge"><i style={{ width: `${quotaMaggiore * 100}%`, background: 'var(--accent-azure)' }} /></div></div>
         </section>
       </main>
-      <aside className="rail" aria-label={t('bp.perimetro')}>
-        <div className="rail__card"><p className="rail__h" title={t('bp.perimetroTip')}>{t('bp.perimetro')}</p>
-          <div className="bpsel" role="group" aria-label={t('bp.perimetro')}>
-            {tutti.map((p) => (
-              <label key={p.id} className={p.inCorso ? 'bozza' : undefined} style={{ ['--c' as string]: colori.get(p.id) }}>
-                <input type="checkbox" checked={sel.includes(p.id)} onChange={() => alterna(p.id)} />
-                {p.cliente}{p.inCorso && <small>{t('bp.inCorsoBreve')}</small>}
-              </label>
-            ))}
-          </div>
-        </div>
-      </aside>
     </div>
   );
 }
