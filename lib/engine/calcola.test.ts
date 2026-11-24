@@ -469,7 +469,7 @@ describe('business plan: piano trimestrale', () => {
   });
 });
 
-import { riepilogoPiano, titoloPiano } from './index';
+import { riepilogoPiano, testoCurva, testoQuota } from './index';
 
 describe('business plan: riepilogo e titolo', () => {
   const prog = (id: string, inizio: string, over: Partial<Progetto> = {}): Progetto => ({
@@ -487,12 +487,24 @@ describe('business plan: riepilogo e titolo', () => {
     expect(r.netto).toBeCloseTo(curvaRecupero(80000, ps, da, 12, pf)[11].cumulato, 6);
     expect(r.esposizione.valore).toBeLessThanOrEqual(0);
   });
-  it('il titolo segue i dati: approvati, solo con le bozze, mai', () => {
+  it('copertura e regime sono del trimestre finale', () => {
+    const pi = pianoTrimestrale(80000, [prog('a', '2027-01-01')], da, 12, costiPiattaforma(cfg));
+    const r = riepilogoPiano(pi), u = pi.trimestri[11];
+    expect(r.copertura).toBeCloseTo(u.margine / u.piattaforma, 8);
+    expect(r.nettoTrimestre).toBeCloseTo(u.margine - u.piattaforma, 8);
+  });
+  it('la frase sul pareggio segue i dati', () => {
     const a = prog('a', '2027-01-01'), b = prog('b', '2027-01-01', { inCorso: true });
     const con = pianoTrimestrale(150000, [a, b], da, 12), solo = pianoTrimestrale(150000, [a], da, 12);
-    expect(titoloPiano(con, solo).chiave).toBe(solo.pareggio ? 'bp.tit.approvati' : 'bp.tit.bozze');
+    expect(testoCurva(con, solo).chiave).toBe(con.pareggio === solo.pareggio ? 'bpn.tc.approvati' : solo.pareggio ? 'bpn.tc.anticipano' : 'bpn.tc.senzaBozze');
     const grande = pianoTrimestrale(5_000_000, [a], da, 12);
-    expect(titoloPiano(grande, grande).chiave).toBe('bp.tit.mai');
+    expect(testoCurva(grande, grande).chiave).toBe('bpn.tc.mai');
+  });
+  it('la frase sulla quota di bozze: tutto, poco, parte, metà', () => {
+    expect(testoQuota(0).chiave).toBe('bpn.tq.tutto');
+    expect(testoQuota(0.1).chiave).toBe('bpn.tq.poco');
+    expect(testoQuota(0.4).chiave).toBe('bpn.tq.parte');
+    expect(testoQuota(0.5).chiave).toBe('bpn.tq.meta');
   });
   it('un progetto storico con quota a zero non riaggiunge costi comuni', () => {
     const p = prog('s', '2027-01-01', { margineAnnuo: 120000, marginePrimoAnno: 211690.315, quotaPiattaformaAnnua: 0, quotaPiattaformaUnaTantum: 0 });

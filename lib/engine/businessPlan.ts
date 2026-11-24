@@ -180,36 +180,45 @@ export function pianoTrimestrale(investimento: number, progetti: Progetto[], da:
   return { trimestri: righe, pareggio: indicePareggio >= 0 ? righe[indicePareggio].etichetta : null, indicePareggio };
 }
 
-/* ---------------------------------------------------------------- riepilogo e titolo del piano
+/* ---------------------------------------------------------------- riepilogo e testi del piano
    Numeri di testata, calcolati solo dal piano: "Business plan" e "Business plan new" leggono gli stessi. */
 export interface RiepilogoPiano {
   ricavi: number; costiDiretti: number; margine: number; piattaforma: number; investimento: number; costiTotali: number; netto: number;
   /** punto più basso del netto cumulato */
   esposizione: { valore: number; etichetta: string };
-  /** margine di progetto ÷ (investimento + piattaforma): sopra 1 i costi comuni sono coperti */
+  /** margine del trimestre finale ÷ costi di piattaforma del trimestre: sopra 1 la piattaforma si ripaga da sola */
   copertura: number;
-  /** margine a regime del trimestre finale */
-  margineTrimestre: number;
+  /** margine, costi di piattaforma e netto (margine − piattaforma) del trimestre finale: il regime */
+  margineTrimestre: number; piattaformaTrimestre: number; nettoTrimestre: number;
 }
 
 export function riepilogoPiano(piano: Piano): RiepilogoPiano {
   const ultimo = piano.trimestri[piano.trimestri.length - 1];
   const ricavi = ultimo.progetti.reduce((a, x) => a + x.ricaviCum, 0);
   const costiDiretti = ultimo.progetti.reduce((a, x) => a + x.costiDirettiCum, 0);
-  const comuni = ultimo.investimento + ultimo.piattaformaCum;
   const minimo = piano.trimestri.reduce((m, t) => (t.netto < m.netto ? t : m), piano.trimestri[0]);
   return {
     ricavi, costiDiretti, margine: ultimo.margineCum, piattaforma: ultimo.piattaformaCum, investimento: ultimo.investimento,
-    costiTotali: costiDiretti + comuni, netto: ultimo.netto,
+    costiTotali: costiDiretti + ultimo.investimento + ultimo.piattaformaCum, netto: ultimo.netto,
     esposizione: { valore: Math.min(0, minimo.netto), etichetta: minimo.etichetta },
-    copertura: comuni ? ultimo.margineCum / comuni : 0,
-    margineTrimestre: ultimo.margine
+    copertura: ultimo.piattaforma ? ultimo.margine / ultimo.piattaforma : 0,
+    margineTrimestre: ultimo.margine, piattaformaTrimestre: ultimo.piattaforma, nettoTrimestre: ultimo.margine - ultimo.piattaforma
   };
 }
 
-/** Titolo del piano, scelto da regole sui dati: mai una frase fissa. `chiave` è una voce del dizionario. */
-export function titoloPiano(selezione: Piano, approvati: Piano): { chiave: 'bp.tit.approvati' | 'bp.tit.bozze' | 'bp.tit.mai'; q?: string } {
-  if (approvati.pareggio) return { chiave: 'bp.tit.approvati', q: approvati.pareggio };
-  if (selezione.pareggio) return { chiave: 'bp.tit.bozze', q: selezione.pareggio };
-  return { chiave: 'bp.tit.mai' };
+/** Frase sul pareggio (tooltip del grafico del netto): scelta da regole sui dati, mai fissa. `chiave` è una voce del dizionario. */
+export function testoCurva(tutti: Piano, approvati: Piano):
+  { chiave: 'bpn.tc.mai' | 'bpn.tc.senzaBozze' | 'bpn.tc.anticipano' | 'bpn.tc.approvati'; q?: string } {
+  if (!tutti.pareggio && !approvati.pareggio) return { chiave: 'bpn.tc.mai' };
+  if (!approvati.pareggio) return { chiave: 'bpn.tc.senzaBozze' };
+  if (tutti.pareggio !== approvati.pareggio) return { chiave: 'bpn.tc.anticipano' };
+  return { chiave: 'bpn.tc.approvati', q: approvati.pareggio };
+}
+
+/** Frase sulla quota di margine che dipende da offerte non approvate (tooltip della tabella dei progetti). `quota` è 0–1. */
+export function testoQuota(quota: number): { chiave: 'bpn.tq.tutto' | 'bpn.tq.poco' | 'bpn.tq.parte' | 'bpn.tq.meta'; quota: number } {
+  if (quota <= 0) return { chiave: 'bpn.tq.tutto', quota };
+  if (quota < 0.25) return { chiave: 'bpn.tq.poco', quota };
+  if (quota >= 0.5) return { chiave: 'bpn.tq.meta', quota };
+  return { chiave: 'bpn.tq.parte', quota };
 }

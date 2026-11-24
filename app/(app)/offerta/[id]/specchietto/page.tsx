@@ -9,6 +9,7 @@ import { euro } from '@/lib/ui/formato';
 import type { Chiave } from '@/lib/i18n/dizionari';
 import { MenuUtente } from '@/components/utente/MenuUtente';
 import { MappaArchitettura } from '@/components/offerta/MappaArchitettura';
+import { EsportaPdf } from '@/components/offerta/EsportaPdf';
 
 /* Specchietto cliente: generato dal dettaglio con la sola funzione specchietto(), che non
    espone giornate, costi, margini né fornitori terzi. Si vede in ogni stato: in bozza usa l'ultima versione dei parametri, dall'approvazione quella congelata. */
@@ -48,7 +49,7 @@ export default async function Specchietto({ params, searchParams }: {
           <MenuUtente />
         </aside>
         <main className="content">
-          <div className="alt-card"><div className="alt-card__body" style={{ padding: '28px 30px' }}>
+          <div className="alt-card sp-stampa"><div className="alt-card__body" style={{ padding: '28px 30px' }}>
               <p style={{ margin: '0 0 22px', fontSize: 12, fontWeight: 700, letterSpacing: '.09em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>
                 {s.cliente} · Digital Onboarding
               </p>
@@ -125,6 +126,7 @@ export default async function Specchietto({ params, searchParams }: {
         <aside className="rail" aria-label={t('sp.esportazione')}>
           <div className="rail__card rail__card--brand"><p className="rail__h">{t('sp.esportazione')}</p>
             <div className="rail__stat"><span>{t('off.stato')}</span><b>{t(`stato.${o.stato}` as Chiave)}</b></div>
+            <EsportaPdf nomeFile={`${s.cliente} - Digital Onboarding`} />
           </div>
           <div className="rail__card"><p className="rail__h">{t('sp.righeVincoli')}</p>
             {cfg.vincoli.filter((v) => v.specchietto).map((v) => (
