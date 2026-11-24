@@ -20,8 +20,7 @@ const SEZIONI: { id: string; k: Chiave; ico: string }[] = [
   { id: 'ps-cond', k: 'par.condivisi', ico: 'costi' },
   { id: 'ps-mod', k: 'par.moduli', ico: 'catalogo' },
   { id: 'ps-cat', k: 'par.catalogo', ico: 'catalogo' },
-  { id: 'ps-ai', k: 'par.aiTitolo', ico: 'ai' },
-  { id: 'ps-bp', k: 'par.piattaformaTit', ico: 'bp' }
+  { id: 'ps-ai', k: 'par.aiTitolo', ico: 'ai' }
 ];
 
 function Card({ id, titolo, ico, children }: { id: string; titolo: string; ico: string; children: React.ReactNode }) {
@@ -59,7 +58,7 @@ export function EditorParametri({ versione, iniziale }: { versione: number; iniz
   const badge: Record<string, string> = {
     'ps-fig': String(c.figure.length), 'ps-marg': perc(c.margineVenduto), 'ps-cond': '',
     'ps-mod': String((c.moduli ?? []).length),
-    'ps-cat': String(c.catalogo.connettori.length + c.catalogo.integrazioni.length + c.catalogo.cicd.length), 'ps-ai': '', 'ps-bp': ''
+    'ps-cat': String(c.catalogo.connettori.length + c.catalogo.integrazioni.length + c.catalogo.cicd.length), 'ps-ai': ''
   };
   const moduliDi = (k: 'connettori' | 'integrazioni', id: string) =>
     (c.moduli ?? []).filter((m) => (m[k] ?? []).includes(id)).map((m) => m.nome).join(', ');
@@ -227,16 +226,6 @@ export function EditorParametri({ versione, iniziale }: { versione: number; iniz
               onChange={(v) => upd((x) => { x.ai.perDocumento = v; })} />
             <CampoNumero etichetta={t('par.docPratica')} valore={c.ai.documentiPerPratica} min={0}
               onChange={(v) => upd((x) => { x.ai.documentiPerPratica = v; })} />
-          </div>
-        </Card>
-        <Card {...cp('ps-bp')}>
-          <div className="griglia-campi">
-            <label className="campo"><span>{t('par.attivaDal')}</span>
-              <span className="alt-inputwrap" style={{ maxWidth: 200 }}>
-                <input className="alt-input" type="month" value={c.piattaforma?.attivaDal ?? '2026-07'}
-                  onChange={(e) => e.target.value && upd((x) => { x.piattaforma = { attivaDal: e.target.value }; })} />
-              </span>
-            </label>
           </div>
         </Card>
       </main>

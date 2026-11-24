@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { supabaseServer } from '@/lib/supabase/server';
 import { configAttiva, configOfferta, offerta } from '@/lib/dati';
-import { nuovaOfferta, sintesi, type Config, type Offerta } from '@/lib/engine';
+import { nuovaOfferta, sintesi, sviluppoTotale, type Config, type Offerta } from '@/lib/engine';
 
 export async function creaOfferta(form: FormData) {
   const cliente = String(form.get('cliente') || '').trim();
@@ -112,8 +112,16 @@ export async function salvaConfig(dati: Config, nota: string, base: number) {
   if (!(dati.costiCondivisi.clientiAttivi >= 0)) return { errore: 'Clienti attivi non valido' };
   const pesi = (dati.moduli ?? []).reduce((a, m) => a + m.peso, 0);
   if (dati.moduli?.length && Math.abs(pesi - 100) > 0.001) return { errore: 'I pesi dei moduli devono sommare a 100%' };
+  const mese = /^\d{4}-(0[1-9]|1[0-2])$/;
+  const cs = dati.costiSistema;
+  if (cs && ![cs.reevoDal, cs.n8nDal, ...cs.sviluppo.map((v) => v.mese)].every((m) => mese.test(m))) return { errore: 'Indica un mese valido' };
+  if (cs?.sviluppo.some((v) => !(v.importo >= 0))) return { errore: 'Ogni voce di sviluppo deve avere un importo non negativo' };
+  if (dati.capacita && !(dati.capacita.pratichePerAnno > 0 && dati.capacita.praticheImpegnate >= 0)) return { errore: 'Capacità o pratiche impegnate non valide' };
+  if (dati.consumo && !(dati.consumo.margineMinimo >= 0 && dati.consumo.margineMinimo < 1 && dati.consumo.costoExtraPratica >= 0)) return { errore: 'Margine minimo o costo extra non validi' };
   const attiva = await configAttiva();
   if (attiva.versione !== base) return { superata: attiva.versione };
+  /* il totale dello sviluppo resta anche in `investimento.sviluppo`, per chi legge la versione senza il registro */
+  if (cs) dati = { ...dati, investimento: { ...dati.investimento, sviluppo: sviluppoTotale(dati) } };
   const sb = await supabaseServer();
   const { data, error } = await sb.from('configurazione').insert({ dati, nota: nota || null }).select('versione').single();
   if (error) return { errore: error.message };

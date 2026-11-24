@@ -41,7 +41,9 @@ export interface VincoloDef {
   default: boolean;
 }
 
-export interface Scaglione { da: number; a: number | null; prezzo: number }
+/** Scaglione di consumo. Nel modello "costo" il prezzo si ricava dal costo per pratica e lo scaglione dà solo
+   lo `sconto` sul prezzo base (0.10 = 10%); nel modello "listino" `prezzo` è il prezzo per pratica scritto a mano. */
+export interface Scaglione { da: number; a: number | null; prezzo: number; sconto?: number }
 
 /** Modulo standard della piattaforma DOB. In configurazione light l'impianto si paga per la quota
    dei moduli scelti; un modulo spento blocca connettori e integrazioni collegati. */
@@ -102,12 +104,30 @@ export interface Config {
     softwareOnPremise: number;
     aiOnPremise: ModalitaAi;
     manutenzioneOnPremise: { attiva: boolean; gg: number; figura: FiguraId };
+    /** modello "costo": il canone SaaS è quello calcolato dal costo, finché non lo si imposta a mano */
+    canoneManuale?: boolean;
   };
   scaglioni: Scaglione[];
   investimento: { sviluppo: number; amPrimoAnno: number };
-  /** business plan: mese di attivazione della piattaforma (AAAA-MM), da cui escono i costi condivisi */
+  /** business plan: mese di attivazione della piattaforma (AAAA-MM), da cui escono AMS e supporto;
+     ReeVo e n8n hanno il proprio mese in `costiSistema` e, se manca, ripiegano su questo */
   piattaforma?: { attivaDal: string };
+  /** costi di sistema: registro dello sviluppo (cresce nel tempo) e mese di partenza di ReeVo e n8n.
+     Se manca, vale `investimento.sviluppo` come unica voce e tutto parte da `piattaforma.attivaDal`. */
+  /** prezzo del consumo SaaS: "costo" = costo per pratica ÷ (1 − margine), scaglioni come sconto;
+     "listino" = prezzi per pratica scritti a mano (versioni storiche, se manca) */
+  consumo?: { modello: 'costo' | 'listino'; costoExtraPratica: number; margineMinimo: number };
+  /** capacità dell'infrastruttura: pratiche l'anno sommando tutti i clienti attivi, e quelle già impegnate */
+  capacita?: { pratichePerAnno: number; praticheImpegnate: number };
+  costiSistema?: {
+    sviluppo: VoceSviluppo[];
+    reevoDal: string;   // AAAA-MM
+    n8nDal: string;     // AAAA-MM
+  };
 }
+
+/** Una voce del registro dello sviluppo: quanto si è speso, riferito a un mese. */
+export interface VoceSviluppo { id: string; mese: string; importo: number; nota: string }
 
 export type ModalitaAi = 'incluso' | 'proxy' | 'cliente';
 export type Approccio = 'saas' | 'on_premise' | 'entrambi';

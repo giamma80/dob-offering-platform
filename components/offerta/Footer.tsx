@@ -47,7 +47,7 @@ export function Footer({ o, r, solaLettura, onCanone, onSoftware, onAi }: {
       <span className="foot__n">{t('leva.aiOnp')}</span>
       <span className="foot__n r">{t('leva.primoSaas')}</span>
       <span className="foot__n r">{t('leva.primoOnp')}</span>
-      <Leva etichetta={t('leva.canoneSaas')} valore={o.leve.canoneSaas} max={300000} onChange={onCanone} disabilitata={solaLettura || !saas} />
+      <Leva etichetta={t('leva.canoneSaas')} valore={r.saas.licenza.software} max={300000} onChange={onCanone} disabilitata={solaLettura || !saas} />
       <Leva etichetta={t('leva.softwareOnp')} valore={o.leve.softwareOnPremise} max={200000} onChange={onSoftware} disabilitata={solaLettura || !onp} />
       <div className="foot__c">
         <span className="foot__seg" role="radiogroup" aria-label={t('leva.aiOnp')}>

@@ -524,29 +524,54 @@
     {
       "da": 1,
       "a": 5000,
-      "prezzo": 6
+      "prezzo": 6,
+      "sconto": 0
     },
     {
       "da": 5001,
       "a": 15000,
-      "prezzo": 4.5
+      "prezzo": 4.5,
+      "sconto": 0.05
     },
     {
       "da": 15001,
       "a": 30000,
-      "prezzo": 3.5
+      "prezzo": 3.5,
+      "sconto": 0.1
     },
     {
       "da": 30001,
       "a": null,
-      "prezzo": 2.5
+      "prezzo": 2.5,
+      "sconto": 0.15
     }
   ],
+  "consumo": {
+    "modello": "costo",
+    "costoExtraPratica": 0,
+    "margineMinimo": 0.15
+  },
+  "capacita": {
+    "pratichePerAnno": 300000,
+    "praticheImpegnate": 0
+  },
   "investimento": {
     "sviluppo": 174209,
     "amPrimoAnno": 20000
   },
   "piattaforma": {
     "attivaDal": "2026-07"
+  },
+  "costiSistema": {
+    "sviluppo": [
+      {
+        "id": "sv-0",
+        "mese": "2026-06",
+        "importo": 174209,
+        "nota": ""
+      }
+    ],
+    "reevoDal": "2026-07",
+    "n8nDal": "2026-07"
   }
 }

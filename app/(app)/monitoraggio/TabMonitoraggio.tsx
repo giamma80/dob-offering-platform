@@ -7,6 +7,7 @@ import { useT } from '@/lib/i18n/client';
 const TAB = [
   { href: '/monitoraggio/offerte', nome: 'mon.offerte' },
   { href: '/monitoraggio/business-plan', nome: 'mon.bp' },
+  { href: '/monitoraggio/costi-sistema', nome: 'mon.costiSistema' },
   { href: '/monitoraggio/parametri', nome: 'mon.parametri' }
 ] as const;
 

@@ -3,7 +3,7 @@
 import { scorriA } from '@/lib/ui/scorri';
 
 import { useMemo, useState } from 'react';
-import { contributoAl, costoPiattaformaAl, curvaRecupero, pareggio, type Progetto } from '@/lib/engine';
+import { contributoAl, costoPiattaformaAl, curvaRecupero, pareggio, type Progetto, type VocePiattaforma } from '@/lib/engine';
 import { useT } from '@/lib/i18n/client';
 import { euro } from '@/lib/ui/formato';
 import { CurvaRecupero } from '@/components/grafici';
@@ -18,14 +18,17 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 
 export function VistaBusinessPlan({ investimento, progetti, piattaforma }: {
   investimento: { sviluppo: number; amPrimoAnno: number }; progetti: ProgettoBP[];
-  piattaforma: { dal: string; mese: number; unaTantum: number };
+  piattaforma: { dal: string; mese: number; unaTantum: number; voci?: (Omit<VocePiattaforma, 'dal'> & { dal: string })[] };
 }) {
   const t = useT();
   const [conInCorso, setConInCorso] = useState(true);
   const [sez, setSez] = useState('bp-curva');
   const tutti = useMemo(() => progetti.map((p) => ({ ...p, inizio: new Date(p.inizio) })), [progetti]);
   const inv = investimento.sviluppo + investimento.amPrimoAnno;
-  const pf = useMemo(() => ({ ...piattaforma, dal: new Date(piattaforma.dal) }), [piattaforma]);
+  const pf = useMemo(() => ({
+    ...piattaforma, dal: new Date(piattaforma.dal),
+    voci: piattaforma.voci?.map((v) => ({ ...v, dal: new Date(v.dal) }))
+  }), [piattaforma]);
   const da = useMemo(() => {
     const min = tutti.reduce((a, p) => (p.inizio < a ? p.inizio : a), pf.dal < new Date() ? pf.dal : new Date());
     return new Date(Date.UTC(min.getUTCFullYear(), 0, 1));

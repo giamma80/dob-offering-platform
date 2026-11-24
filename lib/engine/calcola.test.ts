@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { CONFIG_DEFAULT as cfg, nuovaOfferta, calcola, specchietto, tariffe } from './index';
 
 const o = () => nuovaOfferta(cfg, 'Cliente di prova');
+/* configurazione con il vecchio listino a scaglioni: le offerte storiche si calcolano così */
+const cfgL = structuredClone(cfg);
+cfgL.consumo = { modello: 'listino', costoExtraPratica: 0, margineMinimo: 0 };
+const oL = () => nuovaOfferta(cfgL, 'Cliente di prova');
 
 describe('tariffe', () => {
   it('margine 30% sul venduto: tariffa = costo ÷ 0,70', () => {
@@ -16,8 +20,8 @@ describe('tariffe', () => {
   });
 });
 
-describe('SaaS', () => {
-  const r = calcola(cfg, o());
+describe('SaaS (listino)', () => {
+  const r = calcola(cfgL, oL());
   it('costi condivisi divisi per N + 1 = 5', () => {
     expect(r.n).toBe(5);
     const reevo = r.saas.ricorrenti.find((v) => v.id === 'reevo')!;
@@ -96,8 +100,8 @@ describe('specchietto', () => {
 import { serieMensile, composizioneRicavo, composizioneMargine, sensibilitaClienti } from './index';
 
 describe('serie e composizioni', () => {
-  const x = o();
-  const r = calcola(cfg, x);
+  const x = oL();
+  const r = calcola(cfgL, x);
   it('serie a 36 mesi: parte dalla una tantum e chiude con canone annuo × 3 più le voci dai vincoli', () => {
     const s = serieMensile(r.saas, r.vincoliUnaTantum);
     expect(s).toHaveLength(37);
@@ -109,7 +113,7 @@ describe('serie e composizioni', () => {
     expect(composizioneMargine(r.onPremise, r.vincoliUnaTantum).reduce((a, f) => a + f.valore, 0)).toBeCloseTo(tot, 2);
   });
   it('più clienti sul multi-tenant, quota ricorrente più bassa', () => {
-    const s = sensibilitaClienti(cfg, x, [1, 5, 8]);
+    const s = sensibilitaClienti(cfgL, x, [1, 5, 8]);
     expect(s[0].quotaRicorrente).toBeGreaterThan(s[1].quotaRicorrente);
     expect(s[1].quotaRicorrente).toBeCloseTo(28251.11, 1);
     expect(s[2].margineAnnuo).toBeGreaterThan(s[1].margineAnnuo);
@@ -310,7 +314,7 @@ describe('grafico dell\'architettura', () => {
 });
 
 
-import { contributoAl, costiPiattaforma, costoPiattaformaAl, quotaPiattaforma, sintesi as sintesiOfferta } from './index';
+import { contributoAl, costiPiattaforma, costiSistema, costoPiattaformaAl, quotaPiattaforma, sintesi as sintesiOfferta, sviluppoTotale } from './index';
 
 describe('business plan: costi di piattaforma', () => {
   it('escono per intero dal mese di attivazione', () => {
@@ -323,6 +327,31 @@ describe('business plan: costi di piattaforma', () => {
     const c = costiPiattaforma(cfg);
     const p = curvaRecupero(0, [], new Date(Date.UTC(2026, 0, 1)), 4, c);
     expect(p[2].cumulato).toBeCloseTo(-(c.unaTantum + 3 * c.mese), 6);   // fine Q3: luglio–settembre
+  });
+  it('ReeVo e n8n partono ciascuno dal proprio mese', () => {
+    const c = structuredClone(cfg);
+    c.costiSistema = { sviluppo: [], reevoDal: '2026-07', n8nDal: '2026-10' };
+    const p = costiPiattaforma(c);
+    const reevo = p.voci!.find((v) => v.id === 'reevo')!, n8n = p.voci!.find((v) => v.id === 'n8n')!, ams = p.voci!.find((v) => v.id === 'ams')!;
+    expect(n8n.dal.toISOString().slice(0, 7)).toBe('2026-10');
+    /* a settembre n8n non è ancora partito */
+    expect(costoPiattaformaAl(p, new Date(Date.UTC(2026, 8, 1)))).toBeCloseTo(reevo.unaTantum + 3 * (reevo.mese + ams.mese), 6);
+    /* a ottobre scatta anche n8n */
+    expect(costoPiattaformaAl(p, new Date(Date.UTC(2026, 9, 1)))).toBeCloseTo(reevo.unaTantum + 4 * (reevo.mese + ams.mese) + n8n.mese, 6);
+    expect(p.dal.toISOString().slice(0, 7)).toBe('2026-07');
+  });
+  it('senza costi di sistema (versioni storiche) tutto parte da attivaDal e lo sviluppo è il numero di investimento', () => {
+    const c = structuredClone(cfg); delete c.costiSistema;
+    const s = costiSistema(c);
+    expect(s.reevoDal).toBe('2026-07'); expect(s.n8nDal).toBe('2026-07');
+    expect(sviluppoTotale(c)).toBe(c.investimento.sviluppo);
+  });
+  it('lo sviluppo è la somma del registro e cresce con le voci', () => {
+    const c = structuredClone(cfg);
+    c.costiSistema = { sviluppo: [{ id: 'a', mese: '2026-06', importo: 100000, nota: '' }, { id: 'b', mese: '2026-11', importo: 25000.5, nota: '' }], reevoDal: '2026-07', n8nDal: '2026-07' };
+    expect(sviluppoTotale(c)).toBeCloseTo(125000.5, 6);
+    c.costiSistema.sviluppo.push({ id: 'c', mese: '2026-12', importo: 4999.5, nota: '' });
+    expect(sviluppoTotale(c)).toBeCloseTo(130000, 6);
   });
   it('il contributo del progetto è al lordo della quota condivisa', () => {
     const x = o(); x.approccio = 'saas';
@@ -347,5 +376,51 @@ describe('tipi dei sistemi', () => {
     x.assessment.light = true; x.assessment.moduli = [];
     x.assessment.sistemi = [{ id: 's1', nome: 'Firma del gruppo', complessita: 'media', tipo: 'firma' }];
     expect(architettura(cfg, x).terzi.find((y) => y.id === 'firma')!.stato).toBe('sviluppo');
+  });
+});
+
+describe('SaaS: prezzo dal costo', () => {
+  const x = () => { const v = o(); v.prezzo.margineVenduto = 0.3; return v; };
+  const r = calcola(cfg, x());
+  it('il consumo per pratica è il costo variabile ÷ (1 − margine − riserve)', () => {
+    const d = r.consumo.modello === 'costo' ? r.consumo : null;
+    expect(d).not.toBeNull();
+    expect(d!.costoPratica).toBeCloseTo(0.1 * x().assessment.documentiPerPratica, 4);
+  });
+  it('il margine annuo sul venduto coincide con quello richiesto senza sconti', () => {
+    const v = x();
+    v.prezzo.scaglioni.forEach((s) => { s.sconto = 0; });
+    const rr = calcola(cfg, v);
+    const costi = rr.saas.ricorrenti.reduce((a, v) => a + v.costo, 0);
+    expect(1 - costi / rr.saas.licenza.totale).toBeCloseTo(0.3, 2);
+  });
+  it('lo sconto riduce il prezzo e il margine della fascia', () => {
+    const v = x();
+    v.prezzo.scaglioni.forEach((s, i) => { s.sconto = i === 0 ? 0 : 0.5; });
+    const rr = calcola(cfg, v);
+    expect(rr.consumo.fasce[1].prezzo).toBeLessThan(rr.consumo.fasce[0].prezzo);
+  });
+  it('fascia sotto il margine minimo segnalata', () => {
+    const c = structuredClone(cfg);
+    c.consumo!.margineMinimo = 0.9;
+    const rr = calcola(c, x());
+    expect(rr.consumo.fasce.some((f) => f.sottoMargine)).toBe(true);
+  });
+  it('il canone manuale vince su quello derivato', () => {
+    const v = x(); v.leve.canoneSaas = 99999; v.leve.canoneManuale = true;
+    expect(calcola(cfg, v).saas.licenza.software).toBe(99999);
+  });
+  it('capacità: segnala quando pratiche impegnate + offerta superano il totale', () => {
+    const c = structuredClone(cfg);
+    c.capacita = { pratichePerAnno: 300000, praticheImpegnate: 290000 };
+    expect(calcola(c, x()).capacita?.supera).toBe(true);
+    c.capacita.praticheImpegnate = 0;
+    expect(calcola(c, x()).capacita?.supera).toBe(false);
+  });
+  it('configurazioni senza consumo restano sul listino', () => {
+    const c = structuredClone(cfg); delete c.consumo; delete c.capacita;
+    const rr = calcola(c, nuovaOfferta(c, 'Storico'));
+    expect(rr.consumo.totale).toBe(5000 * 6 + 10000 * 4.5 + 5000 * 3.5);
+    expect(rr.capacita).toBeNull();
   });
 });

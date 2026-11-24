@@ -44,7 +44,12 @@ export interface Scenario {
 export interface Risultato {
   tariffe: Record<FiguraId, number>;
   n: number;
-  consumo: { fasce: (Scaglione & { tx: number; importo: number })[]; totale: number };
+  consumo: {
+    fasce: (Scaglione & { tx: number; importo: number; marginePct?: number; sottoMargine?: boolean })[]; totale: number;
+    modello: 'costo' | 'listino'; costoPratica: number; prezzoBase: number;
+  };
+  /** pratiche dell'offerta più quelle già impegnate dai clienti attivi, contro la capacità dell'infrastruttura */
+  capacita: { totale: number; impegnate: number; usata: number; supera: boolean } | null;
   aiAnno: number;
   saas: Scenario;
   onPremise: Scenario;
@@ -245,8 +250,6 @@ export function calcola(cfg: Config, o: Offerta): Risultato {
   const setupOnp = { ...setupCon(cicdOn
     ? [{ id: target.id, nome: `Adeguamento ${target.nome}`, gg: o.stima.gg[target.id] ?? target.gg, figura: target.figura }] : []), reevoServizi: 0 };
 
-  /* Consumo a scaglioni */
-  const cons = consumo(o.prezzo.scaglioni, volume);
   const aiAnno = volume * o.assessment.documentiPerPratica * cfg.ai.perDocumento;
 
   /* Vincoli */
@@ -263,6 +266,33 @@ export function calcola(cfg: Config, o: Offerta): Risultato {
     }
     return out;
   };
+  /* Modello "costo": il prezzo del consumo e il canone discendono dal costo, in modo che il margine sia quello dichiarato.
+     Le riserve in percentuale della licenza (penali KPI) stringono il divisore; i vincoli fissi si sommano al costo del canone. */
+  const costoModello = cfg.consumo?.modello === 'costo';
+  const costoPratica = o.assessment.documentiPerPratica * cfg.ai.perDocumento + (cfg.consumo?.costoExtraPratica ?? 0);
+  const fissiVincoli = cfg.vincoli.reduce((a, v) => {
+    if (!attivo(v.id)) return a;
+    if (v.effetto.tipo === 'ricorrente_fisso') return a + importoVincolo(v.id, v.effetto.importo);
+    if (v.effetto.tipo === 'ricorrente_pct_licenza' && o.importiVincoli[v.id as keyof Offerta['importiVincoli']] !== undefined) return a + importoVincolo(v.id, 0);
+    return a;
+  }, 0);
+  const riservaPct = cfg.vincoli.reduce((a, v) =>
+    attivo(v.id) && v.effetto.tipo === 'ricorrente_pct_licenza' && o.importiVincoli[v.id as keyof Offerta['importiVincoli']] === undefined ? a + v.effetto.pct : a, 0);
+  const divisore = Math.max(0.01, 1 - m - riservaPct);
+  const prezzoBase = costoModello && m < 1 ? costoPratica / divisore : 0;
+  const scaglioniEff = costoModello
+    ? o.prezzo.scaglioni.map((s) => ({ ...s, prezzo: r2(prezzoBase * (1 - (s.sconto ?? 0))) }))
+    : o.prezzo.scaglioni;
+  const consBase = consumo(scaglioniEff, volume);
+  const minimo = cfg.consumo?.margineMinimo ?? 0;
+  const cons = {
+    ...consBase, modello: (costoModello ? 'costo' : 'listino') as 'costo' | 'listino', costoPratica, prezzoBase,
+    fasce: consBase.fasce.map((f) => {
+      if (!costoModello || !(f.prezzo > 0)) return f;
+      const marginePct = 1 - riservaPct - costoPratica / f.prezzo;
+      return { ...f, marginePct, sottoMargine: marginePct < minimo };
+    })
+  };
   for (const v of cfg.vincoli) {
     if (attivo(v.id) && v.effetto.tipo === 'una_tantum_gg') {
       vincoliUnaTantum.push(riga(cfg, t, { id: v.id, nome: v.nome, gg: v.effetto.gg, figura: v.effetto.figura }));
@@ -277,11 +307,16 @@ export function calcola(cfg: Config, o: Offerta): Risultato {
     { id: 'supp',  nome: 'Supporto interno ALTEN, quota', costo: cc.supportoAnno / n }
   ];
   const costoBaseSaas = ricBase.reduce((a, v) => a + v.costo, 0);
-  const licSaas = o.leve.canoneSaas + cons.totale;
-  const ricSaas = [...ricBase, ...ricVincoli(licSaas)];
+  /* canone calcolato dal costo: copre la quota dei costi condivisi e i vincoli fissi al margine dichiarato */
+  const canoneCosto = m >= 1 ? 0 : r2((costoBaseSaas + fissiVincoli) / divisore);
+  const canoneSaas = costoModello && !o.leve.canoneManuale ? canoneCosto : o.leve.canoneSaas;
+  const licSaas = canoneSaas + cons.totale;
+  /* nel modello "costo" l'AI e il costo variabile per pratica pesano sul SaaS */
+  const ricAiSaas: VoceRicorrente[] = costoModello ? [{ id: 'ai', nome: 'Elaborazione AI e costo per pratica', costo: volume * costoPratica }] : [];
+  const ricSaas = [...ricBase, ...ricAiSaas, ...ricVincoli(licSaas)];
   const saas = scenario(o.approccio !== 'on_premise', setupSaas, customizzazione,
-    { totale: licSaas, software: o.leve.canoneSaas, consumo: cons.totale, manutenzione: 0, aiRifatturata: 0 },
-    ricSaas, m >= 1 ? 0 : costoBaseSaas / (1 - m), o.leve.canoneSaas);
+    { totale: licSaas, software: canoneSaas, consumo: cons.totale, manutenzione: 0, aiRifatturata: 0 },
+    ricSaas, costoModello ? canoneCosto : (m >= 1 ? 0 : costoBaseSaas / (1 - m)), canoneSaas);
 
   /* On-premise */
   const ai = o.leve.aiOnPremise;
@@ -300,7 +335,10 @@ export function calcola(cfg: Config, o: Offerta): Risultato {
     { totale: licOnp, software: o.leve.softwareOnPremise, consumo: consOnp, manutenzione: prezzoMan, aiRifatturata: aiRif },
     ricOnp, ai === 'incluso' ? aiAnno : 0, o.leve.softwareOnPremise);
 
-  return { tariffe: t, n, consumo: cons, aiAnno, saas, onPremise, vincoliUnaTantum };
+  const cap = cfg.capacita;
+  const capacita = cap ? { totale: cap.pratichePerAnno, impegnate: cap.praticheImpegnate, usata: cap.praticheImpegnate + volume,
+    supera: cap.praticheImpegnate + volume > cap.pratichePerAnno } : null;
+  return { tariffe: t, n, consumo: cons, capacita, aiAnno, saas, onPremise, vincoliUnaTantum };
 }
 
 function scenario(

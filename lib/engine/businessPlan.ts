@@ -21,17 +21,50 @@ export interface Progetto {
   quotaPiattaformaUnaTantum?: number;
 }
 
-/** Costi di piattaforma per il business plan: una tantum all'attivazione, poi un importo al mese. */
-export interface CostiPiattaforma { dal: Date; mese: number; unaTantum: number }
+/** Una voce dei costi di piattaforma con il suo mese di partenza. */
+export interface VocePiattaforma { id: 'reevo' | 'n8n' | 'ams'; dal: Date; mese: number; unaTantum: number }
 
-/** Costi di piattaforma interi dalla configurazione (non divisi per i clienti). */
+/** Costi di piattaforma per il business plan: una tantum all'attivazione, poi un importo al mese.
+   `dal` è la prima partenza, `mese` il totale a regime; `voci` dà la partenza di ciascun servizio. */
+export interface CostiPiattaforma { dal: Date; mese: number; unaTantum: number; voci?: VocePiattaforma[] }
+
+const dataMese = (aaaaMm: string) => {
+  const [a, m] = aaaaMm.split('-').map(Number);
+  return new Date(Date.UTC(a, (m || 1) - 1, 1));
+};
+
+/** Costi di sistema letti dalla configurazione, con i ripieghi per le versioni storiche
+   (senza registro: lo sviluppo è l'unico numero di `investimento`; senza mesi propri: tutto parte da `attivaDal`). */
+export function costiSistema(cfg: Config) {
+  const attiva = cfg.piattaforma?.attivaDal ?? '2026-07';
+  const cs = cfg.costiSistema;
+  return {
+    sviluppo: cs?.sviluppo ?? [{ id: 'sv-0', mese: attiva, importo: cfg.investimento.sviluppo, nota: '' }],
+    reevoDal: cs?.reevoDal ?? attiva,
+    n8nDal: cs?.n8nDal ?? attiva,
+    amsDal: attiva
+  };
+}
+
+/** Sviluppo da recuperare: somma del registro. */
+export function sviluppoTotale(cfg: Config): number {
+  return costiSistema(cfg).sviluppo.reduce((a, v) => a + v.importo, 0);
+}
+
+/** Costi di piattaforma interi dalla configurazione (non divisi per i clienti), ciascun servizio dal suo mese. */
 export function costiPiattaforma(cfg: Config): CostiPiattaforma {
   const cc = cfg.costiCondivisi;
-  const [a, m] = (cfg.piattaforma?.attivaDal ?? '2026-07').split('-').map(Number);
+  const cs = costiSistema(cfg);
+  const voci: VocePiattaforma[] = [
+    { id: 'reevo', dal: dataMese(cs.reevoDal), mese: cc.reevo.reduce((x, r) => x + r.mese, 0), unaTantum: cc.reevoServiziUnaTantum },
+    { id: 'n8n', dal: dataMese(cs.n8nDal), mese: cc.n8nOcrMese, unaTantum: 0 },
+    { id: 'ams', dal: dataMese(cs.amsDal), mese: cc.amsSaasAnno / 12 + cc.supportoAnno / 12, unaTantum: 0 }
+  ];
   return {
-    dal: new Date(Date.UTC(a, (m || 1) - 1, 1)),
-    mese: cc.reevo.reduce((x, r) => x + r.mese, 0) + cc.n8nOcrMese + cc.amsSaasAnno / 12 + cc.supportoAnno / 12,
-    unaTantum: cc.reevoServiziUnaTantum
+    dal: new Date(Math.min(...voci.map((v) => v.dal.getTime()))),
+    mese: voci.reduce((x, v) => x + v.mese, 0),
+    unaTantum: cc.reevoServiziUnaTantum,
+    voci
   };
 }
 
@@ -47,8 +80,11 @@ export function quotaPiattaforma(cfg: Config): { annua: number; unaTantum: numbe
 
 /** Costi di piattaforma cumulati fino al mese di `fine` compreso. */
 export function costoPiattaformaAl(c: CostiPiattaforma, fine: Date): number {
-  const mesi = meseIndice(fine) - meseIndice(c.dal) + 1;
-  return mesi <= 0 ? 0 : c.unaTantum + c.mese * mesi;
+  const voci = c.voci ?? [{ dal: c.dal, mese: c.mese, unaTantum: c.unaTantum }];
+  return voci.reduce((a, v) => {
+    const mesi = meseIndice(fine) - meseIndice(v.dal) + 1;
+    return a + (mesi <= 0 ? 0 : v.unaTantum + v.mese * mesi);
+  }, 0);
 }
 
 export interface PuntoTrimestre { etichetta: string; cumulato: number }

@@ -188,6 +188,10 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
   useEffect(() => {
     if (sotto) mostra({ tipo: 'avviso', testo: t('pr.sottoSoglia') });
   }, [sotto, mostra, t]);
+  const oltreCapacita = !!r.capacita?.supera;
+  useEffect(() => {
+    if (oltreCapacita && r.capacita) mostra({ tipo: 'avviso', testo: t('pr.capacitaSuperata', { u: numero(r.capacita.usata), c: numero(r.capacita.totale) }) });
+  }, [oltreCapacita, r.capacita, mostra, t]);
 
   /* sottonavigazione che segue lo scorrimento della colonna centrale */
   useEffect(() => {
@@ -752,10 +756,14 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
               <div className="canoni">
                 {saas && (
                   <div>
-                    <div className="griglia-campi"><CampoNumero etichetta={t('leva.canoneSaas')} valore={o.leve.canoneSaas} min={0} suffisso="€"
-                      onChange={(v) => upd((x) => { x.leve.canoneSaas = v; }, 'leve.canoneSaas')} /></div>
+                    <div className="griglia-campi"><CampoNumero etichetta={t('leva.canoneSaas')} valore={r.saas.licenza.software} min={0} suffisso="€"
+                      onChange={(v) => upd((x) => { x.leve.canoneSaas = v; x.leve.canoneManuale = true; }, 'leve.canoneSaas')} />
+                      {r.consumo.modello === 'costo' && (o.leve.canoneManuale
+                        ? <button type="button" className="alt-btn alt-btn--ghost" disabled={solaLettura}
+                            onClick={() => upd((x) => { x.leve.canoneManuale = false; }, 'leve.canoneSaas')}>{t('pr.ripristinaCanone')}</button>
+                        : <span className="muted" title={t('pr.canoneDerivato')}>{t('pr.canoneDerivato')}</span>)}</div>
                     <div className="soglia" role="img" aria-label={t('pr.soglia', { v: euro(r.saas.soglia) })}>
-                      <span className="soglia__v" style={{ width: `${Math.min(100, (o.leve.canoneSaas / 300000) * 100)}%` }} />
+                      <span className="soglia__v" style={{ width: `${Math.min(100, (r.saas.licenza.software / 300000) * 100)}%` }} />
                       <span className="soglia__m" style={{ left: `${Math.min(100, (r.saas.soglia / 300000) * 100)}%` }} title={t('pr.soglia', { v: euro(r.saas.soglia) })} />
                     </div>
                     <table className="alt-table alt-table--compatta" style={{ marginTop: 14 }}>
@@ -803,21 +811,29 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
             <Card {...cp("p-sca")} bloccata={!saas && !o.prezzo.consumoOnPremise}>
               <table className="alt-table">
                 <thead><tr><th className="is-num">{t('pr.da')}</th><th className="is-num">{t('pr.a')}</th><th className="is-num">{t('pr.euroTx')}</th>
+                  {r.consumo.modello === 'costo' && <><th className="is-num">{t('pr.sconto')}</th><th className="is-num">{t('pr.margineFascia')}</th></>}
                   <th className="is-num">{t('pr.transazioni')}</th><th className="is-num">{t('pr.importo')}</th></tr></thead>
                 <tbody>
                   {r.consumo.fasce.map((f, i) => (
                     <tr key={i}>
                       <td className="is-num">{numero(f.da)}</td>
-                      <td className="is-num">{f.a === null ? '∞' : <CampoNumero compatto etichetta={`${t('pr.a')} ${i + 1}`} valore={f.a} min={f.da}
-                        onChange={(v) => upd((x) => { x.prezzo.scaglioni[i].a = v; if (x.prezzo.scaglioni[i + 1]) x.prezzo.scaglioni[i + 1].da = v + 1; }, 'prezzo.scaglioni')} />}</td>
-                      <td className="is-num"><CampoNumero compatto etichetta={`${t('pr.euroTx')} ${i + 1}`} valore={f.prezzo} min={0}
-                        onChange={(v) => upd((x) => { x.prezzo.scaglioni[i].prezzo = v; }, 'prezzo.scaglioni')} /></td>
+                      <td className="is-num">{f.a === null ? '∞' : numero(f.a)}</td>
+                      {r.consumo.modello === 'costo' ? (<>
+                        <td className="is-num">{euro(f.prezzo)}</td>
+                        <td className="is-num"><CampoNumero compatto etichetta={`${t('pr.sconto')} ${i + 1}`} valore={Math.round((f.sconto ?? 0) * 1000) / 10} min={0} max={99} suffisso="%"
+                          onChange={(v) => upd((x) => { x.prezzo.scaglioni[i].sconto = v / 100; }, 'prezzo.scaglioni')} /></td>
+                        <td className="is-num" title={f.sottoMargine ? t('pr.fasciaSottoMargine') : undefined}
+                          style={f.sottoMargine ? { color: 'var(--signal-open)' } : undefined}>{f.marginePct === undefined ? '—' : perc(f.marginePct)}</td>
+                      </>) : (
+                        <td className="is-num"><CampoNumero compatto etichetta={`${t('pr.euroTx')} ${i + 1}`} valore={f.prezzo} min={0}
+                          onChange={(v) => upd((x) => { x.prezzo.scaglioni[i].prezzo = v; }, 'prezzo.scaglioni')} /></td>
+                      )}
                       <td className="is-num">{numero(f.tx)}</td>
                       <td className="is-num">{euro(f.importo)}</td>
                     </tr>
                   ))}
                 </tbody>
-                <tfoot><tr className="is-total"><td colSpan={4}>{t('pr.consumo')}</td><td className="is-num">{euro(r.consumo.totale)}</td></tr></tfoot>
+                <tfoot><tr className="is-total"><td colSpan={r.consumo.modello === 'costo' ? 6 : 4}>{t('pr.consumo')}</td><td className="is-num">{euro(r.consumo.totale)}</td></tr></tfoot>
               </table>
               <div className="griglia-campi" style={{ marginTop: 16 }}>
                 <label className="campo">
@@ -902,7 +918,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
         </aside>
       </div>
       <Footer o={o} r={r} solaLettura={solaLettura}
-        onCanone={(v) => upd((x) => { x.leve.canoneSaas = v; }, 'leve.canoneSaas')}
+        onCanone={(v) => upd((x) => { x.leve.canoneSaas = v; x.leve.canoneManuale = true; }, 'leve.canoneSaas')}
         onSoftware={(v) => upd((x) => { x.leve.softwareOnPremise = v; }, 'leve.softwareOnPremise')}
         onAi={(m) => upd((x) => { x.leve.aiOnPremise = m; }, 'leve.aiOnPremise')} />
       <Toast toast={toast} />

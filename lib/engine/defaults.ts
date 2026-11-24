@@ -110,13 +110,23 @@ export const CONFIG_DEFAULT: Config = {
     manutenzioneOnPremise: { attiva: true, gg: 220, figura: 'dev' }
   },
   scaglioni: [
-    { da: 1,     a: 5000,  prezzo: 6.0 },
-    { da: 5001,  a: 15000, prezzo: 4.5 },
-    { da: 15001, a: 30000, prezzo: 3.5 },
-    { da: 30001, a: null,  prezzo: 2.5 }
+    /* `prezzo` vale solo nel modello "listino"; nel modello "costo" conta lo sconto (valori da validare) */
+    { da: 1,     a: 5000,  prezzo: 6.0, sconto: 0 },
+    { da: 5001,  a: 15000, prezzo: 4.5, sconto: 0.05 },
+    { da: 15001, a: 30000, prezzo: 3.5, sconto: 0.10 },
+    { da: 30001, a: null,  prezzo: 2.5, sconto: 0.15 }
   ],
+  /* il prezzo del consumo discende dal costo per pratica (AI + extra); margine minimo di fascia da validare */
+  consumo: { modello: 'costo', costoExtraPratica: 0, margineMinimo: 0.15 },
+  /* l'infrastruttura regge 300.000 pratiche l'anno sommando tutti i clienti attivi; quelle già impegnate sono da dichiarare */
+  capacita: { pratichePerAnno: 300000, praticheImpegnate: 0 },
   investimento: { sviluppo: 174209, amPrimoAnno: 20000 },
-  piattaforma: { attivaDal: '2026-07' }
+  piattaforma: { attivaDal: '2026-07' },
+  costiSistema: {
+    sviluppo: [{ id: 'sv-0', mese: '2026-06', importo: 174209, nota: '' }],
+    reevoDal: '2026-07',
+    n8nDal: '2026-07'
+  }
 };
 
 /** Nuova offerta: ogni valore esiste subito, preso dalla configurazione, ed è "assunto". */
