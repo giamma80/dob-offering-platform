@@ -468,3 +468,34 @@ describe('business plan: piano trimestrale', () => {
     expect(pi.trimestri[0].ricavi).toBe(0);
   });
 });
+
+import { riepilogoPiano, titoloPiano } from './index';
+
+describe('business plan: riepilogo e titolo', () => {
+  const prog = (id: string, inizio: string, over: Partial<Progetto> = {}): Progetto => ({
+    id, cliente: id, inizio: new Date(inizio), margineAnnuo: 40000, marginePrimoAnno: 60000, licenzaAnnua: 100000,
+    prezzoPrimoAnno: 150000, durataMesi: 36, inCorso: false, quotaPiattaformaAnnua: 0, quotaPiattaformaUnaTantum: 0, ...over
+  });
+  const da = new Date(Date.UTC(2027, 0, 1));
+  it('il riepilogo torna con i totali del piano e con la curva di recupero', () => {
+    const ps = [prog('a', '2027-01-01'), prog('b', '2027-04-01')];
+    const pf = costiPiattaforma(cfg);
+    const pi = pianoTrimestrale(80000, ps, da, 12, pf);
+    const r = riepilogoPiano(pi);
+    expect(r.ricavi - r.costiDiretti).toBeCloseTo(r.margine, 6);
+    expect(r.margine - r.investimento - r.piattaforma).toBeCloseTo(r.netto, 6);
+    expect(r.netto).toBeCloseTo(curvaRecupero(80000, ps, da, 12, pf)[11].cumulato, 6);
+    expect(r.esposizione.valore).toBeLessThanOrEqual(0);
+  });
+  it('il titolo segue i dati: approvati, solo con le bozze, mai', () => {
+    const a = prog('a', '2027-01-01'), b = prog('b', '2027-01-01', { inCorso: true });
+    const con = pianoTrimestrale(150000, [a, b], da, 12), solo = pianoTrimestrale(150000, [a], da, 12);
+    expect(titoloPiano(con, solo).chiave).toBe(solo.pareggio ? 'bp.tit.approvati' : 'bp.tit.bozze');
+    const grande = pianoTrimestrale(5_000_000, [a], da, 12);
+    expect(titoloPiano(grande, grande).chiave).toBe('bp.tit.mai');
+  });
+  it('un progetto storico con quota a zero non riaggiunge costi comuni', () => {
+    const p = prog('s', '2027-01-01', { margineAnnuo: 120000, marginePrimoAnno: 211690.315, quotaPiattaformaAnnua: 0, quotaPiattaformaUnaTantum: 0 });
+    expect(contributoAl(p, new Date(Date.UTC(2027, 11, 1)))).toBeCloseTo(91690.315 + 120000, 3);
+  });
+});

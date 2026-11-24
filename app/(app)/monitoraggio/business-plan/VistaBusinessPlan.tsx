@@ -3,7 +3,7 @@
 import { scorriA } from '@/lib/ui/scorri';
 
 import { useMemo, useState } from 'react';
-import { costoPiattaformaAl, pianoTrimestrale, type Progetto, type VocePiattaforma } from '@/lib/engine';
+import { costoPiattaformaAl, pianoTrimestrale, type VocePiattaforma } from '@/lib/engine';
 import { useT } from '@/lib/i18n/client';
 import { euro, perc } from '@/lib/ui/formato';
 import { CurvaRecupero } from '@/components/grafici';
@@ -15,7 +15,8 @@ import { Icona } from '@/components/Icona';
 import { TabellaOrdinabile } from '@/components/TabellaOrdinabile';
 import { MenuUtente } from '@/components/utente/MenuUtente';
 
-export type ProgettoBP = Omit<Progetto, 'inizio'> & { inizio: string };
+import type { ProgettoBP } from '@/lib/businessPlan';
+export type { ProgettoBP };
 
 const MESI = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

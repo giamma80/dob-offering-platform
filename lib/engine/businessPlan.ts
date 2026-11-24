@@ -179,3 +179,37 @@ export function pianoTrimestrale(investimento: number, progetti: Progetto[], da:
   const indicePareggio = righe.findIndex((t) => t.netto >= 0);
   return { trimestri: righe, pareggio: indicePareggio >= 0 ? righe[indicePareggio].etichetta : null, indicePareggio };
 }
+
+/* ---------------------------------------------------------------- riepilogo e titolo del piano
+   Numeri di testata, calcolati solo dal piano: "Business plan" e "Business plan new" leggono gli stessi. */
+export interface RiepilogoPiano {
+  ricavi: number; costiDiretti: number; margine: number; piattaforma: number; investimento: number; costiTotali: number; netto: number;
+  /** punto più basso del netto cumulato */
+  esposizione: { valore: number; etichetta: string };
+  /** margine di progetto ÷ (investimento + piattaforma): sopra 1 i costi comuni sono coperti */
+  copertura: number;
+  /** margine a regime del trimestre finale */
+  margineTrimestre: number;
+}
+
+export function riepilogoPiano(piano: Piano): RiepilogoPiano {
+  const ultimo = piano.trimestri[piano.trimestri.length - 1];
+  const ricavi = ultimo.progetti.reduce((a, x) => a + x.ricaviCum, 0);
+  const costiDiretti = ultimo.progetti.reduce((a, x) => a + x.costiDirettiCum, 0);
+  const comuni = ultimo.investimento + ultimo.piattaformaCum;
+  const minimo = piano.trimestri.reduce((m, t) => (t.netto < m.netto ? t : m), piano.trimestri[0]);
+  return {
+    ricavi, costiDiretti, margine: ultimo.margineCum, piattaforma: ultimo.piattaformaCum, investimento: ultimo.investimento,
+    costiTotali: costiDiretti + comuni, netto: ultimo.netto,
+    esposizione: { valore: Math.min(0, minimo.netto), etichetta: minimo.etichetta },
+    copertura: comuni ? ultimo.margineCum / comuni : 0,
+    margineTrimestre: ultimo.margine
+  };
+}
+
+/** Titolo del piano, scelto da regole sui dati: mai una frase fissa. `chiave` è una voce del dizionario. */
+export function titoloPiano(selezione: Piano, approvati: Piano): { chiave: 'bp.tit.approvati' | 'bp.tit.bozze' | 'bp.tit.mai'; q?: string } {
+  if (approvati.pareggio) return { chiave: 'bp.tit.approvati', q: approvati.pareggio };
+  if (selezione.pareggio) return { chiave: 'bp.tit.bozze', q: selezione.pareggio };
+  return { chiave: 'bp.tit.mai' };
+}
