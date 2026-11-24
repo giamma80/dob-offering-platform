@@ -3,10 +3,13 @@
 import { scorriA } from '@/lib/ui/scorri';
 
 import { useMemo, useState } from 'react';
-import { contributoAl, costoPiattaformaAl, curvaRecupero, pareggio, type Progetto, type VocePiattaforma } from '@/lib/engine';
+import { costoPiattaformaAl, pianoTrimestrale, type Progetto, type VocePiattaforma } from '@/lib/engine';
 import { useT } from '@/lib/i18n/client';
-import { euro } from '@/lib/ui/formato';
+import { euro, perc } from '@/lib/ui/formato';
 import { CurvaRecupero } from '@/components/grafici';
+import { AreeMargine, RicaviCosti } from '@/components/bp/GraficiBP';
+import { TimelineBP } from '@/components/bp/TimelineBP';
+import { coloreProgetto } from '@/components/bp/colori';
 import { Icona } from '@/components/Icona';
 import { TabellaOrdinabile } from '@/components/TabellaOrdinabile';
 import { MenuUtente } from '@/components/utente/MenuUtente';
@@ -15,44 +18,87 @@ export type ProgettoBP = Omit<Progetto, 'inizio'> & { inizio: string };
 
 const MESI = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const ANNI = 3;
+const mi = (d: Date) => d.getUTCFullYear() * 12 + d.getUTCMonth();
 
 export function VistaBusinessPlan({ investimento, progetti, piattaforma }: {
   investimento: { sviluppo: number; amPrimoAnno: number }; progetti: ProgettoBP[];
   piattaforma: { dal: string; mese: number; unaTantum: number; voci?: (Omit<VocePiattaforma, 'dal'> & { dal: string })[] };
 }) {
   const t = useT();
-  const [conInCorso, setConInCorso] = useState(true);
-  const [sez, setSez] = useState('bp-curva');
+  const [sel, setSel] = useState<string[]>(() => progetti.map((p) => p.id));
+  const [sez, setSez] = useState('bp-sintesi');
   const tutti = useMemo(() => progetti.map((p) => ({ ...p, inizio: new Date(p.inizio) })), [progetti]);
   const inv = investimento.sviluppo + investimento.amPrimoAnno;
   const pf = useMemo(() => ({
     ...piattaforma, dal: new Date(piattaforma.dal),
     voci: piattaforma.voci?.map((v) => ({ ...v, dal: new Date(v.dal) }))
   }), [piattaforma]);
+  const oggi = useMemo(() => new Date(), []);
   const da = useMemo(() => {
-    const min = tutti.reduce((a, p) => (p.inizio < a ? p.inizio : a), pf.dal < new Date() ? pf.dal : new Date());
+    const min = tutti.reduce((a, p) => (p.inizio < a ? p.inizio : a), pf.dal < oggi ? pf.dal : oggi);
     return new Date(Date.UTC(min.getUTCFullYear(), 0, 1));
-  }, [tutti, pf]);
-  const curva = (con: boolean) => curvaRecupero(inv, tutti.filter((p) => con || !p.inCorso), da, 12, pf);
-  const punti = curva(conInCorso);
-  const parCon = pareggio(curva(true)), parSenza = pareggio(curva(false));
-  const fineOrizzonte = new Date(Date.UTC(da.getUTCFullYear() + 3, 0, 1));
-  const anni = [0, 1, 2, 3].map((i) => da.getUTCFullYear() + i);
-  const span = fineOrizzonte.getTime() - da.getTime();
-  const nomeMese = (d: Date) => `${(t('comune.lingua') === 'Language' ? MONTHS : MESI)[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
-  const contributi = tutti.filter((p) => conInCorso || !p.inCorso).map((p) => {
-    const mesi = Math.max(0, Math.min(p.durataMesi, (fineOrizzonte.getUTCFullYear() * 12 + fineOrizzonte.getUTCMonth()) - (p.inizio.getUTCFullYear() * 12 + p.inizio.getUTCMonth())));
-    return { ...p, mesi, contributo: contributoAl(p, new Date(fineOrizzonte.getTime() - 1)) };
-  });
+  }, [tutti, pf, oggi]);
+  const fineOrizzonte = new Date(Date.UTC(da.getUTCFullYear() + ANNI, 0, 1));
   const finePeriodo = new Date(fineOrizzonte.getTime() - 1);
+  const nomeMese = (d: Date) => `${(t('comune.lingua') === 'Language' ? MONTHS : MESI)[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+
+  const colori = useMemo(() => new Map(tutti.map((p, i) => [p.id, coloreProgetto(i)])), [tutti]);
+  const scelti = tutti.filter((p) => sel.includes(p.id));
+  const piano = useMemo(() => pianoTrimestrale(inv, scelti, da, ANNI * 4, pf), [inv, scelti, da, pf]);
+  const pianoTutti = useMemo(() => pianoTrimestrale(inv, tutti, da, ANNI * 4, pf), [inv, tutti, da, pf]);
+  const pianoApprovati = useMemo(() => pianoTrimestrale(inv, tutti.filter((p) => !p.inCorso), da, ANNI * 4, pf), [inv, tutti, da, pf]);
+  const ultimo = piano.trimestri[piano.trimestri.length - 1];
+  const voci = scelti.map((p) => ({ id: p.id, nome: p.cliente, colore: colori.get(p.id)! }));
+
+  const tot = {
+    ricavi: ultimo.progetti.reduce((a, x) => a + x.ricaviCum, 0),
+    diretti: ultimo.progetti.reduce((a, x) => a + x.costiDirettiCum, 0),
+    margine: ultimo.margineCum
+  };
+  const costiTotali = tot.diretti + ultimo.piattaformaCum + inv;
+  const tuttiScelti = sel.length === tutti.length, soloApprovati = tutti.every((p) => sel.includes(p.id) === !p.inCorso);
+  const alterna = (id: string) => setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  const punti = piano.trimestri.map((q) => ({ etichetta: q.etichetta, cumulato: q.netto }));
   const costoPf = costoPiattaformaAl(pf, finePeriodo);
-  const mesiPf = Math.max(0, (finePeriodo.getUTCFullYear() * 12 + finePeriodo.getUTCMonth()) - (pf.dal.getUTCFullYear() * 12 + pf.dal.getUTCMonth()) + 1);
-  const oggi = new Date();
+
   const SEZ = [
-    { id: 'bp-curva', k: 'bp.abbattimento' as const, ico: 'bp', badge: (conInCorso ? parCon : parSenza) ?? '—' },
-    { id: 'bp-tl', k: 'bp.timeline' as const, ico: 'offerte', badge: String(tutti.length) },
+    { id: 'bp-sintesi', k: 'bp.sintesi' as const, ico: 'bp', badge: piano.pareggio ?? '—' },
+    { id: 'bp-margini', k: 'bp.margini' as const, ico: 'costi', badge: String(scelti.length) },
+    { id: 'bp-ricavi', k: 'bp.ricaviCosti' as const, ico: 'offerte', badge: '' },
+    { id: 'bp-curva', k: 'bp.abbattimento' as const, ico: 'bp', badge: '' },
+    { id: 'bp-tl', k: 'bp.timeline' as const, ico: 'offerte', badge: '' },
     { id: 'bp-con', k: 'bp.contributi' as const, ico: 'costi', badge: '' }
   ];
+  const titolo = (ico: string, k: Parameters<typeof t>[0], tip?: string) => (
+    <h2 className="alt-card__title" style={{ display: 'flex', gap: 8, alignItems: 'center' }} title={tip}><Icona nome={ico} />{t(k)}</h2>
+  );
+  const legenda = (extra: { colore: string; nome: string }[]) => (
+    <div className="legenda">
+      {[...voci, ...extra].map((v) => <span key={v.nome}><i style={{ background: v.colore }} />{v.nome}</span>)}
+    </div>
+  );
+
+  const righe = scelti.map((p) => {
+    const r = ultimo.progetti.find((x) => x.id === p.id)!;
+    const fine = new Date(Date.UTC(p.inizio.getUTCFullYear(), p.inizio.getUTCMonth() + p.durataMesi - 1, 1));
+    const mesiPiano = Math.max(0, Math.min(p.durataMesi, mi(fineOrizzonte) - mi(p.inizio)));
+    const periodo = `${nomeMese(p.inizio)} → ${nomeMese(fine)}`;
+    return {
+      key: p.id,
+      celle: [
+        { v: p.cliente, html: <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><i style={{ width: 10, height: 10, borderRadius: 3, background: colori.get(p.id) }} />{p.cliente}</span> },
+        { v: p.inCorso ? 0 : 1, html: p.inCorso ? t('bp.inCorsoBreve') : t('bp.approvata') },
+        { v: p.inizio.getTime(), html: <span title={t('bp.periodoTip', { m: mesiPiano, d: p.durataMesi })}>{periodo}</span> },
+        { v: r.ricaviCum, html: euro(r.ricaviCum) },
+        { v: r.costiDirettiCum, html: euro(-r.costiDirettiCum) },
+        { v: r.margineCum, html: <span title={t('bp.lordoTip', { q: euro(p.quotaPiattaformaAnnua ?? 0), m: euro(p.margineAnnuo) })}>{euro(r.margineCum)}</span> },
+        { v: r.ricaviCum ? r.margineCum / r.ricaviCum : 0, html: r.ricaviCum ? perc(r.margineCum / r.ricaviCum) : '—' },
+        { v: tot.margine ? r.margineCum / tot.margine : 0, html: tot.margine ? perc(r.margineCum / tot.margine) : '—' }
+      ]
+    };
+  });
+  const vuota = (n: number) => Array.from({ length: n }, () => ({ v: '' }));
 
   return (
     <div className="shell">
@@ -70,67 +116,95 @@ export function VistaBusinessPlan({ investimento, progetti, piattaforma }: {
         <h1 className="ttl">{t('mon.bp')}</h1>
         <div className="alt-confid"><span className="alt-badge alt-badge--riservato">{t('re.riservato')}</span></div>
 
-        <div className="alt-card" id="bp-curva">
+        <div className="alt-card" id="bp-sintesi">
           <div className="alt-card__head">
-            <h2 className="alt-card__title" style={{ display: 'flex', gap: 8, alignItems: 'center' }}><Icona nome="bp" />{t('bp.curvaTit')}</h2>
-            <span className="seg" role="radiogroup" aria-label={t('bp.inCorso')} style={{ marginLeft: 'auto' }}>
-              {[true, false].map((v) => (
-                <b key={String(v)} role="radio" tabIndex={0} aria-checked={conInCorso === v} className={conInCorso === v ? 'on' : undefined}
-                  onClick={() => setConInCorso(v)} onKeyDown={(e) => e.key === 'Enter' && setConInCorso(v)}>{t(v ? 'bp.conInCorso' : 'bp.senzaInCorso')}</b>
-              ))}
+            {titolo('bp', 'bp.perimetro', t('bp.perimetroTip'))}
+            <span className="seg" role="radiogroup" aria-label={t('bp.perimetro')} style={{ marginLeft: 'auto' }}>
+              <b role="radio" tabIndex={0} aria-checked={tuttiScelti} className={tuttiScelti ? 'on' : undefined}
+                onClick={() => setSel(tutti.map((p) => p.id))} onKeyDown={(e) => e.key === 'Enter' && setSel(tutti.map((p) => p.id))}>{t('bp.tutti')}</b>
+              <b role="radio" tabIndex={0} aria-checked={!tuttiScelti && soloApprovati} className={!tuttiScelti && soloApprovati ? 'on' : undefined}
+                onClick={() => setSel(tutti.filter((p) => !p.inCorso).map((p) => p.id))} onKeyDown={(e) => e.key === 'Enter' && setSel(tutti.filter((p) => !p.inCorso).map((p) => p.id))}>{t('bp.soloApprovati')}</b>
             </span>
           </div>
           <div className="alt-card__body">
-            <CurvaRecupero punti={punti} pareggio={pareggio(punti)} etichetta={t('bp.curvaTit')} />
-          </div>
-        </div>
-
-        <div className="alt-card" id="bp-tl">
-          <div className="alt-card__head"><h2 className="alt-card__title" style={{ display: 'flex', gap: 8, alignItems: 'center' }}><Icona nome="offerte" />{t('bp.timeline')}</h2></div>
-          <div className="alt-card__body">
-            <div className="tlp">
-              {contributi.map((p) => {
-                const left = Math.max(0, (p.inizio.getTime() - da.getTime()) / span);
-                const fine = new Date(Date.UTC(p.inizio.getUTCFullYear(), p.inizio.getUTCMonth() + p.durataMesi - 1, 1));
-                const w = Math.max(0.04, Math.min(1 - left, (fine.getTime() - p.inizio.getTime()) / span));
-                return (
-                  <div key={p.id} className="tlp__r">
-                    <span className={`tlp__n${p.inCorso ? ' in-corso' : ''}`}>{p.cliente}</span>
-                    <span className="tlp__t">
-                      <span className={`tlp__b${p.inCorso ? ' in-corso' : ''}`} style={{ left: `${left * 100}%`, width: `${w * 100}%` }}
-                        title={`${nomeMese(p.inizio)} → ${nomeMese(fine)} · ${euro(p.licenzaAnnua)}${t('sp.anno')}`}>
-                        {nomeMese(p.inizio)} → {nomeMese(fine)} · {euro(p.licenzaAnnua)}{t('sp.anno')}
-                      </span>
-                    </span>
-                  </div>
-                );
-              })}
-              <div className="tlp__r"><span className="tlp__n" /><span className="tlp__assi">{anni.map((a) => <span key={a}>{a}</span>)}</span></div>
+            <div className="bpsel" role="group" aria-label={t('bp.perimetro')}>
+              {tutti.map((p) => (
+                <label key={p.id} className={p.inCorso ? 'bozza' : undefined} style={{ ['--c' as string]: colori.get(p.id) }}>
+                  <input type="checkbox" checked={sel.includes(p.id)} onChange={() => alterna(p.id)} />
+                  {p.cliente}{p.inCorso && <small>{t('bp.inCorsoBreve')}</small>}
+                </label>
+              ))}
             </div>
           </div>
         </div>
 
+        <div className="bpkpi">
+          <div className="alt-kpi alt-kpi--brand alt-kpi--hero">
+            <p className="alt-kpi__label">{t('bp.pareggio')}</p>
+            <p className="alt-kpi__value">{piano.pareggio ?? t('bp.nonRaggiunto')}</p>
+            <span className="alt-kpi__delta alt-kpi__delta--flat" style={{ color: 'var(--accent-azure-pale)' }}>{t('bp.nettoA', { a: fineOrizzonte.getUTCFullYear() - 1 })}: {euro(ultimo.netto)}</span>
+          </div>
+          <div className="bpkpi__g">
+            <div className="alt-kpi alt-kpi--md"><p className="alt-kpi__label">{t('bp.ricavi')}</p><p className="alt-kpi__value">{euro(tot.ricavi)}</p></div>
+            <div className="alt-kpi alt-kpi--md"><p className="alt-kpi__label">{t('bp.costi')}</p><p className="alt-kpi__value">{euro(-costiTotali)}</p>
+              <span className="alt-kpi__delta alt-kpi__delta--flat">{t('bp.costiDettaglio', { d: euro(tot.diretti), p: euro(ultimo.piattaformaCum), i: euro(inv) })}</span></div>
+            <div className="alt-kpi alt-kpi--md"><p className="alt-kpi__label">{t('bp.margineProgetti')}</p><p className="alt-kpi__value">{euro(tot.margine)}</p>
+              <span className="alt-kpi__delta alt-kpi__delta--flat">{t('bp.margineDettaglio', { p: tot.ricavi ? perc(tot.margine / tot.ricavi) : '—' })}</span></div>
+            <div className="alt-kpi alt-kpi--md"><p className="alt-kpi__label">{t('bp.netto')}</p>
+              <p className="alt-kpi__value" style={{ color: ultimo.netto >= 0 ? 'var(--signal-positive)' : 'var(--signal-negative)' }}>{euro(ultimo.netto)}</p>
+              <span className="alt-kpi__delta alt-kpi__delta--flat">{t('bp.nettoDettaglio')}</span></div>
+          </div>
+        </div>
+
+        <div className="alt-card" id="bp-margini">
+          <div className="alt-card__head">{titolo('costi', 'bp.margini')}</div>
+          <div className="alt-card__body">
+            <AreeMargine piano={piano} progetti={voci} etichetta={t('bp.margini')} />
+            {legenda([{ colore: 'var(--line-strong)', nome: t('bp.investimentoRiga') }, { colore: 'var(--signal-negative)', nome: t('bp.costiPiattaforma') }])}
+          </div>
+        </div>
+
+        <div className="alt-card" id="bp-ricavi">
+          <div className="alt-card__head">{titolo('offerte', 'bp.ricaviCosti')}</div>
+          <div className="alt-card__body">
+            <RicaviCosti piano={piano} progetti={voci} etichetta={t('bp.ricaviCosti')} />
+            {legenda([{ colore: 'var(--ink-muted)', nome: t('bp.costiDiretti') }, { colore: 'var(--signal-negative)', nome: t('bp.costiPiattaforma') }])}
+          </div>
+        </div>
+
+        <div className="alt-card" id="bp-curva">
+          <div className="alt-card__head">{titolo('bp', 'bp.curvaTit')}</div>
+          <div className="alt-card__body">
+            <CurvaRecupero punti={punti} pareggio={piano.pareggio} etichetta={t('bp.curvaTit')} />
+          </div>
+        </div>
+
+        <div className="alt-card" id="bp-tl">
+          <div className="alt-card__head">{titolo('offerte', 'bp.timeline', t('bp.tlTip'))}</div>
+          <div className="alt-card__body">
+            <TimelineBP
+              progetti={scelti.map((p) => ({ id: p.id, cliente: p.cliente, inizio: p.inizio, durataMesi: p.durataMesi, inCorso: p.inCorso, colore: colori.get(p.id)!, licenzaAnnua: p.licenzaAnnua }))}
+              servizi={(pf.voci ?? []).map((v) => ({ id: v.id, dal: v.dal }))}
+              da={da} anni={ANNI} pareggioIndice={piano.indicePareggio} pareggioEtichetta={piano.pareggio} oggi={oggi} nomeMese={nomeMese} />
+          </div>
+        </div>
+
         <div className="alt-card" id="bp-con">
-          <div className="alt-card__head"><h2 className="alt-card__title" style={{ display: 'flex', gap: 8, alignItems: 'center' }}><Icona nome="costi" />{t('bp.contributo')}</h2></div>
+          <div className="alt-card__head">{titolo('costi', 'bp.contributo', t('bp.tabellaTip', { a: fineOrizzonte.getUTCFullYear() - 1 }))}</div>
           <div className="alt-card__body">
             <TabellaOrdinabile
-              colonne={[{ nome: t('bp.progetto') }, { nome: t('bp.margineAnnuo'), num: true }, { nome: t('bp.mesi'), num: true }, { nome: t('bp.contributoCol'), num: true }]}
+              colonne={[{ nome: t('bp.progetto') }, { nome: t('bp.stato') }, { nome: t('bp.periodo') }, { nome: t('bp.ricavi'), num: true }, { nome: t('bp.costiDiretti'), num: true },
+                { nome: t('bp.margine'), num: true }, { nome: t('bp.margPerc'), num: true }, { nome: t('bp.quota'), num: true }]}
               righe={[
-                ...contributi.map((p) => {
-                  const lordo = p.margineAnnuo + (p.quotaPiattaformaAnnua ?? 0);
-                  return {
-                    key: p.id, className: p.inCorso ? 'is-sub' : undefined,
-                    celle: [{ v: p.cliente, html: p.inCorso ? `${p.cliente} · ${t('bp.inCorsoBreve')}` : p.cliente },
-                      { v: lordo, html: <span title={t('bp.lordoTip', { q: euro(p.quotaPiattaformaAnnua ?? 0), m: euro(p.margineAnnuo) })}>{euro(lordo)}</span> },
-                      { v: p.mesi }, { v: p.contributo, html: euro(p.contributo) }]
-                  };
-                }),
+                ...righe,
                 { key: 'piattaforma', className: 'is-neg',
-                  celle: [{ v: t('bp.costiPiattaforma'), html: <span title={t('bp.costiPiattaformaTip', { d: nomeMese(pf.dal) })}>{t('bp.costiPiattaforma')}</span> },
-                    { v: -pf.mese * 12, html: euro(-pf.mese * 12) }, { v: mesiPf }, { v: -costoPf, html: euro(-costoPf) }] }
+                  celle: [{ v: t('bp.costiPiattaforma'), html: <span title={t('bp.costiPiattaformaTip', { d: nomeMese(pf.dal) })}>{t('bp.costiPiattaforma')}</span> }, ...vuota(4),
+                    { v: -ultimo.piattaformaCum, html: euro(-ultimo.piattaformaCum) }, ...vuota(2)] },
+                { key: 'investimento', className: 'is-neg',
+                  celle: [{ v: t('bp.investimentoRiga') }, ...vuota(4), { v: -inv, html: euro(-inv) }, ...vuota(2)] }
               ]}
-              totale={[{ v: t('bp.cumulatoA', { a: fineOrizzonte.getUTCFullYear() - 1 }) }, { v: '' }, { v: '' },
-                { v: 0, html: euro(contributi.reduce((a, p) => a + p.contributo, 0) - costoPf) }]}
+              totale={[{ v: t('bp.nettoA', { a: fineOrizzonte.getUTCFullYear() - 1 }) }, { v: '' }, { v: '' },
+                { v: tot.ricavi, html: euro(tot.ricavi) }, { v: -tot.diretti, html: euro(-tot.diretti) }, { v: ultimo.netto, html: euro(ultimo.netto) }, { v: '' }, { v: '' }]}
             />
           </div>
         </div>
@@ -145,10 +219,12 @@ export function VistaBusinessPlan({ investimento, progetti, piattaforma }: {
           <div className="rail__stat"><span>{t('bp.attivaDal')}</span><b>{nomeMese(pf.dal)}</b></div>
           <div className="rail__stat"><span>{t('bp.alMese')}</span><b>{euro(pf.mese)}</b></div>
           <div className="rail__stat"><span>{t('bp.finoAOggi')}</span><b>{euro(costoPiattaformaAl(pf, oggi))}</b></div>
+          <div className="rail__stat"><span>{t('bp.nettoA', { a: fineOrizzonte.getUTCFullYear() - 1 })}</span><b>{euro(-costoPf)}</b></div>
         </div>
-        <div className="rail__card"><p className="rail__h">{t('bp.pareggio')}</p>
-          <div className="rail__stat"><span>{t('bp.conInCorso')}</span><b>{parCon ?? t('bp.nonRaggiunto')}</b></div>
-          <div className="rail__stat"><span>{t('bp.senzaInCorso')}</span><b>{parSenza ?? t('bp.nonRaggiunto')}</b></div>
+        <div className="rail__card"><p className="rail__h">{t('bp.confronto')}</p>
+          <div className="rail__stat"><span>{t('bp.selezione')}</span><b>{piano.pareggio ?? t('bp.nonRaggiunto')}</b></div>
+          <div className="rail__stat"><span>{t('bp.tutti')}</span><b>{pianoTutti.pareggio ?? t('bp.nonRaggiunto')}</b></div>
+          <div className="rail__stat"><span>{t('bp.soloApprovati')}</span><b>{pianoApprovati.pareggio ?? t('bp.nonRaggiunto')}</b></div>
         </div>
       </aside>
     </div>

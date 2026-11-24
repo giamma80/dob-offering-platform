@@ -424,3 +424,47 @@ describe('SaaS: prezzo dal costo', () => {
     expect(rr.capacita).toBeNull();
   });
 });
+
+import { pianoTrimestrale, ricaviAl } from './index';
+
+describe('business plan: piano trimestrale', () => {
+  const prog = (id: string, inizio: string, over: Partial<Progetto> = {}): Progetto => ({
+    id, cliente: id, inizio: new Date(inizio), margineAnnuo: 40000, marginePrimoAnno: 60000, licenzaAnnua: 100000,
+    prezzoPrimoAnno: 150000, durataMesi: 36, inCorso: false, quotaPiattaformaAnnua: 10000, quotaPiattaformaUnaTantum: 2000, ...over
+  });
+  const da = new Date(Date.UTC(2027, 0, 1));
+  it('ricavi = una tantum all\'avvio + canone mese per mese', () => {
+    const p = prog('a', '2027-01-01');
+    expect(ricaviAl(p, new Date(Date.UTC(2027, 2, 1)))).toBeCloseTo(50000 + 100000 * 3 / 12, 6);
+    expect(ricaviAl(p, new Date(Date.UTC(2026, 11, 1)))).toBe(0);
+  });
+  it('ricavi − costi diretti = margine, e il cumulato torna con contributoAl', () => {
+    const p = prog('a', '2027-01-01');
+    const pi = pianoTrimestrale(0, [p], da, 4);
+    for (const t of pi.trimestri) {
+      const r = t.progetti[0];
+      expect(r.ricavi - r.costiDiretti).toBeCloseTo(r.margine, 6);
+    }
+    expect(pi.trimestri[3].progetti[0].margineCum).toBeCloseTo(contributoAl(p, new Date(Date.UTC(2027, 11, 1))), 6);
+  });
+  it('lo stesso pareggio della curva di recupero', () => {
+    const ps = [prog('a', '2027-01-01'), prog('b', '2027-04-01')];
+    const cfgPf = costiPiattaforma(cfg);
+    const curva = curvaRecupero(80000, ps, da, 12, cfgPf);
+    const pi = pianoTrimestrale(80000, ps, da, 12, cfgPf);
+    expect(pi.pareggio).toBe(pareggio(curva));
+    pi.trimestri.forEach((t, i) => expect(t.netto).toBeCloseTo(curva[i].cumulato, 6));
+  });
+  it('deselezionare un progetto toglie ricavi e margine e sposta il pareggio', () => {
+    const a = prog('a', '2027-01-01'), b = prog('b', '2027-01-01');
+    const due = pianoTrimestrale(150000, [a, b], da, 12);
+    const uno = pianoTrimestrale(150000, [a], da, 12);
+    expect(uno.trimestri[0].ricavi).toBeCloseTo(due.trimestri[0].ricavi / 2, 6);
+    expect(uno.indicePareggio).toBeGreaterThan(due.indicePareggio);
+  });
+  it('senza progetti: nessun ricavo e nessun pareggio', () => {
+    const pi = pianoTrimestrale(1000, [], da, 4);
+    expect(pi.pareggio).toBeNull();
+    expect(pi.trimestri[0].ricavi).toBe(0);
+  });
+});

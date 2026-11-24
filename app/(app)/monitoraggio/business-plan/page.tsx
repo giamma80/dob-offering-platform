@@ -24,7 +24,7 @@ export default async function BusinessPlan() {
     return {
       id: o.id, cliente: o.cliente, inCorso: !approvata,
       inizio: (approvata ? new Date(o.avviata_il ?? o.approvata_il ?? o.creata_il) : prossimoTrimestre).toISOString(),
-      margineAnnuo: s.margineAnnuo, marginePrimoAnno: s.marginePrimoAnno, licenzaAnnua: s.licenza, durataMesi: 36,
+      margineAnnuo: s.margineAnnuo, marginePrimoAnno: s.marginePrimoAnno, licenzaAnnua: s.licenza, prezzoPrimoAnno: s.primoAnno, durataMesi: 36,
       quotaPiattaformaAnnua: q.annua, quotaPiattaformaUnaTantum: q.unaTantum
     };
   });

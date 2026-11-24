@@ -156,7 +156,7 @@ export function CardVista({ id, titolo, icona, scenari, render }: {
 
 /** Curva del margine cumulato contro l'investimento, con zona positiva/negativa e linea di pareggio. */
 /** Passo "rotondo" per le tacche dell'asse: 1, 2, 2,5 o 5 × 10^n. */
-function passoTacche(intervallo: number, tacche = 5) {
+export function passoTacche(intervallo: number, tacche = 5) {
   const grezzo = intervallo / tacche || 1;
   const p = Math.pow(10, Math.floor(Math.log10(grezzo)));
   return ([1, 2, 2.5, 5, 10].find((m) => m * p >= grezzo) ?? 10) * p;
