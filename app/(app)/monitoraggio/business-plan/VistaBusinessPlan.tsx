@@ -121,7 +121,7 @@ export function VistaBusinessPlan({ investimento, progetti, piattaforma }: {
                   return {
                     key: p.id, className: p.inCorso ? 'is-sub' : undefined,
                     celle: [{ v: p.cliente, html: p.inCorso ? `${p.cliente} · ${t('bp.inCorsoBreve')}` : p.cliente },
-                      { v: lordo, html: <span title={t('bp.lordoTip', { q: euro(p.quotaPiattaformaAnnua ?? 0) })}>{euro(lordo)}</span> },
+                      { v: lordo, html: <span title={t('bp.lordoTip', { q: euro(p.quotaPiattaformaAnnua ?? 0), m: euro(p.margineAnnuo) })}>{euro(lordo)}</span> },
                       { v: p.mesi }, { v: p.contributo, html: euro(p.contributo) }]
                   };
                 }),

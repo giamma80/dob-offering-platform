@@ -424,7 +424,12 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
           {/* ================================================= 2 SOLUZIONE */}
           {fase === 'soluzione' && (<>
             <Card {...cp("s-arch")}>
-              <MappaArchitettura dati={arch} attiva={areaAtt} onAttiva={setAreaAtt} />
+              <MappaArchitettura dati={arch} attiva={areaAtt} onAttiva={setAreaAtt}
+                onApri={solaLettura ? undefined : (a) => {
+                  const tipo = a as NonNullable<Sistema['tipo']>;
+                  if (!sis.some((y) => y.tipo === tipo)) updSis((y) => { y.push({ id: nuovoId('sis'), nome: t('as.nuovoSistema'), complessita: 'media', tipo }); });
+                  document.getElementById('s-sis')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }} />
             </Card>
             <Card {...cp("s-sis")}>
               <TabellaOrdinabile

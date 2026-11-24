@@ -22,11 +22,13 @@ const ICONE: Record<AreaArchitettura, string> = {
 
 /** Architettura della soluzione: le caselle si accendono con la configurazione dell'offerta.
    In modalità cliente non ci sono tooltip con le voci: solo incluso o no. */
-export function MappaArchitettura({ dati, cliente = false, attiva, onAttiva }: {
+export function MappaArchitettura({ dati, cliente = false, attiva, onAttiva, onApri }: {
   dati: DatiMappa;
   cliente?: boolean;
   attiva?: AreaArchitettura | null;
   onAttiva?: (a: AreaArchitettura | null) => void;
+  /** clic su una casella dei sistemi cliente: porta alla tabella dei sistemi */
+  onApri?: (a: AreaArchitettura) => void;
 }) {
   const t = useT();
   const titolo = (x: DatiMappa['terzi'][number]) => {
@@ -34,8 +36,11 @@ export function MappaArchitettura({ dati, cliente = false, attiva, onAttiva }: {
     if (cliente || !x.voci?.length) return `${nome} · ${t(`arch.stato.${x.stato}` as Chiave)}`;
     return `${nome}\n${x.voci.map((v) => `${v.nome} · ${numero(v.gg)} gg`).join('\n')}`;
   };
-  const casella = (x: DatiMappa['terzi'][number], grande = false) => (
-    <li key={x.id}
+  const casella = (x: DatiMappa['terzi'][number], grande = false, apri = false) => (
+    <li key={x.id} role={apri && onApri ? 'button' : undefined}
+      onClick={apri && onApri ? () => onApri(x.id) : undefined}
+      onKeyDown={apri && onApri ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onApri(x.id); } } : undefined}
+      style={apri && onApri ? { cursor: 'pointer' } : undefined}
       className={`mappa__c mappa__c--${x.stato}${grande ? ' mappa__c--pil' : ''}${attiva === x.id ? ' is-attiva' : ''}`}
       title={titolo(x)} tabIndex={cliente ? undefined : 0}
       onMouseEnter={() => onAttiva?.(x.id)} onMouseLeave={() => onAttiva?.(null)}
@@ -76,7 +81,7 @@ export function MappaArchitettura({ dati, cliente = false, attiva, onAttiva }: {
       <div className="mappa__freccia" aria-hidden="true">⇄</div>
       <section className="mappa__col">
         <h4>{t('arch.cliente')}</h4>
-        <ul>{dati.cliente.map((x) => casella(x))}</ul>
+        <ul>{dati.cliente.map((x) => casella(x, false, true))}</ul>
       </section>
       {!cliente && (
         <p className="mappa__leg" aria-hidden="true">
