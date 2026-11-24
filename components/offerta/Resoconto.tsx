@@ -28,7 +28,7 @@ export function Sintesi({ cfg, o, r }: Props) {
   const t = useT();
   const att = moduliAttivi(cfg, o);
   const sc = (x: Scen): Scenario => (x === 'on_premise' ? r.onPremise : r.saas);
-  const extra = r.vincoliUnaTantum;
+  const extra = r.vincoliUnaTantum.slice(0, 0); /* le opzioni (es. supporto on demand) restano fuori da tutti i totali */
   const ricavo = (s: Scenario) => {
     const serie = serieMensile(s, extra);
     return (
@@ -36,14 +36,12 @@ export function Sintesi({ cfg, o, r }: Props) {
         <AreaCumulata etichetta={t('re.ricavo36')} etichettaCosti={t('gr.costi')}
           livelli={[
             { colore: COL.brand, nome: t('gr.setupCustom'), valori: serie.map((p) => p.unaTantum) },
-            { colore: COL.azure, nome: t('re.licenza'), valori: serie.map((p) => p.licenza) },
-            { colore: COL.pale, nome: t('gr.extra'), valori: serie.map((p) => p.extra) }
+            { colore: COL.azure, nome: t('re.licenza'), valori: serie.map((p) => p.licenza) }
           ]}
           costo={serie.map((p) => p.costo)} />
         <Legenda voci={[
           { colore: COL.brand, nome: t('gr.setupCustom'), valore: euro(serie[0].unaTantum) },
           { colore: COL.azure, nome: t('re.licenza'), valore: euro(serie[36].licenza) },
-          { colore: COL.pale, nome: t('gr.extra'), valore: euro(serie[36].extra) },
           { colore: '', nome: t('gr.costi'), valore: euro(serie[36].costo), tratteggio: true }
         ]} />
       </>
@@ -53,7 +51,7 @@ export function Sintesi({ cfg, o, r }: Props) {
     const c = composizioneRicavo(s, extra);
     const nomi: Record<string, Chiave> = { messa: 'st.messa', infra: 'st.infra', licenza: 'gr.licenza3', extra: 'gr.extra' };
     const cls: Record<string, string> = { messa: 's1', infra: 's2', licenza: 's3', extra: 's4' };
-    return <BarraComposizione etichetta={t('re.ricavo36')} parti={c.map((f) => ({ cls: cls[f.id], nome: t(nomi[f.id]), valore: f.valore }))} />;
+    return <BarraComposizione etichetta={t('re.ricavo36')} parti={c.filter((f) => f.id !== 'extra').map((f) => ({ cls: cls[f.id], nome: t(nomi[f.id]), valore: f.valore }))} />;
   };
   return (
     <>
@@ -137,8 +135,8 @@ function CostiEsercizio({ r }: { r: Risultato }) {
 
 export function RailSintesi({ r, o, cfg }: Props) {
   const t = useT();
-  const tre = (s: Scenario) => composizioneRicavo(s, r.vincoliUnaTantum).reduce((a, f) => a + f.valore, 0);
-  const marg = (s: Scenario) => { const c = composizioneMargine(s, r.vincoliUnaTantum); const tot = c.reduce((a, f) => a + f.valore, 0); return tot ? c[2].valore / tot : 0; };
+  const tre = (s: Scenario) => composizioneRicavo(s, r.vincoliUnaTantum.slice(0, 0)).reduce((a, f) => a + f.valore, 0);
+  const marg = (s: Scenario) => { const c = composizioneMargine(s, r.vincoliUnaTantum.slice(0, 0)); const tot = c.reduce((a, f) => a + f.valore, 0); return tot ? c[2].valore / tot : 0; };
   const attivi = cfg.vincoli.filter((v) => o.vincoli[v.id]).length;
   return (
     <>
@@ -163,7 +161,7 @@ export function RailSintesi({ r, o, cfg }: Props) {
 export function Sostenibilita({ cfg, o, r }: Props) {
   const t = useT();
   const sc = (x: Scen): Scenario => (x === 'on_premise' ? r.onPremise : r.saas);
-  const extra = r.vincoliUnaTantum;
+  const extra = r.vincoliUnaTantum.slice(0, 0);
   const area = (s: Scenario) => {
     const serie = serieMensile(s, extra);
     const ult = serie[36];
@@ -245,13 +243,11 @@ export function DettaglioCosti({ r }: Props) {
   const t = useT();
   const tabella = (k: 'saas' | 'on_premise', s: Scenario) => {
     const vincoliRic = s.ricorrenti.filter((x) => ['normativo', 'kpi', 'audit'].includes(x.id)).reduce((a, x) => a + x.costo, 0);
-    const extra = r.vincoliUnaTantum;
     const righe = [
       { id: 'messa', nome: t('st.messa'), gg: s.messaInOpera.gg, costo: s.messaInOpera.costo, prezzo: s.messaInOpera.prezzo },
       { id: 'infra', nome: t('st.infra'), gg: s.infrastruttura.gg, costo: s.infrastruttura.costo, prezzo: s.infrastruttura.prezzo },
       { id: 'lic', nome: t('gr.licenza3'), gg: null, costo: (s.costoRicorrente - vincoliRic) * 3, prezzo: s.licenza.totale * 3 },
-      { id: 'vinc', nome: t('re.vincoliRic3'), gg: null, costo: vincoliRic * 3, prezzo: null },
-      ...extra.map((e) => ({ id: e.id, nome: e.nome, gg: e.gg, costo: e.costo, prezzo: e.prezzo }))
+      { id: 'vinc', nome: t('re.vincoliRic3'), gg: null, costo: vincoliRic * 3, prezzo: null }
     ];
     const tot = { gg: righe.reduce((a, x) => a + (x.gg ?? 0), 0), costo: righe.reduce((a, x) => a + x.costo, 0), prezzo: righe.reduce((a, x) => a + (x.prezzo ?? 0), 0) };
     const m = (p: number | null, c: number) => (p ? perc((p - c) / p) : '—');

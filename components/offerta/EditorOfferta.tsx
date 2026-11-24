@@ -882,7 +882,7 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
               <TabellaOrdinabile
                 colonne={[{ nome: t('st.voce') }, { nome: t('pr.natura') }, { nome: t('pr.costo'), num: true }, { nome: t('pr.prezzo'), num: true }]}
                 righe={[
-                  ...r.vincoliUnaTantum.map((v) => ({ key: v.id, celle: [{ v: v.nome }, { v: t('pr.unaTantum') }, { v: v.costo, html: euro(v.costo) }, { v: v.prezzo, html: euro(v.prezzo) }] })),
+                  ...r.vincoliUnaTantum.map((v) => ({ key: v.id, celle: [{ v: v.nome }, { v: t('pr.opzione') }, { v: v.costo, html: euro(v.costo) }, { v: v.prezzo, html: euro(v.prezzo) }] })),
                   ...(saas ? r.saas : r.onPremise).ricorrenti.filter((v) => cfg.vincoli.some((c) => c.id === v.id)).map((v) => ({
                     key: v.id, celle: [{ v: v.nome }, { v: t('pr.ricorrente') }, { v: v.costo, html: euro(v.costo) }, { v: '', html: '—' }]
                   })),
