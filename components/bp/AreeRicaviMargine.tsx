@@ -4,15 +4,15 @@ import { importo } from '@/lib/ui/formato';
 import { passoTacche } from '@/components/grafici';
 
 export interface SerieProgetto { id: string; nome: string; colore: string; bozza: boolean; valori: number[] }
-export interface TestiAree { margine: string; costi: string; ricavi: string; oggi: string }
+export interface TestiAree { margine: string; costi: string; piattaforma: string; ricavi: string; oggi: string }
 
 /** Ricavi per progetto in aree impilate (le bozze tratteggiate), con il margine di contribuzione e i costi come linee. */
-export function AreeRicaviMargine({ etichette, serie, ricavi, margine, costi, oggi, testi, aria }: {
-  etichette: string[]; serie: SerieProgetto[]; ricavi: number[]; margine: number[]; costi: number[]; oggi: number | null; testi: TestiAree; aria: string;
+export function AreeRicaviMargine({ etichette, serie, ricavi, margine, costi, piattaforma, oggi, testi, aria }: {
+  etichette: string[]; serie: SerieProgetto[]; ricavi: number[]; margine: number[]; costi: number[]; piattaforma: number[]; oggi: number | null; testi: TestiAree; aria: string;
 }) {
   const N = etichette.length;
   const AW = 1240, AH = 432, AX0 = 104, AX1 = 1090, AY0 = 20, AY1 = 360;
-  const massimo = Math.max(...ricavi, ...margine, ...costi, 1);
+  const massimo = Math.max(...ricavi, ...margine, ...costi, ...piattaforma, 1);
   const passo = passoTacche(massimo);
   const ymax = (Math.floor(massimo / passo) + 1) * passo;
   const ax = (i: number) => AX0 + (i * (AX1 - AX0)) / Math.max(1, N - 1);
@@ -37,10 +37,11 @@ export function AreeRicaviMargine({ etichette, serie, ricavi, margine, costi, og
       </g>
     );
   };
-  const MARG = 'var(--surface-brand-deep)', NEG = 'var(--signal-negative)';
+  const MARG = 'var(--surface-brand-deep)', NEG = 'var(--signal-negative)', SETUP = 'var(--signal-open-ink)';
   const fine = [
     { y: ay(margine[N - 1]), n: testi.margine, v: margine[N - 1], c: MARG },
-    { y: ay(costi[N - 1]), n: testi.costi, v: costi[N - 1], c: NEG },
+    { y: ay(costi[N - 1]), n: testi.costi, v: costi[N - 1], c: SETUP },
+    { y: ay(piattaforma[N - 1]), n: testi.piattaforma, v: piattaforma[N - 1], c: NEG },
     { y: ay(ricavi[N - 1]), n: testi.ricavi, v: ricavi[N - 1], c: 'var(--ink-secondary)' }
   ].sort((a, b) => b.y - a.y);
   let ultimo = AY1 - 22;
@@ -69,7 +70,8 @@ export function AreeRicaviMargine({ etichette, serie, ricavi, margine, costi, og
           <text x={ox + 6} y={AY0 - 10} fontSize="11" fontWeight={700} fill="var(--accent-azure-text)">{testi.oggi}</text>
         </g>
       )}
-      {linea(costi, NEG, '6 4')}
+      {linea(costi, SETUP, '2 4')}
+      {linea(piattaforma, NEG, '6 4')}
       {linea(margine, MARG)}
       {etich.map((e) => (
         <g key={e.n}>

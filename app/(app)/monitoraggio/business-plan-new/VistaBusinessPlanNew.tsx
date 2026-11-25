@@ -79,13 +79,12 @@ export function VistaBusinessPlanNew({ investimento, progetti, piattaforma }: Da
   }));
   const ricaviQ = vis.map((q) => q.ricavi), margineQ = vis.map((q) => q.margine);
   const dirQ = vis.map((q) => q.costiDiretti), pfQ = vis.map((q) => q.piattaforma);
-  const costiQ = vis.map((q) => q.costiDiretti + q.piattaforma);
-  const somma = (a: number[]) => a.reduce((x, y) => x + y, 0);
+    const somma = (a: number[]) => a.reduce((x, y) => x + y, 0);
   const avvio = (p: (typeof tutti)[number]) => `${String(p.inizio.getUTCFullYear()).slice(2)} Q${Math.floor(p.inizio.getUTCMonth() / 3) + 1}`;
 
   const cascata: PassoCascata[] = [
     { nome: t('bp.ricavi'), da: 0, valore: r.ricavi, colore: 'var(--accent-azure)', tipo: 'totale' },
-    { nome: t('bp.costiDiretti'), da: r.ricavi, valore: -r.costiDiretti, colore: 'var(--ink-muted)', tipo: 'delta' },
+    { nome: t('bpn.costiSetup'), da: r.ricavi, valore: -r.costiDiretti, colore: 'var(--ink-muted)', tipo: 'delta' },
     { nome: t('bpn.margineContribuzione.a'), da: 0, valore: r.margine, colore: 'var(--surface-brand)', tipo: 'totale' },
     { nome: t('bpn.costiPiattaforma.a'), da: r.margine, valore: -r.piattaforma, colore: 'var(--signal-negative)', tipo: 'delta' },
     { nome: t('bp.investimentoRiga'), da: r.margine - r.piattaforma, valore: -inv, colore: 'var(--signal-negative)', tipo: 'delta' },
@@ -200,9 +199,10 @@ export function VistaBusinessPlanNew({ investimento, progetti, piattaforma }: Da
           <div className="alt-card__body">
             <LegendaBP voci={[
               ...scelti.map((p) => ({ tipo: 'box' as const, nome: p.cliente, colore: p.inCorso ? tratteggio(colori.get(p.id)!) : colori.get(p.id)!, tip: t('bpn.avvioTip', { s: p.inCorso ? t('bpn.bozza') : t('bpn.approvata'), q: avvio(p) }) })),
-              { tipo: 'linea', nome: t('bp.margine'), colore: 'var(--surface-brand-deep)' }, { tipo: 'tratto', nome: t('bp.costi'), colore: 'var(--signal-negative)' }]} />
-            <AreeRicaviMargine etichette={etichette} serie={serie} ricavi={ricaviQ} margine={margineQ} costi={costiQ} oggi={io}
-              testi={{ margine: t('bp.margine'), costi: t('bp.costi'), ricavi: t('bp.ricavi'), oggi: t('bp.oggi') }} aria={t('bpn.timeline')} />
+              { tipo: 'linea', nome: t('bp.margine'), colore: 'var(--surface-brand-deep)' }, { tipo: 'tratto', nome: t('bpn.costiSetup'), colore: 'var(--signal-open-ink)', tratteggio: 'dotted', tip: t('bpn.setupTip') },
+              { tipo: 'tratto', nome: t('bp.costiPiattaforma'), colore: 'var(--signal-negative)', tip: t('bpn.piattaformaTip') }]} />
+            <AreeRicaviMargine etichette={etichette} serie={serie} ricavi={ricaviQ} margine={margineQ} costi={dirQ} piattaforma={pfQ} oggi={io}
+              testi={{ margine: t('bp.margine'), costi: t('bpn.costiSetup'), piattaforma: t('bp.costiPiattaforma'), ricavi: t('bp.ricavi'), oggi: t('bp.oggi') }} aria={t('bpn.timeline')} />
             <div className="bpn-mxw">
               <table className="bpn-mx">
                 <thead><tr><th />{etichette.map((l, i) => <th key={l} className={`qh${i === colOggi ? ' og' : ''}`}>{l}{i === colOggi && <em>{t('bp.oggi')}</em>}</th>)}<th className="qh">{t('bp.periodo')}</th></tr></thead>
@@ -212,8 +212,8 @@ export function VistaBusinessPlanNew({ investimento, progetti, piattaforma }: Da
                   {rigaMx(t('bpn.totaleRicavi'), ricaviQ, 'tr')}
                   {bande(t('bpn.margineECosti'))}
                   {rigaMx(t('bpn.margineContribuzione'), margineQ, 'tr')}
-                  {rigaMx(t('bp.costiDiretti'), dirQ)}
-                  {rigaMx(t('bp.costiPiattaforma'), pfQ)}
+                  {rigaMx(<span title={t('bpn.setupTip')}>{t('bpn.costiSetup')}</span>, dirQ)}
+                  {rigaMx(<span title={t('bpn.piattaformaTip')}>{t('bp.costiPiattaforma')}</span>, pfQ)}
                   {rigaMx(t('bpn.nettoTrimestre'), margineQ.map((m, i) => m - pfQ[i]), 'tr')}
                 </tbody>
               </table>
