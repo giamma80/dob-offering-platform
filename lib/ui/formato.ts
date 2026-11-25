@@ -8,6 +8,6 @@ export const numero = (v: number) => int.format(v);
 export const perc = (v: number) => `${pct.format(v * 100)}%`;
 
 /** Importo con due decimali senza simbolo (assi dei grafici, celle delle matrici). */
-export const importo = (v: number) => eur.format(v);
+export const importo = (v: number) => eur.format(Math.abs(v) < 0.005 ? 0 : v);
 /** Rapporto con due decimali e il segno ×, come "1,56×". */
 export const rapporto = (v: number) => `${eur.format(v)}×`;

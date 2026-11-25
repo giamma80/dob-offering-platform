@@ -100,7 +100,7 @@ export function VistaBusinessPlanNew({ investimento, progetti, piattaforma }: Da
       key: p.id,
       celle: [
         { v: p.cliente, html: <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}><i className="bpn-dot" style={{ background: c }} />{p.cliente}</span> },
-        { v: p.inCorso ? 0 : 1, html: <span className={`bpn-chip ${p.inCorso ? 'bpn-chip--bozza' : 'bpn-chip--ok'}`}>{p.inCorso ? t('bpn.bozza') : t('bp.approvata')}</span> },
+        { v: p.inCorso ? 0 : 1, html: <span className={`bpn-chip ${p.inCorso ? 'bpn-chip--bozza' : 'bpn-chip--ok'}`}>{p.inCorso ? t('bpn.bozza') : t('bpn.approvata')}</span> },
         { v: x.ricaviCum, html: euro(x.ricaviCum) },
         { v: x.margineCum, html: (
           <div className="bpn-bar"><b>{euro(x.margineCum)}</b>
@@ -199,7 +199,7 @@ export function VistaBusinessPlanNew({ investimento, progetti, piattaforma }: Da
           <div className="alt-card__head">{titolo('offerte', t('bpn.timeline'), t('bpn.timelineTip'))}</div>
           <div className="alt-card__body">
             <LegendaBP voci={[
-              ...scelti.map((p) => ({ tipo: 'box' as const, nome: p.cliente, colore: p.inCorso ? tratteggio(colori.get(p.id)!) : colori.get(p.id)!, tip: t('bpn.avvioTip', { s: p.inCorso ? t('bpn.bozza') : t('bp.approvata'), q: avvio(p) }) })),
+              ...scelti.map((p) => ({ tipo: 'box' as const, nome: p.cliente, colore: p.inCorso ? tratteggio(colori.get(p.id)!) : colori.get(p.id)!, tip: t('bpn.avvioTip', { s: p.inCorso ? t('bpn.bozza') : t('bpn.approvata'), q: avvio(p) }) })),
               { tipo: 'linea', nome: t('bp.margine'), colore: 'var(--surface-brand-deep)' }, { tipo: 'tratto', nome: t('bp.costi'), colore: 'var(--signal-negative)' }]} />
             <AreeRicaviMargine etichette={etichette} serie={serie} ricavi={ricaviQ} margine={margineQ} costi={costiQ} oggi={io}
               testi={{ margine: t('bp.margine'), costi: t('bp.costi'), ricavi: t('bp.ricavi'), oggi: t('bp.oggi') }} aria={t('bpn.timeline')} />
