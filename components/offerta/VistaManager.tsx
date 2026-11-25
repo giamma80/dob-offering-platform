@@ -9,6 +9,7 @@ import { useT } from '@/lib/i18n/client';
 import type { Chiave } from '@/lib/i18n/dizionari';
 
 const segno = (v: number) => (v < -0.004 ? 'var(--signal-negative)' : 'var(--ink-primary)');
+const segnoTot = (v: number) => (v < -0.004 ? 'var(--signal-negative)' : undefined);
 const VOCE_SETUP: Record<string, Chiave> = {
   base: 'sp.sv.base', integrazioni: 'sp.sv.integrazioni', catalogo: 'sp.sv.catalogo', moduli: 'sp.sv.moduli',
   stima: 'sp.sv.stima', parametriche: 'sp.sv.parametriche', infra: 'st.infra'
@@ -62,7 +63,7 @@ export function VistaManager({ iniziale }: { iniziale: SpecchiettoManager }) {
                   { v: p - c.costo, html: <span style={{ color: segno(p - c.costo) }}>{euro(p - c.costo)}</span> }] };
               })}
               totale={[{ v: t('sm.totale') }, { v: s.costo, html: euro(s.costo) }, { v: s.prezzo, html: euro(s.prezzo) },
-                { v: s.margine, html: <span style={{ color: segno(s.margine) }}>{euro(s.margine)}</span> }]} />
+                { v: s.margine, html: <span style={{ color: segnoTot(s.margine) }}>{euro(s.margine)}</span> }]} />
           ) : (
             <>
               <TabellaOrdinabile
