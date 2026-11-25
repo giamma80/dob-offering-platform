@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { EMAIL_ADMIN } from '@/lib/admin';
 
 /* Rinnova la sessione Supabase a ogni richiesta e manda al login chi non è autenticato
    o non ha un indirizzo del dominio ammesso. */
@@ -35,6 +36,12 @@ export async function middleware(req: NextRequest) {
   if (!ok && !pubblico) {
     const url = req.nextUrl.clone();
     url.pathname = '/login';
+    url.search = '';
+    return NextResponse.redirect(url);
+  }
+  if (ok && req.nextUrl.pathname.startsWith('/monitoraggio/configurazione') && user!.email!.toLowerCase() !== EMAIL_ADMIN) {
+    const url = req.nextUrl.clone();
+    url.pathname = '/monitoraggio/offerte';
     url.search = '';
     return NextResponse.redirect(url);
   }

@@ -14,7 +14,7 @@ Strumento interno ALTEN per quotare la piattaforma Digital Onboarding (DOB). Nex
 1. **Il calcolo vive solo in `lib/engine/`.** Funzioni pure, senza DOM né rete, coperte da `calcola.test.ts`. Le pagine non fanno aritmetica sugli importi: chiamano `calcola()`. Ogni nuova regola entra con il suo test.
 2. **Lo specchietto cliente si genera solo con `specchietto()`.** Non deve mai contenere giornate, costi, margini, ReeVo, n8n o altri fornitori. Il test "nessun dato interno" deve restare verde.
 3. **Condizioni ReeVo: C2-Restricted.** Non vanno in log, in messaggi d'errore, in export o in qualunque output verso il cliente. Non sono trasferibili come base d'offerta verso un altro cliente.
-4. **Accesso: solo email @alten.it.** Il controllo sta in tre punti: `middleware.ts`, la server action di login, e le policy RLS (`public.is_alten()`). Non aggiungere tabelle senza RLS. Dopo ogni migrazione: advisor di sicurezza Supabase.
+4. **Accesso: solo email @alten.it.** Il controllo sta in tre punti: `middleware.ts`, la server action di login, e le policy RLS (`public.is_alten()`). Non aggiungere tabelle senza RLS. La Configurazione (costi e parametri di sistema) è riservata a gianmarco.morelli@alten.it: `lib/admin.ts`, middleware, `salvaConfig` e `public.is_admin()`. Dopo ogni migrazione: advisor di sicurezza Supabase.
 5. **Margine sul venduto, non ricarico.** tariffa = costo ÷ (1 − margine). Con 30% si vende 100 e restano 30.
 6. **Costi condivisi ÷ (N + 1).** N = clienti già attivi, l'offerta in corso è il +1.
 7. **Nessun controllo di completezza.** Le fasi non si bloccano e i valori non hanno stati: "Invia in approvazione" cambia solo lo stato dell'offerta (bozza → in approvazione → approvata).

@@ -27,7 +27,7 @@ Il problema che risolve non è il calcolo — un Excel lo fa — ma tre cose che
 
 Le leve commerciali (canone SaaS, software on-premise, modalità AI on-premise) appartengono a **una** offerta e vivono in un **footer fisso** dell'area Offerta, su due righe, insieme ai due totali del primo anno. Si passa da un'area all'altra con un interruttore in testata.
 
-Sotto la testata il Backoffice ha tre tab (Offerte, Business plan, Parametri di sistema) e l'Offerta ne ha due: **Dettaglio interno** e **Specchietto cliente**. La timeline delle cinque fasi sta dentro il Dettaglio interno. Lo Specchietto non ha timeline e resta bloccato finché l'offerta non è approvata. La tabella dei costi per voce è la terza sotto-sezione del Resoconto (Sintesi, Sostenibilità, Dettaglio costi).
+Sotto la testata il Backoffice ha tre tab (Offerte, Business plan, Configurazione, quest'ultima con Costi e Parametri di sistema e riservata a un solo utente) e l'Offerta ne ha due: **Dettaglio interno** e **Specchietto cliente**. La timeline delle cinque fasi sta dentro il Dettaglio interno. Lo Specchietto non ha timeline e resta bloccato finché l'offerta non è approvata. La tabella dei costi per voce è la terza sotto-sezione del Resoconto (Sintesi, Sostenibilità, Dettaglio costi).
 
 Le offerte approvate si aprono in lettura o si **duplicano**: i default della nuova offerta arrivano da quella approvata invece che dal sistema.
 

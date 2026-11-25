@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { supabaseServer } from '@/lib/supabase/server';
+import { isAdmin } from '@/lib/admin';
 import { configAttiva, configOfferta, offerta } from '@/lib/dati';
 import { nuovaOfferta, sintesi, sviluppoTotale, type Config, type Offerta } from '@/lib/engine';
 
@@ -107,6 +108,8 @@ async function cambiaStato(id: string, stato: 'in_approvazione' | 'approvata' | 
 /** Salva una nuova versione dei parametri. `base` è la versione da cui la pagina è partita:
    se nel frattempo ne è uscita un'altra, il salvataggio si rifiuta invece di sovrascriverla. */
 export async function salvaConfig(dati: Config, nota: string, base: number) {
+  const { data: { user } } = await (await supabaseServer()).auth.getUser();
+  if (!isAdmin(user?.email)) return { errore: 'Operazione riservata' };
   if (!(dati.margineVenduto >= 0 && dati.margineVenduto < 1)) return { errore: 'Il margine deve stare fra 0 e 99%' };
   if (dati.figure.some((f) => !(f.costo > 0))) return { errore: 'Ogni figura deve avere un costo positivo' };
   if (!(dati.costiCondivisi.clientiAttivi >= 0)) return { errore: 'Clienti attivi non valido' };

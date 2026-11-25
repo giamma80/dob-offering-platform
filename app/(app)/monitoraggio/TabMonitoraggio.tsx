@@ -8,16 +8,15 @@ const TAB = [
   { href: '/monitoraggio/offerte', nome: 'mon.offerte' },
   { href: '/monitoraggio/business-plan', nome: 'mon.bp' },
   { href: '/monitoraggio/business-plan-new', nome: 'mon.bpNew' },
-  { href: '/monitoraggio/costi-sistema', nome: 'mon.costiSistema' },
-  { href: '/monitoraggio/parametri', nome: 'mon.parametri' }
+  { href: '/monitoraggio/configurazione', nome: 'mon.configurazione' }
 ] as const;
 
-export function TabMonitoraggio() {
+export function TabMonitoraggio({ admin }: { admin: boolean }) {
   const p = usePathname();
   const t = useT();
   return (
     <nav className="alt-tabs" aria-label="Monitoraggio" style={{ padding: '0 24px', background: 'var(--surface-card)', borderBottom: '1px solid var(--line-soft)' }}>
-      {TAB.map((x) => (
+      {TAB.filter((x) => admin || x.href !== '/monitoraggio/configurazione').map((x) => (
         <Link key={x.href} className="alt-tab" href={x.href} aria-current={p === x.href || p.startsWith(`${x.href}/`) ? 'page' : undefined}>{t(x.nome)}</Link>
       ))}
     </nav>

@@ -9,6 +9,7 @@ import { Icona } from '@/components/Icona';
 import { TabellaOrdinabile } from '@/components/TabellaOrdinabile';
 import { Toast, useToast } from '@/components/Toast';
 import { useT } from '@/lib/i18n/client';
+import { NavConfigurazione } from '@/components/NavConfigurazione';
 import { MenuUtente } from '@/components/utente/MenuUtente';
 
 const MESE = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -58,8 +59,9 @@ export function EditorCostiSistema({ versione, iniziale }: { versione: number; i
 
   return (
     <div className="shell">
-      <aside className="subnav" aria-label={t('mon.costiSistema')}>
-        <p className="subnav__title">{t('mon.costiSistema')}</p>
+      <aside className="subnav" aria-label={t('mon.configurazione')}>
+        <p className="subnav__title">{t('mon.configurazione')}</p>
+        <NavConfigurazione />
         <MenuUtente />
       </aside>
       <main className="content">

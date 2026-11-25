@@ -11,6 +11,7 @@ import { Icona } from '@/components/Icona';
 import { Toast, useToast } from '@/components/Toast';
 import { useT } from '@/lib/i18n/client';
 import type { Chiave } from '@/lib/i18n/dizionari';
+import { NavConfigurazione } from '@/components/NavConfigurazione';
 import { MenuUtente } from '@/components/utente/MenuUtente';
 
 /* Parametri di sistema come nel mockup (Sistema.dc.html): card impilate, la sottonavigazione scorre. */
@@ -79,7 +80,8 @@ export function EditorParametri({ versione, iniziale }: { versione: number; iniz
   return (
     <div className="shell">
       <aside className="subnav" aria-label={t('mon.parametri')}>
-        <p className="subnav__title">{t('mon.parametri')}</p>
+        <p className="subnav__title">{t('mon.configurazione')}</p>
+        <NavConfigurazione />
         {SEZIONI.map((s) => (
           <a key={s.id} className="subnav__a" href={`#${s.id}`} aria-current={sez === s.id ? 'true' : undefined}
             onClick={(e) => { e.preventDefault(); setSez(s.id); scorriA(s.id); }}>
