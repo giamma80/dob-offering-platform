@@ -37,6 +37,7 @@ export default async function Specchietto({ params, searchParams }: {
       <nav className="alt-tabs" style={{ background: 'var(--surface-card)', padding: '0 24px', borderBottom: '1px solid var(--line-soft)', flex: '0 0 auto' }}>
         <Link className="alt-tab" href={`/offerta/${id}/assessment`}>{t('tab.dettaglio')}</Link>
         <Link className="alt-tab" href={`/offerta/${id}/specchietto`} aria-current="page">{t('tab.specchietto')}</Link>
+        <Link className="alt-tab" href={`/offerta/${id}/manager`}>{t('tab.manager')}</Link>
       </nav>
       <div className="shell">
         <aside className="subnav" aria-label="Scenari">

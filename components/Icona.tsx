@@ -42,6 +42,7 @@ const P: Record<string, string> = {
  "valid": "<circle cx=\"8\" cy=\"8\" r=\"5.5\"/><path d=\"M5.5 8.2l1.8 1.8 3.2-3.6\"/>",
  "margine": "<path d=\"M3 13l10-10\"/><path d=\"M8.5 3H13v4.5\"/>",
  "uscita": "<path d=\"M9.5 3H13v10H9.5M7 5.5L4.5 8 7 10.5M4.5 8H11\"/>",
+ "ripristina": "<path d=\"M3.5 8a4.5 4.5 0 1 0 1.4-3.3M3.5 3v2.5H6\"/>",
  "specch": "<path d=\"M4 2.5h6l2.5 2.5v8.5H4z\"/><path d=\"M10 2.5V5h2.5M6 8h4M6 10.5h4\"/>"
 };
 

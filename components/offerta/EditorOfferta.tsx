@@ -289,6 +289,8 @@ export function EditorOfferta({ id, fase, cfg, iniziale, solaLettura, versione }
         <Link className="alt-tab" href={`/offerta/${id}/assessment`} aria-current="page">{t('tab.dettaglio')}</Link>
         <Link className="alt-tab" href={`/offerta/${id}/specchietto`}
           onClick={(e) => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return; e.preventDefault(); void attendiSalvataggio().then(() => router.push(`/offerta/${id}/specchietto`)); }}>{t('tab.specchietto')}</Link>
+        <Link className="alt-tab" href={`/offerta/${id}/manager`}
+          onClick={(e) => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return; e.preventDefault(); void attendiSalvataggio().then(() => router.push(`/offerta/${id}/manager`)); }}>{t('tab.manager')}</Link>
       </nav>
       <Timeline id={id} corrente={fase} />
       <div className="shell">

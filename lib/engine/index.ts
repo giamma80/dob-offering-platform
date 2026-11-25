@@ -4,3 +4,4 @@ export * from './calcola';
 export * from './stati';
 export * from './businessPlan';
 export * from './architettura';
+export * from './manager';

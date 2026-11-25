@@ -511,3 +511,50 @@ describe('business plan: riepilogo e titolo', () => {
     expect(contributoAl(p, new Date(Date.UTC(2027, 11, 1)))).toBeCloseTo(91690.315 + 120000, 3);
   });
 });
+
+import { specchiettoManager, conPrezzi, conPrezzo, intervalloPrezzo } from './index';
+
+describe('specchietto manager', () => {
+  const x = () => { const v = o(); v.soluzione.connettori = ['namirial', 'cleverchain', 'api-gw']; return v; };
+  for (const sc of ['saas', 'on_premise'] as const) {
+    it(`${sc}: a listino costi, prezzi e margine tornano con il calcolo`, () => {
+      const v = x(); v.approccio = sc === 'saas' ? 'saas' : 'on_premise';
+      const r = calcola(cfg, v)[sc === 'saas' ? 'saas' : 'onPremise'];
+      const m = specchiettoManager(cfg, v, sc);
+      expect(m.setup.costo).toBeCloseTo(r.setup.costo + r.customizzazione.costo, 2);
+      expect(m.canone.costo).toBeCloseTo(r.costoRicorrente, 2);
+      expect(m.setup.listino).toBeCloseTo(r.setup.prezzo + r.customizzazione.prezzo, 2);
+      expect(m.canone.listino).toBeCloseTo(r.licenza.totale, 2);
+      expect(m.primoAnno.margine).toBeCloseTo(r.primoAnno.margine, 2);
+      expect(m.setup.costi.reduce((a, c) => a + c.costo, 0)).toBeCloseTo(m.setup.costo, 2);
+      expect(m.setup.prezzi.reduce((a, p) => a + p.prezzo, 0)).toBeCloseTo(m.setup.listino, 2);
+      expect(m.canone.prezzi.reduce((a, p) => a + p.prezzo, 0)).toBeCloseTo(m.canone.listino, 2);
+    });
+  }
+  it('spostare il prezzo ricalcola il margine, una sezione alla volta', () => {
+    const m = specchiettoManager(cfg, x(), 'saas');
+    const a = conPrezzi(m, { setup: m.setup.costo * 2 });
+    expect(a.setup.margine).toBeCloseTo(a.setup.costo, 2);
+    expect(a.setup.marginePct).toBeCloseTo(0.5, 6);
+    expect(a.canone).toEqual(m.canone);
+    expect(a.primoAnno.margine).toBeCloseTo(a.setup.margine + m.canone.margine, 2);
+    const b = conPrezzi(a, { canone: m.canone.costo });
+    expect(b.canone.margine).toBeCloseTo(0, 6);
+    expect(b.setup).toEqual(a.setup);
+  });
+  it('le voci si scalano in proporzione e sotto costo il margine è negativo', () => {
+    const m = specchiettoManager(cfg, x(), 'saas');
+    const s = conPrezzo(m.setup, m.setup.listino / 2);
+    expect(s.prezzi.reduce((a, p) => a + p.prezzo, 0)).toBeCloseTo(s.prezzo, 1);
+    expect(conPrezzo(m.canone, 0).margine).toBeCloseTo(-m.canone.costo, 2);
+    expect(conPrezzo(m.canone, -50).prezzo).toBe(0);
+  });
+  it('la barra copre il listino e il costo', () => {
+    const m = specchiettoManager(cfg, x(), 'saas');
+    for (const s of [m.setup, m.canone]) {
+      const i = intervalloPrezzo(s);
+      expect(i.min).toBe(0);
+      expect(i.max).toBeGreaterThanOrEqual(2 * Math.max(s.listino, s.costo));
+    }
+  });
+});
